@@ -1,0 +1,236 @@
+<h2 id="少年-18-岁时的梦">少年 18 岁时的梦</h2>
+<p>记得我 18 岁那年高考完在家，还没放松几天就被我爸催着去找份暑假工作。当时我对工作一点概念也没有，糊了份简历就在 58 同城上乱投，投完第二天跟一家公司约了线下聊聊，结果还真让我聊到个在家兼职的工作。<del>（后来发现其实巨不靠谱）</del></p>
+<p>工作内容大致是开发微信小程序，我当时仅有一点自学的微信小程序的开发经验和 PHP CodeIgniter 后端经验，差不多能 Hold 住对面的需求，甚至还在 GitHub 上给一个小程序前端组件库提了 PR。（现在回过头看当初写的代码，真的是“满目疮痍”——前端 UI 没对齐，后端 SQL 注入满天飞，黑历史了属于是）</p>
+<p>直到大学开学前，暑假的两个月里我给那边开发了两个微信小程序。因为每次都要用 CodeIgniter 框架写功能类似的后端，年少的我在想能否把 MVC 的 Model 操作数据库，Controller 处理逻辑，View 返回响应给封装成一个线上的服务，我在图形化的 Web 页面上点点点就可以实现建表、验证表单、定义 API 接口等操作。</p>
+<p>我被自己这个天才般的点子所鼓舞，用 PHP 写了 <a href="https://github.com/wuhan005/WeBake">WeBake</a> ，当时的想法是用来快速构建微信小程序后端。年少的我以为自己在做前人从来没做过的东西，沉浸其中并暗自窃喜。直到进入大学的前一天夜里，我在知乎上偶然看到了一家同类型的 SaaS 应用推广，也是在跟我做相同的东西，并且已经开始了商业化，我才知道业内有很多公司都已经在做了。那天晚上我直接心态爆炸。关于 WeBake 这个项目后面也就理所当然的弃坑了。</p>
+<p>后来发生的事，大家也都知道了：微信后面发布了「微信云开发」的一站式后端解决方案，直接官方必死同人。再后来 “LowCode 低代码”的概念开始流行，LeanCloud 被心动游戏收购，国外 AirTable、国内黑帕云、维格表 Vika 等产品开始流行起来&hellip;&hellip; 而那个当时让我心态爆炸的做小程序后端的 SaaS 产品，在互联网上几乎找不到它的痕迹了。</p>
+<h2 id="开始填坑">开始填坑</h2>
+<p>我在 2021 年的时候看到了 Hooopo 的文章 <a href="https://ruby-china.org/topics/37922">Let&rsquo;s clone a Leancloud</a>，里面介绍了使用 Postgres 实现类似 LeanCloud 的 Schemaless Table 的特性。我直呼好家伙，没想到 Postgres 的视图和 JSON 数据类型还可以这样玩出花来。我当时对着文章用 Go 实现了个小 Demo，感觉确实有意思。但是因为没有具体的需求，那个 Demo 一直躺在我的 GitHub 里。</p>
+<p>今年我放弃 WordPress 使用 Hugo 重构了本博客，一直没找到个能满足我需求的静态博客评论组件，便想自己造轮子写一个。但是评论服务的后端，不就跟留言板一样，都是些很基础很无脑的 CRUD 吗？我已经不想再用 Go 无脑写 CRUD 了！要不我把需求抽象一层，直接写个“低代码数据中台”出来？好像有点意思哦&hellip;&hellip;？</p>
+<p>就这样，Sayrud 诞生了。</p>
+<h2 id="schemaless-特性">Schemaless 特性</h2>
+<p>Schemaless，中文机翻为「无模式」，让人听得云里雾里的，让我们一步步来。</p>
+<p>首先，数据库语境的 <code>Schema</code> 可以简单的理解为是数据库的表结构定义，我有一张学生表，表里有学号、姓名、班级三列，然后学号是主键&hellip;&hellip; 这些就是 <code>Schema</code> 。在关系型数据库中，我们得写 SQL 语句来定义这张表：</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sql" data-lang="sql"><span style="display:flex;"><span><span style="color:#ff7b72">CREATE</span><span style="color:#6e7681"> </span><span style="color:#ff7b72">TABLE</span><span style="color:#6e7681"> </span>students<span style="color:#6e7681"> </span>(<span style="color:#ff7b72">no</span><span style="color:#6e7681"> </span>TEXT,<span style="color:#6e7681"> </span>name<span style="color:#6e7681"> </span>TEXT,<span style="color:#6e7681"> </span><span style="color:#ff7b72">class</span><span style="color:#6e7681"> </span>TEXT);<span style="color:#6e7681">
+</span></span></span></code></pre></div><p>后面需求改了，要再新增一列记录“出生日期”，那我们得写 SQL 修改表结构：</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sql" data-lang="sql"><span style="display:flex;"><span><span style="color:#ff7b72">ALTER</span><span style="color:#6e7681"> </span><span style="color:#ff7b72">TABLE</span><span style="color:#6e7681"> </span>students<span style="color:#6e7681"> </span><span style="color:#ff7b72">ADD</span><span style="color:#6e7681"> </span><span style="color:#ff7b72">COLUMN</span><span style="color:#6e7681"> </span>birth_date<span style="color:#6e7681"> </span>DATE;<span style="color:#6e7681">
+</span></span></span></code></pre></div><p>如果改得多了，那这就有点烦了。况且在实际的项目里我们还得去编写数据库迁移的 SQL 并在线上运行迁移的 Migration 程序。聪明的你估计想到了我们可以用 MongoDB 来做呀！要新增一列直接在 JSON 中加一个字段就行，无所谓什么“表结构”的概念。表结构的概念没了，也就是 <code>Schema</code> 没了。英文中形容词 <code>-less</code> 后缀指 <code>without</code> ，这就有了 <code>Schemaless</code> 这个词。简单来说就是跟 MongoDB 一样不受表结构定义的条条框框，想加字段就加字段。</p>
+<p>市面上的很多 Schemaless 特性的产品，其后端大多都使用 MongoDB 实现。但我前文中提到了 Hooopo 那篇文章，再加上我对 Postgres 的热爱，我决定另辟蹊径使用 Postgres 来实现。</p>
+<p>我们平时写后端，需要先建表，定义表里有哪些字段，最后往表里插数据，对应到 Sayrud 使用 <code>sl_tables</code> <code>sl_fields</code> <code>sl_records</code> 三张表来存储。（以下列出的表结构精简了项目分组、<code>gorm.Model</code> 里包含的字段）</p>
+<ul>
+<li><code>sl_tables</code>： Schemaless 表</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th style="text-align: center">字段名</th>
+<th style="text-align: center">类型（Go）</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center">name</td>
+<td style="text-align: center"><code>string</code></td>
+<td>表名，给程序看的</td>
+</tr>
+<tr>
+<td style="text-align: center">desc</td>
+<td style="text-align: center"><code>string</code></td>
+<td>表备注名，前端给人看的</td>
+</tr>
+<tr>
+<td style="text-align: center">increment_index</td>
+<td style="text-align: center"><code>int64</code></td>
+<td>记录当前自增 ID</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><code>sl_fields</code>：Schemaless 字段</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th style="text-align: center">字段名</th>
+<th style="text-align: center">类型（Go）</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center">sl_table_id</td>
+<td style="text-align: center"><code>int64</code></td>
+<td>属于哪张表</td>
+</tr>
+<tr>
+<td style="text-align: center">name</td>
+<td style="text-align: center"><code>string</code></td>
+<td>字段名</td>
+</tr>
+<tr>
+<td style="text-align: center">label</td>
+<td style="text-align: center"><code>string</code></td>
+<td>字段备注，前端给人看的</td>
+</tr>
+<tr>
+<td style="text-align: center">type</td>
+<td style="text-align: center"><code>string</code></td>
+<td>字段类型，包括 <code>int</code> <code>text</code> <code>bool</code> <code>float</code> <code>timestamp</code> <code>reference</code> <code>generated</code> 等</td>
+</tr>
+<tr>
+<td style="text-align: center">options</td>
+<td style="text-align: center"><code>json.RawMessage</code></td>
+<td>字段额外的属性，如默认值、约束条件等</td>
+</tr>
+<tr>
+<td style="text-align: center">position</td>
+<td style="text-align: center"><code>int</code></td>
+<td>字段在表中的顺序</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><code>sl_records</code> ：Schemaless 数据</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th style="text-align: center">字段名</th>
+<th style="text-align: center">类型（Go）</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center">sl_table_id</td>
+<td style="text-align: center"><code>int64</code></td>
+<td>属于哪张表</td>
+</tr>
+<tr>
+<td style="text-align: center">data</td>
+<td style="text-align: center"><code>json.RawMessage</code></td>
+<td>JSON 存数据，Key 为字段的 ID，Value 为字段的值</td>
+</tr>
+</tbody>
+</table>
+<p>然后神奇的事情就来了~ 我们按照 Hooopo 上述文章里所介绍的，为每一个 Schemaless 表当创建一张视图。以下是一个视图的 SQL 定义示例：</p>
+<p><img src="https://github.red/images/2024/07/schemaless_view_sql.png" alt=""></p>
+<p>得益于 Postgres 对 JSON 类型的强大支持，我们可以从 <code>sl_records</code> 表中提取 JSON 字段的值作为内容，构建出一张“表”，效果如下：</p>
+<p><img src="https://github.red/images/2024/07/schemaless_view_data.png" alt=""></p>
+<p>当用户需要查询 Schemaless 表中的数据时，我们直接查询这张视图就行。对于 GORM 而言，这就跟查询一张普通的表一样！它都不会意识到这是由三张表拼凑提取出来的数据。更神奇的是，当你对着这张视图删除一条记录时，对应的 <code>sl_records</code> 原始表中的记录行也会被删除！Postgres 居然能把这俩关联起来。</p>
+<p>具体到代码实现上，我们需要动态构造创建视图的 SQL 语句。而像字段、表名这类关键字在 SQL 语句中是不支持 SQL 预编译传入的，为了避免潜在的 SQL 注入风险，我使用了 <a href="https://github.com/tj/go-pg-escape">github.com/tj/go-pg-escape</a> 库来对字段名和表名进行转义。</p>
+<p>正如 Hooopo 文章中所提到的，我将这个视图创建在了另一个 Postgres Schema 下，与默认的 <code>public</code> 进行区分，这也是一种简易的多租户实现了。</p>
+<div class="box-warning box"><i class="box-icon-warning"></i> <p>有坑注意！</p>
+<p>之前看到过这篇文章： <a href="https://mp.weixin.qq.com/s/8T4Lgis9q30jHaSAfT3jgQ">《我们使用 Postgres 构建多租户 SaaS 服务时踩的坑》</a>，文中提到使用 Postgres Schema 构建多租户时，如果每个 Postgres Schema 下都是同样的表结构，同时对所有 Postgres Schema 中的表结构变更会有性能问题。但上述场景在我们这里不存在，可以忽略该问题。</p>
+</div>
+<h2 id="引用列生成列字段约束的实现">引用列、生成列、字段约束的实现</h2>
+<p>当我们开发一个博客评论后端时，功能上需要支持回复他人的评论，即数据之间会存在引用关系，我们一般会在 <code>comments</code> 表中加一列 <code>parent_comment_id</code> 来存储父评论的 ID。对应到 Schemaless 的字段类型里，就需要有 <code>reference</code> 这样一种引用类型。</p>
+<p>我的设计是，当字段类型为 <code>reference</code> 时，其字段值存储的是所引用记录的 UID，字段额外属性 <code>options</code> 里记录它实际展示的列，如下图所示：</p>
+<img style="box-shadow: none;" src="https://github.red/images/2024/07/reference_table.png" />
+<p>在生成视图时，使用 Postgres <code>json_build_object</code> 来构造 <code>reference</code> 类型字段展示的 JSON。（再次感叹 Postgres 真是太强大了！）JSON 中的字段 <code>u</code> 为关联记录的唯一 UID，方便前端处理时找到这一条记录。<code>v</code> 为关联记录的展示字段，用于在前端 Table 表格上展示给用户看。</p>
+<p>在实际的博客评论记录中，一条评论是不能将自己作为自己的父级评论的。即我们要对 <code>reference</code> 字段的引用值进行约束。我给 <code>reference</code> 字段加了一个 <code>constraint</code> 属性，用户可以输入 JavaScript 表达式来自定义约束行为。JavaScript 表达式返回 <code>true</code> / <code>false</code> ，来表示数据校验是否通过。背后的实现是接了 <a href="https://github.com/dop251/goja">goja</a> 这个 Go 的 JavaScript Engine 库。我将当前记录传入 JavaScript 运行时的 <code>$this</code> 变量中，将被关联的记录传入 <code>$that</code> 变量中，对于上述需求，我们只需要写 <code>$this.uid !== $that.uid</code> 就可以约束一条评论的父评论不能是它自身。</p>
+<p><img src="https://github.red/images/2024/07/reference_field_constraint.png" alt=""></p>
+<p>除了能引用他人的评论，在博客评论中还需要展示评论者的头像，通常的做法是使用评论者的电子邮箱去获取其 Gravatar 头像进行展示。即将评论者的电子邮箱地址全部转换为小写后，再做 MD5 哈希，拼接到 <code>https://gravatar.com/avatar/</code> 或者其他镜像站地址之后。在 Postgres 里我们可以使用<a href="https://www.postgresql.org/docs/current/ddl-generated-columns.html">生成列（Generated Columns）</a>来很轻松的做到这一点：</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sql" data-lang="sql"><span style="display:flex;"><span><span style="color:#ff7b72">CREATE</span><span style="color:#6e7681"> </span><span style="color:#ff7b72">TABLE</span><span style="color:#6e7681"> </span>comments<span style="color:#6e7681"> </span>(<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>email<span style="color:#6e7681"> </span>TEXT,<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>email_md5<span style="color:#6e7681"> </span>TEXT<span style="color:#6e7681"> </span><span style="color:#ff7b72">GENERATED</span><span style="color:#6e7681"> </span>ALWAYS<span style="color:#6e7681"> </span><span style="color:#ff7b72">AS</span><span style="color:#6e7681"> </span>(md5(<span style="color:#ff7b72">lower</span>(email)))<span style="color:#6e7681"> </span>STORED<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"></span>);<span style="color:#6e7681">
+</span></span></span></code></pre></div><p>但在 Schemaless Table 里呢？一开始我的想法是像上面做字段约束一样接 JavaScript Engine，在添加数据时跑一遍 JavaScript 表达式计算出生成列的值就行。但这存在一个问题：如果 JavaScript 表达式被修改了，那就得全表重新跑重新更新刷一遍数据，这是无法接受的。</p>
+<p>最后还是选择让用户编写 Postgres SQL 语句片段，用作创建视图时生成列的定义，就像前面视图的 SQL 定义那张图里的：</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sql" data-lang="sql"><span style="display:flex;"><span>md5(<span style="color:#ff7b72">lower</span>(sl_records.<span style="color:#ff7b72">data</span><span style="color:#6e7681"> </span><span style="color:#ff7b72;font-weight:bold">-&gt;&gt;</span><span style="color:#6e7681"> </span><span style="color:#a5d6ff">&#39;YXSQhESl&#39;</span>::text))<span style="color:#6e7681"> </span><span style="color:#ff7b72">AS</span><span style="color:#6e7681"> </span>email_md5,<span style="color:#6e7681">
+</span></span></span></code></pre></div><p>但既然用户能直接编写原生 SQL，SQL 还会被拼接进来创建视图，那我这不直接 SQL 注入被注烂了！就算用黑名单来过滤字符串特殊字符与关键字，保不齐后面出来个我不知道的方法给绕了。这里我使用了 <a href="https://github.com/auxten/postgresql-parser">auxten/postgresql-parser</a> 这个库（Bytebase 也在用）来将用户输入的 SQL 语句解析成 AST，然后 Walk 遍历树上的每个节点，发现有 <code>UNION</code> <code>JOIN</code> 以及白名单外的函数调用就直接禁止提交。如果有人 bypass 了这个库的解析规则绕过了我的检验，那也就等同于他找到了 CockroachDB 的洞（这个 AST 解析库是从 CockroachDB 源码中拆出来的），那我直接拿去水个 CVE。😂</p>
+<p>在具体代码实现中，由于 postgresql-parser 这个库只能解析完整的 SQL 语句，而用户输入的是 <code>md5(lower(email))</code> 这样的 SQL 片段，我会在用户输入前拼一个 <code>SELECT </code> 再解析。而像 <code>email</code> 这种字段名，由于提供没有上下文，会被解析成 <code>*tree.UnresolvedName</code> 节点。我需要将这些 <code>*tree.UnresolvedName</code> 节点的<strong>值</strong>替换成 <code>sl_records.data -&gt;&gt; 'YXSQhESl'::text</code> 这样的 JSON 取值<strong>语句</strong>，直接修改节点的话出来的语句会是：</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sql" data-lang="sql"><span style="display:flex;"><span>md5(<span style="color:#ff7b72">lower</span>(<span style="color:#a5d6ff">&#34;sl_records.data -&gt;&gt; &#39;YXSQhESl&#39;::text&#34;</span>))<span style="color:#6e7681">
+</span></span></span></code></pre></div><p>它将这整一块用双引号包裹，会被 Postgres 一整个当做列名去解析。我也没能找到在 Walk 里修改节点属性的方法，最后只能用一个比较丑陋的 HACK：替换节点内容时前后加上一段分隔符，在最后生成的 SQL 语句中找到这个分隔符，将分隔符和它前面的 <code>&quot;</code> 引号去掉。<del>（不由得想起 PHP 反序列化字符逃逸&hellip;&hellip;）</del></p>
+<p>最终实现大致如下，目前函数白名单仅放开了极少数的哈希函数和字符串处理函数。我还写了不少单元测试来测这个函数的安全性，希望没洞吧&hellip;&hellip;</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">var</span> whiteFunctions = []<span style="color:#ff7b72">string</span>{
+</span></span><span style="display:flex;"><span> <span style="color:#a5d6ff">&#34;md5&#34;</span>, <span style="color:#a5d6ff">&#34;sha1&#34;</span>, <span style="color:#a5d6ff">&#34;sha256&#34;</span>, <span style="color:#a5d6ff">&#34;sha512&#34;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#a5d6ff">&#34;concat&#34;</span>, <span style="color:#a5d6ff">&#34;substring&#34;</span>, <span style="color:#a5d6ff">&#34;substr&#34;</span>, <span style="color:#a5d6ff">&#34;length&#34;</span>, <span style="color:#a5d6ff">&#34;lower&#34;</span>, <span style="color:#a5d6ff">&#34;upper&#34;</span>,
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">SterilizeExpression</span>(ctx context.Context, input <span style="color:#ff7b72">string</span>, allowFields <span style="color:#ff7b72">map</span>[<span style="color:#ff7b72">string</span>]<span style="color:#ff7b72">string</span>) (<span style="color:#ff7b72">string</span>, <span style="color:#ff7b72">error</span>) {
+</span></span><span style="display:flex;"><span> w <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#ff7b72;font-weight:bold">&amp;</span>walk.AstWalker{
+</span></span><span style="display:flex;"><span> Fn: <span style="color:#ff7b72">func</span>(ctx <span style="color:#ff7b72">interface</span>{}, node <span style="color:#ff7b72">interface</span>{}) (stop <span style="color:#ff7b72">bool</span>) {
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">switch</span> v <span style="color:#ff7b72;font-weight:bold">:=</span> node.(<span style="color:#ff7b72">type</span>) {
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72;font-weight:bold">...</span>
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">case</span> <span style="color:#ff7b72;font-weight:bold">*</span>tree.UnresolvedName:
+</span></span><span style="display:flex;"><span> inputFields = append(inputFields, v.<span style="color:#d2a8ff;font-weight:bold">String</span>())
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> <span style="color:#8b949e;font-style:italic">// HACK: We add separator to get the field name.</span>
+</span></span><span style="display:flex;"><span> v.Parts[<span style="color:#a5d6ff">0</span>] = <span style="color:#a5d6ff">&#34;!&lt;----!&#34;</span> <span style="color:#ff7b72;font-weight:bold">+</span> allowFields[v.Parts[<span style="color:#a5d6ff">0</span>]] <span style="color:#ff7b72;font-weight:bold">+</span> <span style="color:#a5d6ff">&#34;!----&gt;!&#34;</span>
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72;font-weight:bold">...</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">return</span> <span style="color:#79c0ff">false</span>
+</span></span><span style="display:flex;"><span> },
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72;font-weight:bold">...</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> <span style="color:#8b949e;font-style:italic">// Remove the separator.</span>
+</span></span><span style="display:flex;"><span> sql = strings.<span style="color:#d2a8ff;font-weight:bold">ReplaceAll</span>(sql, <span style="color:#a5d6ff">`&#34;!&lt;----!`</span>, <span style="color:#a5d6ff">&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span> sql = strings.<span style="color:#d2a8ff;font-weight:bold">ReplaceAll</span>(sql, <span style="color:#a5d6ff">`!----&gt;!&#34;`</span>, <span style="color:#a5d6ff">&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">return</span> sql, <span style="color:#79c0ff">nil</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="api-接口设计">API 接口设计</h2>
+<p>聊完了 Schemaless 特性的实现，我们再来看下自定义 API 接口的实现。这里直接上前端的操作页面，方便我来逐一介绍。</p>
+<p><img src="https://github.red/images/2024/07/update_api_example.png" alt=""></p>
+<p>参考之前用过的 Pocketbase，我将接口分为 <code>LIST</code> <code>VIEW</code> <code>CREATE</code> <code>UPDATE</code> <code>DELETE</code> 五种类型。注意这与 HTTP 请求动词或数据库 DDL 操作并无关系，是偏业务上的定义。<code>LIST</code> 返回多条数据、<code>VIEW</code> 查询单条数据、<code>CREATE</code> 添加数据、<code>UPDATE</code> 修改数据、<code>DELETE</code> 删除数据。</p>
+<p>就像我们写后端需要定义路由一样，每个 API 接口会有它请求方法和路径。以及会定义每个接口它从 GET Query 和 POST Body 处接收的字段。这些字段除了要有英文的参数名外，还需要有给人看的标签名，用于展示在数据校验的报错信息里。</p>
+<p>然后我们会选择一张 Schemaless 数据表作为数据源（记得在 Dreamweaver 里叫“记录集”），把传入参数与数据表中的字段做映射，这样就完成了对数据的操作流程。而就整个请求而言，在请求开始前我们可能会想做一层限流或者验证码，请求结束后需要发送通知邮件或触发 WebHook，因此还需要支持配置路由中间件。</p>
+<p>这里有两个值得拿来讨论的部分：数据源的筛选规则与前端拖拽配置路由中间件。</p>
+<h2 id="filter-dsl">Filter DSL</h2>
+<p>我们的接口经常会有传入 <code>?id=1</code> 来筛选指定一条数据的需求，确切的说是在 <code>LIST</code> <code>VIEW </code> <code>UPDATE</code> <code>DELETE</code> 四种类型下都会遇到。Schemaless 表的增删改查在代码上最终都是用 GORM 来构造 SQL 并执行的，“筛选”对应查询中的 <code>WHERE</code> ，对应 GORM 中的 <code>Where</code> 方法。用户在前端编辑好筛选条件后，需要能“翻译”成 GORM 的 Where 查询条件（一个 <code>clause.Expression</code> 类型的变量）。</p>
+<p>我在这里设计了一种使用 JSON 格式来表示 Where 查询条件的方法。一个查询条件分为两种类型，一种是单操作符，仅接收一个或零个参数，如字面量 <code>true</code>、「非」操作 <code>NOT xxxx</code> ；另一种是常见的双操作符的，如「与」操作 <code>xxx AND xxx</code>、<code>xxx LIKE xxx</code>，它们接收两个参数。</p>
+<p>我们定义一个 <code>Operator</code> 结构体，它记录了当前 WHERE 查询的操作类型 <code>Type</code>、单操作符的参数 <code>Value</code> 、双操作符的左值 <code>Left</code> 和右值 <code>Right</code>。注意左值和右值又可以是一个查询条件，构造 WHERE 条件的时候需要递归解析下去。</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">type</span> Operator <span style="color:#ff7b72">struct</span> {
+</span></span><span style="display:flex;"><span> Type OperatorType <span style="color:#a5d6ff">`json:&#34;t&#34;`</span>
+</span></span><span style="display:flex;"><span> Value json.RawMessage <span style="color:#a5d6ff">`json:&#34;v,omitempty&#34;`</span>
+</span></span><span style="display:flex;"><span> Left <span style="color:#ff7b72;font-weight:bold">*</span>Operator <span style="color:#a5d6ff">`json:&#34;l,omitempty&#34;`</span>
+</span></span><span style="display:flex;"><span> Right <span style="color:#ff7b72;font-weight:bold">*</span>Operator <span style="color:#a5d6ff">`json:&#34;r,omitempty&#34;`</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>对应的操作符有以下这些，你可以看到上方的双操作符都是对应着 SQL 语句中的操作，下面单操作符中有两个特殊的操作 <code>FIELD</code> 和 <code>LITERAL</code> 。其中 <code>FIELD</code> 会被解析为 Schemaless 表中的字段，而 <code>LITERAL</code> 的内容将被放到 JavaScript Engine 中运行，请求的 Query 和 Body 会被解析后注入到 JavaScript Runtime 中。你可以通过一个值为 <code>$request.query.id</code> 的 <code>LITERAL</code> 操作拿到 <code>id</code> 这个 Query 参数的值。</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">const</span> (
+</span></span><span style="display:flex;"><span> <span style="color:#8b949e;font-style:italic">// Binary operators</span>
+</span></span><span style="display:flex;"><span> OperatorTypeAnd OperatorType = <span style="color:#a5d6ff">&#34;AND&#34;</span>
+</span></span><span style="display:flex;"><span> OperatorTypeOr OperatorType = <span style="color:#a5d6ff">&#34;OR&#34;</span>
+</span></span><span style="display:flex;"><span> OperatorTypeNotEqual OperatorType = <span style="color:#a5d6ff">&#34;&lt;&gt;&#34;</span>
+</span></span><span style="display:flex;"><span> OperatorTypeEqual OperatorType = <span style="color:#a5d6ff">&#34;=&#34;</span>
+</span></span><span style="display:flex;"><span> OperatorTypeGreater OperatorType = <span style="color:#a5d6ff">&#34;&gt;&#34;</span>
+</span></span><span style="display:flex;"><span> OperatorTypeLess OperatorType = <span style="color:#a5d6ff">&#34;&lt;&#34;</span>
+</span></span><span style="display:flex;"><span> OperatorTypeGreaterEqual OperatorType = <span style="color:#a5d6ff">&#34;&gt;=&#34;</span>
+</span></span><span style="display:flex;"><span> OperatorTypeLessEqual OperatorType = <span style="color:#a5d6ff">&#34;&lt;=&#34;</span>
+</span></span><span style="display:flex;"><span> OperatorTypeLike OperatorType = <span style="color:#a5d6ff">&#34;LIKE&#34;</span>
+</span></span><span style="display:flex;"><span> OperatorTypeIn OperatorType = <span style="color:#a5d6ff">&#34;IN&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> <span style="color:#8b949e;font-style:italic">// Unary operators</span>
+</span></span><span style="display:flex;"><span> OperatorTypeNot OperatorType = <span style="color:#a5d6ff">&#34;NOT&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> OperatorTypeField OperatorType = <span style="color:#a5d6ff">&#34;FIELD&#34;</span>
+</span></span><span style="display:flex;"><span> OperatorTypeLiteral OperatorType = <span style="color:#a5d6ff">&#34;LITERAL&#34;</span>
+</span></span><span style="display:flex;"><span>)
+</span></span></code></pre></div><p>形如上面前端图中的那段 Filter：</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span> <span style="color:#7ee787">&#34;l&#34;</span>: {
+</span></span><span style="display:flex;"><span> <span style="color:#7ee787">&#34;t&#34;</span>: <span style="color:#a5d6ff">&#34;FIELD&#34;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#7ee787">&#34;v&#34;</span>: <span style="color:#a5d6ff">&#34;raw&#34;</span>
+</span></span><span style="display:flex;"><span> },
+</span></span><span style="display:flex;"><span> <span style="color:#7ee787">&#34;r&#34;</span>: {
+</span></span><span style="display:flex;"><span> <span style="color:#7ee787">&#34;t&#34;</span>: <span style="color:#a5d6ff">&#34;LITERAL&#34;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#7ee787">&#34;v&#34;</span>: <span style="color:#a5d6ff">&#34;$request.query.raw&#34;</span>
+</span></span><span style="display:flex;"><span> },
+</span></span><span style="display:flex;"><span> <span style="color:#7ee787">&#34;t&#34;</span>: <span style="color:#a5d6ff">&#34;=&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>我们从最外层开始解析，就是将左值和右值做 <code>=</code> 操作，左值是数据表的 <code>raw</code> 字段，右值是 <code>$request.query.raw</code> 即 Query 参数 <code>raw</code>，所以上述这么一长串到最后的 Go 代码里形如：</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>query.<span style="color:#d2a8ff;font-weight:bold">Where</span>(<span style="color:#a5d6ff">&#34;raw = ?&#34;</span>, ctx.Query[<span style="color:#a5d6ff">&#34;raw&#34;</span>])
+</span></span></code></pre></div><p>十分优雅，又十分安全。只是目前前端这个 Filter 还是给你个文本框自己填 Filter JSON，后续会做成纯图形化点点点的组件。（因为评估了下不太好写，所以先咕着🕊）</p>
+<h2 id="前端拖拽路由中间件">前端拖拽路由中间件</h2>
+<p>路由的中间件，我一开始就想把常用的功能封装成模块，然后前端直接拖拽着使用。其中对数据操作的主逻辑为 <code>main</code> 中间件，这个不可删除，其它的可以自由编排。</p>
+<p>后端的实现很简单，相信看过任意 Go Web 框架源码的小伙伴都知道，又是些被说烂了的“洋葱模型”之类的东西。说穿了就是对整个中间件的 Slice <code>for</code> 遍历一下，判断发现其中的某个中间件返回响应（<code>ctx.ResponseWriter().Written()</code> 为 <code>true</code> ），就直接整个返回了，这里就不贴代码水字数了。</p>
+<p>前端我使用了 <a href="https://github.com/gilnd/vue3-smooth-dnd">vue3-smooth-dnd</a> 这个库，我对比了 Vue 多个拖拽库，貌似只有这一家的动画最为丝滑，并且还带自动吸附。最后实现的效果我也是十分满意：</p>
+<p><img src="https://github.red/images/2024/07/drag-middlewares.gif" alt=""></p>
+<p>这个中间件模块的节点是我自己画的，背景设置为灰色， 然后后面放一个细长的 <code>div</code> 作为流程的直线。鼠标放在中间件节点上时会有一个 popup 配置中间件的具体参数。这里是直接用的 TDesign 的 Popup 弹出层组件，里面再放一个 Card 卡片组件把弹出层空间撑开即可。</p>
+<h2 id="最后说几句">最后说几句</h2>
+<p>目前 Sayrud 已经初步开发完并部署到了线上，它已经完美支持了我想要一个静态博客评论后端的需求，后面只需要接上我写得前端就可以用了！（目前我开发的博客评论组件还没上，你现在看到的还是又丑又难用的 Waline）</p>
+<p>你可能也注意到了编辑接口前端有一个「响应格式」的 Textarea，这块空着是因为我还没有找到一个能够简洁定义 JSON 数据结构的方式。所以目前接口的返回结构也是固定写死的，这块如果你有好的想法，欢迎告诉我。</p>
+<p>这个项目的开发差不多花了一个月的时间，我平时下班后如果有空就会稍微写点。（注意是下班哦，我上班可是兢兢业业干满 8 小时+，恨不得住在鹅厂）由于开发时间不连贯，再加上有时回到家里比较困脑子不清醒，经常会出现后一天否定前一天的设计的情况。最后磕磕绊绊总算是完成了！由于是纯属为满足自己的需求，再加上我对它后端字段的校验还没统一梳理测试过，我目前并不会把这个站向公众开放。而像这种二开一下就能拿去恰烂钱的东西，我当然也更不会开源。</p>
+<p>总的来说，Sayrud 也算是圆了自己当年 18 岁时的梦，将自己当时想得东西给做出来了。你可能注意到这个项目的名字也颇耐人寻味，<code>Say - RUD</code> 是 <code>CRUD</code> 的谐音，这其实也代表着我对这个项目未来的规划。嘻嘻😝</p>

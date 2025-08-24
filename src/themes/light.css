@@ -1,0 +1,23 @@
+:root {
+  --bg-color: #ffffff;
+  --text-color: #333333;
+  --header-bg: #f8f9fa;
+  --card-bg: #ffffff;
+  --card-border: #ddd;
+  --button-bg: #42b983;
+  --button-hover-bg: #359c6d;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+.header {
+  background-color: var(--header-bg);
+}
+
+.article-card {
+  background-color: var(--card-bg);
+  border-color: var(--card-border);
+}

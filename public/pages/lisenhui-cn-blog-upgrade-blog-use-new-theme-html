@@ -1,0 +1,7 @@
+<p>时隔 2 年的时间后，如今又再一次开始折腾自己的博客站点，看来是自己有点太躁动啦&#x1f602;。在上海疫情期间也真有点压抑的，为了消除这份不安的情绪，决定参考 
+<a href="https://theme-next.js.org/" title="Hexo NexT" rel="noopener external nofollow noreferrer" target="_blank" class=" exturl">
+ <strong>Hexo NexT</strong>
+ 
+ <i class="fa fa-external-link-alt"></i>
+ 
+</a>从零开始全面重构 <code>NexT</code> 主题，也在独自奋斗的2个多月断断续续时间里完成主体功能所有移植工作（其实一直想有人参与进来共建，直接跑到人家 Hexo NexT 用户群“呼喊”，但也是没有浪花泛起，只好是自己继续独立前行）。 这不乘着周末的时间，把自己的站点也是升级到最新开发的主题，同时也是为后续想升级旧版本 <code>Hugo NexT</code> 的用户打个样吧。</p>

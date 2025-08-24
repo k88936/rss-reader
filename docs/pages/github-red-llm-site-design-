@@ -1,0 +1,341 @@
+<p>我在 2021 年时就开始用 GitHub Copilot 写代码了，2022 年 12 月初刷推特时看到了 ChatGPT，立刻注册了个号玩了下。大模型的这波风口我看到的很早，但却没有做什么行动。那个时候的自己感觉不管做什么起步都已经晚了，套壳站已经满天飞了，OpenAI 的 API Key 也被人卖的差不多了，已经没有什么新的玩法了。</p>
+<p>今年过年的时候 DeepSeek 火了，我才惊讶地发现，几年过去了， 豆包、混元、千问虽然在业内打得不可开交，但还是有太多的人至今没有接触过这些大模型应用。我在推特上看到个喷子，喷 DeepSeek 的点居然是问今天天气怎么样，它回答不出来。很多人对这种对话式 AI 的概念还停留在 10 年前的 Siri 等手机语音助手上。换句话说，下沉市场还是一片蓝海。</p>
+<p>刚好之前看到腾讯混元大模型的最低配模型 <code>hunyuan-lite</code> 居然是免费的！那我们不如也来试试当一回二道贩子，尝试自己做一个大模型套壳站，会不会有人用我不知道，但开发的过程一定很有意思。</p>
+<h2 id="感兴趣的功能">感兴趣的功能</h2>
+<p>排除掉写了一万遍的用户注册登录和一堆 CRUD，我对以下功能的实现原理很感兴趣：</p>
+<ol>
+<li>
+<p>SSE 代理：怎样将腾讯云大模型的 SSE 和自己的对话接口接起来？</p>
+</li>
+<li>
+<p>SSE 断点续传：对话生成过程中如果页面刷新了，重新进入时怎样继续生成当前回答？（⚠️ 实践后发现这是最难实现的功能，边缘情况很多）</p>
+</li>
+<li>
+<p>怎样生成对话标题？</p>
+</li>
+<li>
+<p>每次对话的 Token 如何计算？单次对话的 Token 数如何限制？</p>
+</li>
+</ol>
+<h2 id="先来看看开源社区">先来看看开源社区</h2>
+<p>开始逐个分析上述功能之前，我们先来看看社区做得怎么样了。我按 stars 排序随便挑了几个感兴趣的项目，简单读了下他们的代码后，我信心大增哈哈哈。🤣</p>
+<h3 id="typescript-821k"><a href="https://github.com/ChatGPTNextWeb/NextChat">https://github.com/ChatGPTNextWeb/NextChat</a> TypeScript 82.1k</h3>
+<p>这应该是大家最初自建套壳站时使用的了，使用 TypeScript 编写。功能中规中矩，我发现了两个有意思的点：</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// https://github.com/ChatGPTNextWeb/NextChat/blob/48469bd8ca4b29d40db0ade61b57f9be6f601e01/app/client/api.ts#L197-L201
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>
+</span></span><span style="display:flex;"><span>.concat([
+</span></span><span style="display:flex;"><span> {
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">from</span><span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">&#34;human&#34;</span>,
+</span></span><span style="display:flex;"><span> value<span style="color:#ff7b72;font-weight:bold">:</span>
+</span></span><span style="display:flex;"><span> <span style="color:#a5d6ff">&#34;Share from [NextChat]: https://github.com/Yidadaa/ChatGPT-Next-Web&#34;</span>,
+</span></span><span style="display:flex;"><span> },
+</span></span><span style="display:flex;"><span>]);
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// 敬告二开开发者们，为了开源大模型的发展，请不要修改上述消息，此消息用于后续数据清洗使用
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Please do not modify this message
+</span></span></span></code></pre></div><p>NextChat 在生成公开的对外分享链接时，会在对话最后加上 <code>Share from [NextChat]</code> 的标识。目的是为了后续训练大模型时，能够分辨出哪些是人工产生的数据，哪些是以往的大模型生成的，进而清洗过滤掉大模型生成的内容。</p>
+<p>细想一下还挺意思的，“2022 年” 像是一道屏障一样，将互联网上的文字内容隔开来了。2022 年以后的内容，读起来就得留个心眼了，凡是看到 “综上所述” “总的来说” 这些字眼，难免会怀疑是否是用 AI 生成的。它像是泄露的核废水一样，随着时间的推移逐渐蔓延并浸染整片知识的海洋。</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// https://github.com/ChatGPTNextWeb/NextChat/blob/48469bd8ca4b29d40db0ade61b57f9be6f601e01/app/locales/cn.ts#L626-L632
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>
+</span></span><span style="display:flex;"><span>Prompt<span style="color:#ff7b72;font-weight:bold">:</span> {
+</span></span><span style="display:flex;"><span> History<span style="color:#ff7b72;font-weight:bold">:</span> (content: <span style="color:#ff7b72">string</span>) <span style="color:#ff7b72;font-weight:bold">=&gt;</span> <span style="color:#a5d6ff">&#34;这是历史聊天总结作为前情提要：&#34;</span> <span style="color:#ff7b72;font-weight:bold">+</span> content,
+</span></span><span style="display:flex;"><span> Topic<span style="color:#ff7b72;font-weight:bold">:</span>
+</span></span><span style="display:flex;"><span> <span style="color:#a5d6ff">&#34;使用四到五个字直接返回这句话的简要主题，不要解释、不要标点、不要语气词、不要多余文本，不要加粗，如果没有主题，请直接返回“闲聊”&#34;</span>,
+</span></span><span style="display:flex;"><span> Summarize<span style="color:#ff7b72;font-weight:bold">:</span>
+</span></span><span style="display:flex;"><span> <span style="color:#a5d6ff">&#34;简要总结一下对话内容，用作后续的上下文提示 prompt，控制在 200 字以内&#34;</span>,
+</span></span><span style="display:flex;"><span>},
+</span></span></code></pre></div><p>NextChat 的这段代码解答了上面的问题 3 —— 对话标题是使用一段简短的 Prompt + 一个较小的模型生成的。转而一想，这里其实可能存在 Prompt 注入，只是没什么危害罢了。</p>
+<h3 id="python-848k"><a href="https://github.com/open-webui/open-webui">https://github.com/open-webui/open-webui</a> Python 84.8k</h3>
+<p>open-webui 的前端做出了高仿 OpenAI 的风格。使用 Python Web 异步库 <code>starlette</code> 返回 <code>SteamingResponse</code> 来代理 SSE 接口。它也实现了对话标题生成的功能，Prompt 上比 NextChat 长很多，并且要求以 JSON 格式返回。</p>
+<blockquote>
+<p><a href="https://github.com/open-webui/open-webui/blob/b03fc97e287f31ad07bda896143959bc4413f7d2/backend/open_webui/config.py#L1149-L1168">https://github.com/open-webui/open-webui/blob/b03fc97e287f31ad07bda896143959bc4413f7d2/backend/open_webui/config.py#L1149-L1168</a></p></blockquote>
+<p>我担心的点是，标题生成本身用的就是小模型，这么长的 Prompt 以及限定 JSON 格式输出，对小模型而言会不会不稳定。🤔</p>
+<p>至于并发限流、以及对话的 Token 吞吐量限制，open-webui 写了一个路由中间件解决，这里就不再赘述了。</p>
+<h3 id="go-41k"><a href="https://github.com/yangjian102621/geekai">https://github.com/yangjian102621/geekai</a> Go 4.1k</h3>
+<p>因为我使用 Go 来编写后端，所以找了个 Stars 数很多的 Go 项目。作者应该是 PHP 转 Go 没多久，或者说是刚学编程没多久，这代码质量真的不敢恭维。</p>
+<p>好好的 SSE 不用，画蛇添足用了 WebSocket，可从头至尾就没有需要客户端发送消息的场景。甚至这项目背后还接了个 xxl-job。😅 他能获得这么多 stars 只是因为把支付那块也给做完了，小白可以即开即用拿去做套壳。但从代码的可维护性和整洁度上来说，真是一团糟。我都想做个《鉴定网络奇葩代码》短视频了。</p>
+<p>这个故事告诉我们，技术好不好不重要，能把事情做完最重要。</p>
+<h3 id="go-538"><a href="https://github.com/swuecho/chat">https://github.com/swuecho/chat</a> Go 538</h3>
+<p>同样是 Go 项目，这个国外老哥写得代码就好多了。他使用了 <code>langchaingo</code> 来构造拼接对话。说实话我内心觉得这些库用起来挺花里胡哨的，又是什么模板，什么占位符，什么对话链，但最终做的事还是在拼字符串，拼出一个 Prompt 发给大模型。😁</p>
+<p>老哥使用了 <code>langchaingo</code> 自带的 <code>summarization</code> 来做对话总结，本质上也是 <code>langchaingo</code> 内置了一段 Prompt。</p>
+<p>而关于问题 4，如何计算 Token 数量，由于这个项目支持的模型都是 OpenAI 家的，因此直接使用的 OpenAI 开源的 tiktoken 来进行计算（国会听证会警告）。tiktoken 有 Go 封装的开源实现：<code>github.com/pkoukk/tiktoken-go</code>。</p>
+<hr>
+<p>其余的一些项目我有点看不下去了，不如直接开写吧！</p>
+<h2 id="数据结构">数据结构</h2>
+<p>回忆一下，我们是怎样用豆包或元宝的，在页面左侧有一个对话列表，点开对话后可以看到我们发送的和 AI 回复的消息。因此需要创建 <code>Chat</code> （对话）和 <code>Message</code> （消息）两张表。</p>
+<ul>
+<li><code>Chat</code> 对话表</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th style="text-align: center">字段名</th>
+<th style="text-align: center">类型</th>
+<th style="text-align: center">说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center"><code>ID</code></td>
+<td style="text-align: center"><code>int64</code></td>
+<td style="text-align: center">生成的自增 ID</td>
+</tr>
+<tr>
+<td style="text-align: center"><code>UserUID</code></td>
+<td style="text-align: center"><code>string</code></td>
+<td style="text-align: center">用户 UID，用来对应这个对话属于哪个用户</td>
+</tr>
+<tr>
+<td style="text-align: center"><code>Title</code></td>
+<td style="text-align: center"><code>string</code></td>
+<td style="text-align: center">对话标题，后面由大模型总结生成</td>
+</tr>
+<tr>
+<td style="text-align: center"><code>CreatedAt</code></td>
+<td style="text-align: center"><code>time.Time</code></td>
+<td style="text-align: center">对话创建时间</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><code>Message</code> 消息表</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th style="text-align: center">字段名</th>
+<th style="text-align: center">类型</th>
+<th style="text-align: center">说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center"><code>ID</code></td>
+<td style="text-align: center"><code>int64</code></td>
+<td style="text-align: center">生成的自增 ID</td>
+</tr>
+<tr>
+<td style="text-align: center"><code>ChatID</code></td>
+<td style="text-align: center"><code>int64</code></td>
+<td style="text-align: center">Chat 对话表 ID，表示这条消息属于哪个对话</td>
+</tr>
+<tr>
+<td style="text-align: center"><code>ParentID</code></td>
+<td style="text-align: center"><code>int64</code></td>
+<td style="text-align: center">父消息的 ID</td>
+</tr>
+<tr>
+<td style="text-align: center"><code>ChildrenIDs</code></td>
+<td style="text-align: center"><code>pq.Int64Array</code></td>
+<td style="text-align: center">当前消息所有子消息的 ID 集合</td>
+</tr>
+<tr>
+<td style="text-align: center"><code>Role</code></td>
+<td style="text-align: center"><code>MessageRole</code></td>
+<td style="text-align: center">这条消息是谁发的，user / assistant</td>
+</tr>
+<tr>
+<td style="text-align: center"><code>Content</code></td>
+<td style="text-align: center"><code>string</code></td>
+<td style="text-align: center">消息正文</td>
+</tr>
+<tr>
+<td style="text-align: center"><code>Model</code></td>
+<td style="text-align: center"><code>string</code></td>
+<td style="text-align: center">对话使用的模型，目前还没做多模型切换，先预留</td>
+</tr>
+<tr>
+<td style="text-align: center"><code>TokenCount</code></td>
+<td style="text-align: center"><code>int64</code></td>
+<td style="text-align: center">为消息正文的 Token 数</td>
+</tr>
+<tr>
+<td style="text-align: center"><code>CreatedAt</code></td>
+<td style="text-align: center"><code>time.Time</code></td>
+<td style="text-align: center">对话创建时间</td>
+</tr>
+</tbody>
+</table>
+<div class="box-warning box"><i class="box-icon-warning"></i> <p><strong>有坑注意！</strong></p>
+<p>这里的 <code>ID</code> 均使用 Snowflake 算法生成，Snowflake 生成的是 19 位数字，这在 Go <code>int64</code> 下没问题，但在前端 JavaScript 下会丢失最后 4 位的精度。即 <code>1906281281029672960</code> 在前端会变成 <code>1906281281029673000</code>。</p>
+<p>我用了一个简单粗暴且不靠谱的 HACK，将数字除以 1000，去除后三位。</p>
+</div>
+<p>消息表中的 <code>ParentID</code> 和 <code>ChildrenIDs</code> 字段，用于记录父子消息关系。就像豆包可以点击重新生成，进而再生成一条回复。</p>
+<p><img src="https://github.red/images/2025/03/doubao-child-message.png" alt="豆包子消息"></p>
+<p>更复杂的像 ChatGPT，可以点击上文任意一条消息，新建一个分支重新生成对话。为了实现这样的效果，我们在创建一条新的消息记录时，需要 <code>ParentID</code> 指定它的父消息，并更新它父消息的 <code>ChildrenIDs</code> 字段，这俩包在一个数据库事务里做就行。</p>
+<p>在需要构造大模型接口 JSON <code>messages</code> 参数时，只需从最后一条消息开始，沿着 <code>ParentID</code> 依次向上遍历，一直到 <code>ParentID</code> 为 0，即可拿到当前对话分支的消息列表。 前端实现像上图中豆包的“上一条”“下一条”翻页的效果，也只需取 <code>ChildrenIDs</code> 构造翻页即可。</p>
+<p>这里再补充一些小细节，我发现腾讯元宝的消息 ID 使用 <code>&lt;对话ID&gt;_&lt;自增索引的格式&gt;</code> 表示，如 <code>&lt;对话ID&gt;_1</code> <code>&lt;对话ID&gt;_2</code> 等，<strong>这从设计上使得元宝的对话只能是线性的。</strong> 用户只能重新生成最新一轮对话的消息，且不能在历史对话中重新生成创建分支。</p>
+<h2 id="实现最简单的-sse">实现最简单的 SSE</h2>
+<p>关于 SSE 的简单介绍，可以去阅读我五年前写得 <a href="https://github.red/talking-about-eventstream/">《聊聊 EventStream 服务器端推送》</a> 这篇文章。大模型活了之后每个月都会有人在 Google 上搜 EventStream 搜到这篇。</p>
+<p>腾讯云官方的 Go SDK 调用混元大模型时，客户端可以使用 <code>SendOctetStream</code> 方法，接收流式响应，此时 <code>response</code> 中返回的是 <code>channel</code> 类型的 <code>SSEvent</code>。我们可以先对混元大模型做简单的函数封装，从 SDK 的 channel 中提出大模型对话返回的 <code>Content</code> 正文，再打到函数返回值的 <code>channel</code> 中，精简后的代码如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">func</span> (h <span style="color:#ff7b72;font-weight:bold">*</span>Hunyuan) <span style="color:#d2a8ff;font-weight:bold">TextCompletions</span>(ctx context.Context, input TextCompletionsInput) (<span style="color:#ff7b72">chan</span> <span style="color:#ff7b72">string</span>, <span style="color:#ff7b72">error</span>) {
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// ...</span>
+</span></span><span style="display:flex;"><span>eventsCh <span style="color:#ff7b72;font-weight:bold">:=</span> response.BaseSSEResponse.Events <span style="color:#8b949e;font-style:italic">// 腾讯云 SDK 输出</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">go</span> <span style="color:#ff7b72">func</span>() {
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">for</span> event <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#ff7b72">range</span> eventsCh {
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">if</span> event.Err <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
+</span></span><span style="display:flex;"><span> logrus.<span style="color:#d2a8ff;font-weight:bold">WithContext</span>(ctx).<span style="color:#d2a8ff;font-weight:bold">WithError</span>(event.Err).<span style="color:#d2a8ff;font-weight:bold">Error</span>(<span style="color:#a5d6ff">&#34;Failed to get event&#34;</span>)
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">break</span>
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> eventData <span style="color:#ff7b72;font-weight:bold">:=</span> event.Data
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">var</span> respParams hunyuan.ChatCompletionsResponseParams
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">if</span> err <span style="color:#ff7b72;font-weight:bold">:=</span> json.<span style="color:#d2a8ff;font-weight:bold">Unmarshal</span>(eventData, <span style="color:#ff7b72;font-weight:bold">&amp;</span>respParams); err <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
+</span></span><span style="display:flex;"><span> logrus.<span style="color:#d2a8ff;font-weight:bold">WithContext</span>(ctx).<span style="color:#d2a8ff;font-weight:bold">WithError</span>(err).<span style="color:#d2a8ff;font-weight:bold">Error</span>(<span style="color:#a5d6ff">&#34;Failed to unmarshal event data&#34;</span>)
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">continue</span>
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">if</span> len(respParams.Choices) <span style="color:#ff7b72;font-weight:bold">==</span> <span style="color:#a5d6ff">0</span> {
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">break</span>
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> choice <span style="color:#ff7b72;font-weight:bold">:=</span> respParams.Choices[<span style="color:#a5d6ff">0</span>] <span style="color:#8b949e;font-style:italic">// 默认取第一个结果，貌似我从没见过会有第二个</span>
+</span></span><span style="display:flex;"><span> outputChan <span style="color:#ff7b72;font-weight:bold">&lt;-</span> <span style="color:#ff7b72;font-weight:bold">*</span>choice.Delta.Content <span style="color:#8b949e;font-style:italic">// 打到函数返回值的 channel 里</span>
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> close(outputChan)
+</span></span><span style="display:flex;"><span>}()
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// ...</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>我这里直接默认选第一个 <code>Choices</code> ，将 <code>Content</code> 正文放到 <code>channel</code> 里。JSON 反序列化那块，硬要扣的话也可以改用 sonic。</p>
+<p>具体到对话接口的设计上，与那些自用的套壳站不同，我们是要给第三方用户使用的，在接口的入参上<strong>不能像那些自用站一样每次都将整个对话完整的 <code>messages</code> 发给后端处理</strong>，应该尽可能缩减用户前端可控的参数范围。前端只能传入对话 ID、父消息 ID、提问消息正文；历史消息链的拼接和 <code>messages</code> 参数的构造全都应该在后端完成。</p>
+<p>对话接口先响应 <code>Content-Type: text/event-stream</code> 头，然后发送一条类型 <code>event:metadata</code> 的消息告诉前端当前对话 ID 和消息 ID，之后就从大模型的 <code>channel</code> 里读消息，写入 <code>ResponseWriter</code> 即可。</p>
+<p>大模型接口返回的是逐 Token 生成的内容，这里其实又有一个抉择，SSE 的每条消息，是返回当下完整的消息内容，还是返回新增的 Token 内容呢？</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// 返回当下完整的内容
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>{<span style="color:#7ee787">&#34;v&#34;</span>:<span style="color:#a5d6ff">&#34;你好，很&#34;</span>}
+</span></span><span style="display:flex;"><span>{<span style="color:#7ee787">&#34;v&#34;</span>:<span style="color:#a5d6ff">&#34;你好，很高兴认识你&#34;</span>}
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// 返回新增内容
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span>{<span style="color:#7ee787">&#34;v&#34;</span>:<span style="color:#a5d6ff">&#34;你好，很&#34;</span>}
+</span></span><span style="display:flex;"><span>{<span style="color:#7ee787">&#34;v&#34;</span>:<span style="color:#a5d6ff">&#34;高兴&#34;</span>}
+</span></span><span style="display:flex;"><span>{<span style="color:#7ee787">&#34;v&#34;</span>:<span style="color:#a5d6ff">&#34;认识你&#34;</span>}
+</span></span></code></pre></div><p>现在大家都是选择后者。我担心的点是如果选择后者，前端拼接字符串时会不会有概率乱掉。我在不断测试豆包的时候遇到过一次，但这也是极端情况，实际后端文本是正常的，刷新一下就好了。因此我也随大流选择了返回每次新增的内容。😁</p>
+<p><img src="https://github.red/images/2025/03/doubao-delta-text-mistake.png" alt="豆包生成文本错位"></p>
+<p>由于我前端处理 SSE 使用的是 <a href="https://www.npmjs.com/package/eventsource-client">eventsource-client</a> 这个库，它在传入对话接口的 URL 后，就只能处理 SSE 格式的响应了。因此这个对话接口的报错，也只能以写入单条 SSE 消息的形式返回，使用 <code>event: error</code> 来区分。</p>
+<h2 id="对话标题生成">对话标题生成</h2>
+<p>在对话生成结束后，需要判断当前是否为新对话，是的话则需要再调用大模型，让其生成对话标题。生成的对话标题入库存储，同时 SSE 发送一条 <code>event: title</code> 类型的消息，通知前端更新页面上的对话标题。</p>
+<p>我这里的 Prompt 写得比较粗糙，你可以根据上文中提到的 NextChat 和 open-webui 的 Prompt 自己再改改。以及是将提问内容放在单独的 <code>user</code> 消息中，还是直接拼在 System Prompt 中，这里也可以再钻研下。</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">if</span> isNewChat {
+</span></span><span style="display:flex;"><span> <span style="color:#8b949e;font-style:italic">// Summarize the conversation title from LLM in a new conversation.</span>
+</span></span><span style="display:flex;"><span> summaryOutput, err <span style="color:#ff7b72;font-weight:bold">:=</span> llmChat.<span style="color:#d2a8ff;font-weight:bold">TextCompletions</span>(ctx.<span style="color:#d2a8ff;font-weight:bold">Request</span>().<span style="color:#d2a8ff;font-weight:bold">Context</span>(), llm.TextCompletionsInput{
+</span></span><span style="display:flex;"><span> Messages: []<span style="color:#ff7b72;font-weight:bold">*</span>llm.TextCompletionsMessage{
+</span></span><span style="display:flex;"><span> {Role: <span style="color:#a5d6ff">&#34;system&#34;</span>, Content: <span style="color:#a5d6ff">&#34;请根据给出的提问内容，总结生成一个不超过 10 个字的对话标题，尽可能是陈述句，仅输出对话标题，不要有任何其他的内容。&#34;</span>},
+</span></span><span style="display:flex;"><span> {Role: <span style="color:#a5d6ff">&#34;user&#34;</span>, Content: <span style="color:#a5d6ff">&#34;提问内容：`&#34;</span> <span style="color:#ff7b72;font-weight:bold">+</span> content <span style="color:#ff7b72;font-weight:bold">+</span> <span style="color:#a5d6ff">&#34;`&#34;</span>},
+</span></span><span style="display:flex;"><span> },
+</span></span><span style="display:flex;"><span> SSE: <span style="color:#79c0ff">false</span>,
+</span></span><span style="display:flex;"><span> })
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">if</span> err <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
+</span></span><span style="display:flex;"><span> logrus.<span style="color:#d2a8ff;font-weight:bold">WithContext</span>(ctx.<span style="color:#d2a8ff;font-weight:bold">Request</span>().<span style="color:#d2a8ff;font-weight:bold">Context</span>()).<span style="color:#d2a8ff;font-weight:bold">WithError</span>(err).<span style="color:#d2a8ff;font-weight:bold">Error</span>(<span style="color:#a5d6ff">&#34;Failed to get text completions of summary title&#34;</span>)
+</span></span><span style="display:flex;"><span> } <span style="color:#ff7b72">else</span> {
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">for</span> title <span style="color:#ff7b72;font-weight:bold">:=</span> <span style="color:#ff7b72">range</span> summaryOutput {
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">if</span> err <span style="color:#ff7b72;font-weight:bold">:=</span> db.Chats.<span style="color:#d2a8ff;font-weight:bold">Update</span>(ctx.<span style="color:#d2a8ff;font-weight:bold">Request</span>().<span style="color:#d2a8ff;font-weight:bold">Context</span>(), chat.ID, db.UpdateChatOptions{Title: title}); err <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
+</span></span><span style="display:flex;"><span> logrus.<span style="color:#d2a8ff;font-weight:bold">WithContext</span>(ctx.<span style="color:#d2a8ff;font-weight:bold">Request</span>().<span style="color:#d2a8ff;font-weight:bold">Context</span>()).<span style="color:#d2a8ff;font-weight:bold">WithError</span>(err).<span style="color:#d2a8ff;font-weight:bold">Error</span>(<span style="color:#a5d6ff">&#34;Failed to update chat title&#34;</span>)
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> <span style="color:#8b949e;font-style:italic">// Set the title to the SSE response if the context is not canceled.</span>
+</span></span><span style="display:flex;"><span> _ = ctx.<span style="color:#d2a8ff;font-weight:bold">SSEResponse</span>(<span style="color:#a5d6ff">&#34;title&#34;</span>, title)
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="对话-token-计算">对话 Token 计算</h2>
+<p>混元大模型本身提供了 <code>GetTokenCount</code> 接口用于计算消息中的 Token 数，20 QPS 的限制还不收费，足够我们使用了。</p>
+<p>从处理流程上来说，用户发起提问时，调用 <code>GetTokenCount</code> 计算提问的 Token 数；回答生成完毕后，计算并更新回答所消耗的 Token 数。为未来可能要做的 Token 付费功能铺垫。进一步，如果还要做不同套餐的上下文长度的限制，提问的长度在开始提问的时就进行判断，而对于大模型回答的长度，则是在调大模型接口时使用 <code>max_tokens</code> 参数限制。</p>
+<p>然而混元的 SDK 好像不能指定这个参数，只有走 OpenAI 兼容接口调用时才支持。</p>
+<p><img src="https://github.red/images/2025/03/simple-llm-arch.png" alt="简单的对话实现"></p>
+<p>我画了一张流程图来梳理目前的整个过程，带 🚀 小火箭图标的意味着这一步可以开个 goroutine 异步进行。如果上述流程没问题，那就请做紧抓稳了，我们后面要引入 SSE 断点续传功能了。</p>
+<h2 id="sse-断点续传">SSE 断点续传</h2>
+<p>这是一个各家大厂都支持的功能，但网上好像还没人讨论应该如何实现，我在相关的大模型套壳开源项目中也没有看到。</p>
+<p>具体来说就是，在用户提问后，前端调用了上述对话接口，页面开始逐字打出大模型的回答。就在这时用户突然刷新了页面，或者在新的浏览器标签页中打开了网页，页面上应该要接着之前的回答继续生成完。我称之为“SSE 断点续传”。</p>
+<p>我们拆解一下这个需求，最终的效果应该是：</p>
+<ul>
+<li>用户提问后，刷新页面，页面要能继续接着之前的回答内容生成。</li>
+<li>用户提问后，点击「停止」按钮，生成停止；刷新页面，要停在之前的回答内容上。</li>
+<li>用户提问后，刷新页面，页面继续生成；点击「停止」按钮，生成停止；再刷新页面，要停在之前的回答内容上。</li>
+<li>用户提问后，又在新浏览器窗口打开对话，此时两个窗口要同步生成；点击「停止」按钮，两个窗口要近乎同时停止。</li>
+</ul>
+<p>在前文中，我们直接将大模型的 Channel 和当前请求的 Response Channel 接在一起，一旦 SSE 请求被中断，HTTP 请求的 Context Cancel 后，会连带着混元大模型 SDK 生成请求的 Context 一起停止。因此，我们第一步应该是将大模型生成请求独立到一个 goroutine 中进行，且 Context 与外部 HTTP Context 隔离。</p>
+<p>不管是刷新还是新开多个浏览器页面，都要能获取到之前已生成的回答内容，那么生成的内容就得找个地方存下来。这个“存下来”还不是持久化存储，因为回答生成完毕后，就会入库存到 <code>Messages</code> 表的 <code>Content</code> 字段中。我们要的是一个性能好的临时存储，它最好还自带过期功能，还支持多个浏览器接收的这种消息订阅分发模式，这里很容易能想到用 Redis。</p>
+<p>Redis 关于消息订阅的功能有 PubSub 和 Stream。前者用于实现消息的发送与广播，但消息不会被持久化，发完就忘了；后者引入了消费组的概念，不同的消费组有单独的 position 来消费历史消息，甚至还支持 ACK 机制。那么结果就很明确了，我最终选择了 Redis Stream 来实现这个功能。</p>
+<p>大模型生成请求在单独的 goroutine 中进行，生成的内容打到 Redis Stream 中，Stream 的 Key 使用 <code>chat:message-stream:&lt;message_id&gt;</code> 表示。每一个前端的 SSE 请求，都是从 <code>chat:message-stream:&lt;message_id&gt;</code> 中从头开始（游标为 <code>0</code>）间接读取消息并返回。</p>
+<p>那么前端在进入页面后，又该如何知道当前对话还在生成中呢？我在每次调用大模型生成时都会在 Redis 里设置一个 Key，生成结束后删除。</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>set chat:conversation-status:&lt;chatID&gt; &lt;messageID&gt; 5*time.Minute
+</span></span></code></pre></div><p>前端获取对话基本信息的 HTTP API，会通过查看这个 Key 是否存在来判断当前对话是否正在生成。如果正在生成，就直接调对话接口，发送空提问消息来开启 SSE 开始拉取回答消息。</p>
+<p>这个 <code>chat:conversation-status:&lt;chatID&gt;</code> 我还设置了 5 分钟的过期时间用于兜底，如果因为意外后端重启了，对话不至于一直卡在生成中的状态。</p>
+<p>在对话结束后，<code>chat:conversation-status:&lt;chatID&gt;</code> <code>chat:message-stream:&lt;message_id&gt;</code> 这两个 Key 都会被删除，这里会存在一个 race 的极端情况：那就是前端通过 <code>conversation-status</code> 得知对话正在生成，这个时刻之后刚好对话生成结束，前端启动 SSE 后发现 <code>message-stream</code> 被删了，这样就拉不到历史消息了。<strong>因此我在删除 <code>conversation-status</code> 后延迟了 5 秒再删除 <code>message-stream</code> 。</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Delete the conversation status in redis.</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">if</span> err <span style="color:#ff7b72;font-weight:bold">:=</span> redis.<span style="color:#d2a8ff;font-weight:bold">Get</span>().<span style="color:#d2a8ff;font-weight:bold">Del</span>(ctx, conversationStatusFlagKey).<span style="color:#d2a8ff;font-weight:bold">Err</span>(); err <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
+</span></span><span style="display:flex;"><span> logrus.<span style="color:#d2a8ff;font-weight:bold">WithContext</span>(ctx).<span style="color:#d2a8ff;font-weight:bold">WithError</span>(err).<span style="color:#d2a8ff;font-weight:bold">WithField</span>(<span style="color:#a5d6ff">&#34;key&#34;</span>, conversationStatusFlagKey).<span style="color:#d2a8ff;font-weight:bold">Error</span>(<span style="color:#a5d6ff">&#34;Failed to delete redis key&#34;</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>time.<span style="color:#d2a8ff;font-weight:bold">Sleep</span>(<span style="color:#a5d6ff">5</span> <span style="color:#ff7b72;font-weight:bold">*</span> time.Second)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Delete the redis stream after the chat message completion is done.</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">if</span> err <span style="color:#ff7b72;font-weight:bold">:=</span> redis.<span style="color:#d2a8ff;font-weight:bold">Get</span>().<span style="color:#d2a8ff;font-weight:bold">Del</span>(ctx, messageStreamKey).<span style="color:#d2a8ff;font-weight:bold">Err</span>(); err <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
+</span></span><span style="display:flex;"><span> logrus.<span style="color:#d2a8ff;font-weight:bold">WithContext</span>(ctx).<span style="color:#d2a8ff;font-weight:bold">WithError</span>(err).<span style="color:#d2a8ff;font-weight:bold">WithField</span>(<span style="color:#a5d6ff">&#34;stream&#34;</span>, messageStreamKey).<span style="color:#d2a8ff;font-weight:bold">Error</span>(<span style="color:#a5d6ff">&#34;Failed to delete redis stream&#34;</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>以上，我们就实现了 SSE 消息的断点续传了。但还有一个问题：用户点击前端的「停止」按钮后，我们要能够停掉 goroutine 里正在跑的大模型请求，确保生成的消息内容就停在当下。这里我单独加了个 <code>POST /stop</code> 接口，前端调用后会将 <code>chat:conversation-status:&lt;chatID&gt;</code> 从 Redis 中直接删掉。大模型生成的 goroutine 里再开一个 goroutine 来循环查看这个 Key 是否存在，如果不存在了，就直接关掉大模型请求的 Context：</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// Scan for `conversationStatusFlagKey`</span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// If the conversation status is not set, which means the conversation is stopped by the user.</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">go</span> <span style="color:#ff7b72">func</span>() {
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">for</span> {
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">select</span> {
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">case</span> <span style="color:#ff7b72;font-weight:bold">&lt;-</span>ctx.<span style="color:#d2a8ff;font-weight:bold">Done</span>():
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">return</span>
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">case</span> <span style="color:#ff7b72;font-weight:bold">&lt;-</span>llmCtx.<span style="color:#d2a8ff;font-weight:bold">Done</span>():
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">return</span>
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">default</span>:
+</span></span><span style="display:flex;"><span> _, err <span style="color:#ff7b72;font-weight:bold">:=</span> redis.<span style="color:#d2a8ff;font-weight:bold">Get</span>().<span style="color:#d2a8ff;font-weight:bold">Get</span>(ctx, conversationStatusFlagKey).<span style="color:#d2a8ff;font-weight:bold">Result</span>()
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">if</span> errors.<span style="color:#d2a8ff;font-weight:bold">Is</span>(err, redispkg.Nil) {
+</span></span><span style="display:flex;"><span> <span style="color:#d2a8ff;font-weight:bold">llmCancel</span>()
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">return</span>
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span> time.<span style="color:#d2a8ff;font-weight:bold">Sleep</span>(<span style="color:#a5d6ff">1</span> <span style="color:#ff7b72;font-weight:bold">*</span> time.Second)
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span>}()
+</span></span></code></pre></div><p>至此，我们就完成了上述 SSE 断点续传的 4 个需求，属实不容易，这里的设计我斟酌思考了很久。我也不知道大厂们是怎么做的，如果你有更好的设计或者想法，欢迎留言和我讨论。</p>
+<p><img src="https://github.red/images/2025/03/breakpoint-resume-llm-arch.png" alt="带断点续传的对话实现"></p>
+<p>具体落实到代码上会复杂些，因为还有更新对话标题、计算 Token 等流程，很多步骤又是可以异步进行的，但互相之间又会用不同的 Context 来同步状态，然后 goroutine 中还有一堆的 <code>defer</code> ，这块的代码我打算后续梳理下流程好好美化下，现在只是停留在可用的状态。</p>
+<h2 id="来看看豆包和元宝">来看看豆包和元宝</h2>
+<p>整个开发过程中，我时常会去看豆包和元宝是怎么做的，参考他们的设计是怎样的（期间要不停地抓包和翻压缩后的 JS 文件），也和大家分享下。</p>
+<p>豆包的实现比较复杂，用户发送的消息在浏览器本地的 IndexDB 会存一份。当用户开启新对话提问后，由于这时新对话还没发送到后端，前端会给这个对话和消息生成一个本地的 Local ID。带着 Local ID 将请求发给后端。但正如我前面提到的，Local ID 这种由用户本地生成的数据，后端不应该给予过多的信任，因而对话 Local ID 仅被用在第一次后端生成对话 ID 前，当后端生成并返回了对话 ID 后，后续都用该对话 ID 进行查询；消息 ID 也是同理。最后接口参数会传 本地/后端 的 对话/消息 ID 共 4 个参数，但后端会优先使用后端生成的 ID。我对着这个接口排列组合测了多种情况，发现豆包都能很好的 handle 住。</p>
+<p>由于豆包会把消息在本地存一份，因此在页面刷新后，它是知道上次 SSE 断在哪里的。观察豆包的 SSE 返回消息，它的 JSON 中有一个自增的 <code>event_id</code> 游标字段，断点续传时会带上这个 <code>event_id</code>，SSE 接口就只会返回在这之后的消息。这样做是为了省一点传输的流量吗（？</p>
+<p>相对而言元宝就大道至简很多。除了我们上面提到的，元宝使用 <code>&lt;对话ID&gt;_&lt;自增索引的格式&gt;</code> 格式的消息 ID 记录线性的消息记录。关于断点续传，元宝是拿着对话 ID + 消息 ID 请求 <code>/continue</code> 接口，后端 SSE 返回全部历史消息和正在生成的消息。但如果再重放 <code>/continue</code> 接口请求，会直接 hang 住，可能这是个 Bug 吧。</p>
+<h2 id="再聊聊前端">再聊聊前端</h2>
+<p>我之前总结过 BAT 三家大厂的 AI 组件库建设情况：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center">公司</th>
+<th style="text-align: center">组件库</th>
+<th style="text-align: left">评价</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center">字节跳动</td>
+<td style="text-align: center">Semi Design</td>
+<td style="text-align: left">豆包同款，Semi Design 还支持搭配 Tailwind CSS 使用。缺点是只支持 React，很难受。然后开发团队还说提供了接口，社区可以自己实现 Vue 版本。呃呃，社区实现了，但又没完全实现，居然还要在 Vue 里写 JSX。😅</td>
+</tr>
+<tr>
+<td style="text-align: center">阿里巴巴（蚂蚁）</td>
+<td style="text-align: center">Ant DesIgn X</td>
+<td style="text-align: left">打开官网给我浏览器卡得半死。相比其它家有欢迎栏、提示集这类独特组件。还没深入使用过。</td>
+</tr>
+<tr>
+<td style="text-align: center">腾讯</td>
+<td style="text-align: center">TDesign</td>
+<td style="text-align: left">我司这个有点一言难尽。元宝前端虽然用了 TDesign 但 AI 对话那块看起来是自己写的。组件库提供的 <code>ChatInput</code> 占得空间太大了，样式还不好调，我在司内的项目是拿 TDesign 的 Input 组件自己撸了一个。<strong>（以上仅代表个人观点，我爱公司😘）</strong></td>
+</tr>
+</tbody>
+</table>
+<p>因此前端的部分我选择了 Semi Design 组件库，因为我感觉它是真的经历了 Dogfooding 做出来的，实打实的豆包同款前端。我在写的时候前端想去仿豆包的风格，然后发现现成的组件库实现不了同样的样式，便去翻豆包的前端，<strong>惊讶地发现我踩的坑他居然都踩过一遍了！</strong> 我按照豆包前端强行加 CSS style 和 class 之后，真就搞好了。</p>
+<p>这也是我写得第一个 React 项目，不出意外地踩了 <code>StrictMode</code> 下请求会发两次用来检查副作用的坑。🤣 这个过程跟我刚开始写 Vue 一样，一开始是很痛苦的，但写着写着突然就顿悟了，发现 React 把各种东西和功能定义成组件嵌套包起来的设计，还真有点妙。我也理解为什么 Vue 能火了，这俩入门难度确实不一样。</p>
+<h2 id="最后再聊聊">最后再聊聊</h2>
+<p>我的大模型套壳站现已部署至线上：TakoChat - <a href="https://tako.chat">https://tako.chat</a></p>
+<p><img src="https://github.red/images/2025/03/tako-chat-snapshot.png" alt="TakoChat"></p>
+<p>Tako（たこ）是日文章鱼🐙的意思。起这个名字只是我单纯觉得微软 Teams 下的章鱼动态 Emoji 很可爱。背后接的是免费版的混元大模型，所以你可以注册体验下，只是目前的功能还很基础。（不清楚阿里云那边短信验证码备案的问题是否解决了，可能会遇到部分运营商收不到短信验证码的问题，可以换不同运营商的号试试）</p>
+<p>你可以看到左侧有「实验室」一栏，我是打算在这里动手做做像 MCP 和 Agent 这样的小玩意。（先把坑开了，填不填再说。</p>
+<p>呼~ 总算把这篇写完了。我还挺自我感动的，没蹭热度，仅仅只是分享一些自己总结的心得体会，比那些营销号不知道高到哪里去了。</p>
+<p>至此，周末也要结束了，明天又可以上班继续修 bug 了 🤤</p>
+<blockquote>
+<p>文章头图来自 @极道寂 <a href="https://www.pixiv.net/artworks/69237248" title="PixivID 69237248">PixivID: 69237248</a></p></blockquote>
