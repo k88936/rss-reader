@@ -88,7 +88,7 @@ const selectArticle = async (article) => {
   selectedArticle.value = article
   loading.value = true
   try {
-    articleContent.value = await getContent(article.link)
+    articleContent.value = await getContent(article.content)
     // 更新URL
     await router.push(`/detail/${encodeURIComponent(article.link)}`)
   } catch (error) {
