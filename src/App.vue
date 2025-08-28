@@ -141,7 +141,7 @@ watch(articles, () => {
 
 <style scoped>
 #app {
-  max-width: 1200px;
+  max-width: 1600px;
   margin: 0 auto;
   padding: 20px;
   font-family: Arial, sans-serif;
@@ -163,13 +163,13 @@ watch(articles, () => {
 }
 
 .sidebar {
-  width: 350px;
   flex-shrink: 0;
 }
 
 .articles-list {
   max-height: calc(100vh - 150px);
   overflow-y: auto;
+  padding: 10px;
 }
 
 .article-card {
@@ -179,6 +179,7 @@ watch(articles, () => {
   margin-bottom: 15px;
   cursor: pointer;
   transition: box-shadow 0.2s;
+  width: 350px;
 }
 
 .article-card:hover {
