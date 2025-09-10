@@ -38,5 +38,10 @@
     "name": "Vicki Boykis",
     "url": "https://vickiboykis.com/index.xml",
     "folder": ""
+  },
+  {
+    "name":"Red Thought",
+    "url":"https://feeds.feedburner.com/thoughtsfromtheredplanet?format=xml",
+    "folder":""
   }
 ]
