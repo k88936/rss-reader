@@ -90,7 +90,6 @@ const selectArticle = async (article) => {
   try {
     articleContent.value = await getContent(article.content)
     // 更新URL
-    await router.push(`/detail/${encodeURIComponent(article.link)}`)
   } catch (error) {
     console.error('加载文章失败:', error)
   } finally {
@@ -98,45 +97,11 @@ const selectArticle = async (article) => {
   }
 }
 
-// 根据URL参数自动选择文章
-const selectArticleByRoute = async () => {
-  if (route.params.link) {
-    const link = decodeURIComponent(route.params.link)
-    const article = articles.value.find(a => a.link === link)
-    if (article) {
-      selectedArticle.value = article
-      loading.value = true
-      try {
-        articleContent.value = await getContent(article.content)
-      } catch (error) {
-        console.error('加载文章失败:', error)
-      } finally {
-        loading.value = false
-      }
-    }
-  } else {
-    selectedArticle.value = null
-    articleContent.value = ''
-  }
-}
 
 onMounted(() => {
   loadArticles()
 })
 
-// 监听路由变化
-watch(() => route.params.link, () => {
-  if (articles.value.length > 0) {
-    selectArticleByRoute()
-  }
-})
-
-// 监听文章列表变化，确保在路由参数存在但文章列表尚未加载时能正确处理
-watch(articles, () => {
-  if (route.params.link) {
-    selectArticleByRoute()
-  }
-})
 </script>
 
 <style scoped>
