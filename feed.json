@@ -39,6 +39,11 @@
     "url": "https://vickiboykis.com/index.xml",
     "folder": ""
   },
+    {
+    "name": "AlRawasAbed",
+    "url": "https://alrawasabed.com/rss.xml",
+    "folder": ""
+  },
   {
     "name":"Red Thought",
     "url":"https://feeds.feedburner.com/thoughtsfromtheredplanet?format=xml",
