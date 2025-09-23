@@ -1,0 +1,56 @@
+<style>
+.journal-comment-area-wrapper {
+  display: none;
+}
+.tinytext {
+  font-size: 45%;
+}
+ul {
+  margin: 0 0 0 0;
+}
+</style>
+
+<h2>Ingredients</h2>
+
+<ul>
+<li>Books for a computer science curriculum from a top university</li>
+<li>Computer</li>
+<li>Headphones</li>
+<li>Internet</li>
+<li>Stress ball</li>
+<li>Pillow</li>
+<li>Lighter fluid</li>
+<li>Food</li>
+</ul>
+
+<h2>Directions</h2>
+
+<ol start="0">
+<li>Cover computer science books with lighter fluid</li>
+<li><a href="http://nathanmarz.com/blog/the-limited-value-of-a-computer-science-education.html">Light books on fire</a></li>
+<li>Use flames to cook an energy-rich meal for the thousands of hours ahead</li>
+<li>Pick an editor</li>
+<li>Choose a project beyond current capabilities. Good ways to push boundaries:
+  <ul>
+  <li>Unfamiliar domain (e.g. large scale data processing, UI programming, high performance computing, games)</li>
+  <li>Exotic programming language</li>
+  <li>Larger in scope than any project before</li>
+  </ul>
+  </li>
+<li>Shut up about your editor</li>
+<li>Attempt to build</li>
+<li>Stop procrastinating on Hacker News</li>
+<li>Re-attempt to build</li>
+<li>Squeeze stress ball and scream into pillow as necessary to keep sanity</li>
+<li>When stuck:
+  <ul>
+   <li>Paste stack traces into Google</li>
+   <li>Find appropriate mailing list to get guidance</li>
+   <li>Realize that real learning happens when you are stuck, uncomfortable, and/or frustrated</li>
+   <li>Seek out books, classes, or other resources AFTER you have a good understanding of your deficiencies</li>
+   </ul>
+   </li>
+<li>Repeat #4 to #10 for at least 10 years</li>
+</ol>
+
+<p>Results guaranteed! <span class="tinytext">(to the same extent static types guarantee bug-free programs)</span></p>

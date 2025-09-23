@@ -1,0 +1,53 @@
+<p id="_mcePaste">Back in college I was deeply inspired by Paul Graham's essays, like <a href="http://www.paulgraham.com/wealth.html">How to Make Wealth</a> and <a href="http://www.paulgraham.com/love.html">How To Do What You Love</a>. His essays helped me realize I wanted to be involved in startups after I graduated. I loved the notions of avoiding the bureaucracy of big companies and being part of a small team doing something big.</p>
+<div></div>
+<div></div>
+<div></div>
+<div id="_mcePaste"></div>
+<p id="_mcePaste">Fast-forward a few years to 2013 and I was in a predicament about where to go with my career. I was working at Twitter, leading a core infrastructure team I had started. I arrived at Twitter 1.5 years earlier via the <a href="https://techcrunch.com/2011/07/05/twitter-acquires-social-analytics-startup-backtype/">acquisition of BackType</a>, of which I was the first employee. I was on track towards a distinguished engineer type of career, where I would be influential in the industry through conference talks and writing books and articles. I would work comfortable 9 to 5 hours and make many millions of dollars through salary and equity.</p>
+<div id="_mcePaste"></div>
+<div id="_mcePaste"></div>
+<p>There's little I find as inspirational as the United States space program in the 1960s. I've read so much about that period, and I've listened to <a href="https://www.youtube.com/watch?v=WZyRbnpGyzQ">Kennedy's speech at Rice University</a> dozens of times. "We choose to go to the Moon in this decade and do the other things, not because they are easy, but because they are hard." The audacity of that speech gives me chills, and it's stunning Neil Armstrong stepped foot on the Moon only seven years later.</p>
+<div></div>
+<div id="_mcePaste"></div>
+<p id="_mcePaste">The people of Mercury, Gemini, and Apollo pushed humanity forward. They fundamentally expanded human potential. Something deep inside me wanted to be part of something like that.</p>
+<div></div>
+<div id="_mcePaste"></div>
+<p id="_mcePaste">While at Twitter, I started to get bothered by a simple observation. You can describe what the consumer Twitter product does (tweets, follows, search, trends, API, etc.) in a few hours, yet it took Twitter hundreds of man-years of effort to get that product to the point of scalability and stability (remember the <a href="https://i2.cdn.turner.com/money/2010/06/15/technology/twitter_fail/fail_whale.top.jpg">"fail whale"</a>?). Software is entirely about abstraction and automation, so how can it take hundreds of man-years to build something you can describe in hours?</p>
+<div></div>
+<div id="_mcePaste"></div>
+<p id="_mcePaste">Bridging this gap would revolutionize the basic economics of the software industry. What does the world look like when an individual or small team can build what currently requires a large company? What does the world look like when the economics of software development are radically improved? How much innovation would be unleashed? What new capabilities would humanity gain by enabling problems to be addressed that are currently too hard or too expensive?</p>
+<div></div>
+<div id="_mcePaste"></div>
+<p id="_mcePaste">Of course, I didn't know at the time how to bridge that gap. I had no concrete concept of what software development looks like in that universe. All I had were a few faint ideas of directions to explore. These faint ideas came from thinking about large-scale system design as I was working on <a href="https://www.amazon.com/Big-Data-Principles-practices-scalable-ebook/dp/B097835W6T/ref=sr_1_3">my book</a>.</p>
+<div></div>
+<div id="_mcePaste"></div>
+<p id="_mcePaste">So back in 2013, I had to decide whether to take that leap into exploring something which I wasn't sure was even possible. Should I walk away from millions of dollars and a high-status position to pursue a faint notion most people would say was crazy? It's not like I wouldn't be having impact in my current career track &ndash; just that my impact would be incremental and limited in comparison.</p>
+<div></div>
+<div id="_mcePaste"></div>
+<p id="_mcePaste">Years earlier I saw an <a href="https://www.youtube.com/watch?v=jwG_qR6XmDQ">interview with Jeff Bezos</a> where he talked about why he left his highly paid job to start Amazon. What tipped him over the edge was the notion of regret. He would never regret shooting for the stars with his idea for an online bookstore, but he would regret for the rest of his life not trying. His "regret minimization framework" always stuck with me.</p>
+<div></div>
+<div id="_mcePaste"></div>
+<p id="_mcePaste">It was clear pursuing my idea would take years and require 100% of my focus, so working on it only on nights/weekends was out of the question. Another wrench in my situation at the time was the success of my open-source project <a href="https://storm.apache.org/">Storm</a>. I had many users eager to give me money to provide support/consulting services, and I was getting a lot of inbound interest from respected investors. Founding a company around a successful open-source project was a proven model that would have been an exciting endeavor.</p>
+<p>Ultimately though, Storm was at a point where the major innovation was pretty much done and further improvements would be incremental. Forming a company around it would mostly be about monetization, and it would monopolize my focus for many, many years.</p>
+<div></div>
+<div id="_mcePaste"></div>
+<p id="_mcePaste">My decision to pursue my crazy idea hinged on a few factors. First, I already had enough equity vested from the BackType acquisition to sustain myself for however many years it would take to pursue my idea to either viability or failure. Second, I would regret it forever if I didn't try. Third, and most importantly, I recognized the opportunity to expand human potential and revolutionize an industry is incredibly rare. That such an opportunity was even available, as faint and tenuous as it was, made it precious beyond words.</p>
+<div id="_mcePaste"></div>
+<div id="_mcePaste"></div>
+<p>So I left Twitter to start working on <a href="https://redplanetlabs.com">Red Planet Labs</a>. I started by exploring that faint direction I had come upon before. More than anything else, the problem was one of abstraction. How do you express applications as diverse as Twitter, BackType, Reddit, Bank of America, Gmail, eBay, Splunk, and Slack concisely and with a common set of scalable abstractions?</p>
+<div></div>
+<div id="_mcePaste"></div>
+<p id="_mcePaste">It took me 5.5 years of excruciatingly difficult exploration to answer that question. It constantly felt like two steps forward, one step back. I would hit technical roadblocks and be stuck on details for months at a time. Completely unexpectedly, I came to suspect a new programming paradigm was needed to be able to form these abstractions. I resisted this idea for months until the evidence was so overwhelming I spent over a year making a new programming language to serve as the foundation for further exploration. That breakthrough led to more roadblocks, whose eventual resolutions led to even more roadblocks beyond. I rewrote code so many times my head spins from thinking about it.</p>
+<div></div>
+<div id="_mcePaste"></div>
+<p id="_mcePaste">And then in late 2018, I reached my goal. My idea was not only viable, it was more thrilling than anything I could have imagined. I understood what the abstractions were, how they worked, and how they composed together.</p>
+<div></div>
+<div id="_mcePaste"></div>
+<p id="_mcePaste">Since then, I <a href="https://medium.com/red-planet-labs/introducing-red-planet-labs-2a0304a67312">raised a large seed round</a> and built a <a href="https://redplanetlabs.com/about">fantastic team</a> to pursue this vision with me. We started with my proof-of-concept and have been working since to turn it into a production-worthy development platform.</p>
+<div id="_mcePaste"></div>
+<div id="_mcePaste"></div>
+<p>I cannot wait for the day when our platform is available to the world. It gives me those same chills I get when I think about Neil Armstrong and Buzz Aldrin descending to the lunar surface. This is what has kept me going for the past 8.5 years, and I'm immensely grateful just to have had the opportunity.</p>
+<div></div>
+<div id="_mcePaste"></div>
+<p id="_mcePaste">My team at Red Planet Labs inspires me every day, and I'm always looking for more great people to join us. If you're a great engineer who shares my passion for expanding human potential, please <a href="https://redplanetlabs.com/careers">get in touch</a>!</p>
+<p>&nbsp;</p>
