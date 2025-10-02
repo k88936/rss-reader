@@ -128,7 +128,7 @@ Path Reuse in Real-time</a> and <a rel="nofollow noreferrer" href="https://inter
 
   </div>
   <div class="content">
-    <p>All raytracing in Solari is handled via inline ray queries. Wgpu does not yet support raytracing pipelines, so I haven't gotten a chance to see play around with them.</p>
+    <p>All raytracing in Solari is handled via inline ray queries. Wgpu does not yet support raytracing pipelines, so I haven't gotten a chance to play around with them.</p>
 
   </div>
   
