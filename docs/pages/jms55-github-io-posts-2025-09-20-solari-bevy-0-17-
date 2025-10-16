@@ -10,9 +10,9 @@
 <p>Try it out yourself:</p>
 <pre data-lang="bash" style="background-color:#002b36;color:#839496;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#b58900;">git</span><span> clone https://github.com/bevyengine/bevy </span><span style="color:#859900;">&amp;&amp; cd</span><span> bevy
 </span><span style="color:#b58900;">git</span><span> checkout release-0.17.0
-</span><span style="color:#b58900;">cargo</span><span> run</span><span style="color:#268bd2;"> --release --examples</span><span> solari</span><span style="color:#268bd2;"> --features</span><span> bevy_solari,https
+</span><span style="color:#b58900;">cargo</span><span> run</span><span style="color:#268bd2;"> --release --example</span><span> solari</span><span style="color:#268bd2;"> --features</span><span> bevy_solari,https
 </span><span style="color:#586e75;"># Optionally setup DLSS support for NVIDIA GPUs following https://github.com/bevyengine/dlss_wgpu?tab=readme-ov-file#downloading-the-dlss-sdk
-</span><span style="color:#b58900;">cargo</span><span> run</span><span style="color:#268bd2;"> --release --examples</span><span> solari</span><span style="color:#268bd2;"> --features</span><span> bevy_solari,https,dlss
+</span><span style="color:#b58900;">cargo</span><span> run</span><span style="color:#268bd2;"> --release --example</span><span> solari</span><span style="color:#268bd2;"> --features</span><span> bevy_solari,https,dlss
 </span></code></pre>
 <h2 id="introduction">Introduction<a class="zola-anchor" href="#introduction" aria-label="Anchor link for: introduction" style="visibility: hidden;"></a>
 </h2>
