@@ -44,38 +44,41 @@ Path Reuse in Real-time</a> and <a rel="nofollow noreferrer" href="https://inter
 </h3>
 <p>The first step of Solari is also the most boring: rasterize a standard GBuffer.</p>
 <p><figure>
-    <img 
-        src="gbuffer_base_color.png" 
+    <img
+        src="gbuffer_base_color.png"
         
         
         
     >
     
-    <figcaption>Base color</figcaption>
+    <figcaption><p>Base color</p>
+</figcaption>
     
 </figure>
 
 <figure>
-    <img 
-        src="gbuffer_normals.png" 
+    <img
+        src="gbuffer_normals.png"
         
         
         
     >
     
-    <figcaption>Normals</figcaption>
+    <figcaption><p>Normals</p>
+</figcaption>
     
 </figure>
 
 <figure>
-    <img 
-        src="gbuffer_position.png" 
+    <img
+        src="gbuffer_position.png"
         
         
         
     >
     
-    <figcaption>Position reconstructed from depth buffer</figcaption>
+    <figcaption><p>Position reconstructed from depth buffer</p>
+</figcaption>
     
 </figure>
 </p>
@@ -135,26 +138,28 @@ Path Reuse in Real-time</a> and <a rel="nofollow noreferrer" href="https://inter
 </blockquote>
 
 <p><figure>
-    <img 
-        src="noisy_di_one_sample.png" 
+    <img
+        src="noisy_di_one_sample.png"
         
         
         
     >
     
-    <figcaption>One candidate sample DI</figcaption>
+    <figcaption><p>One candidate sample DI</p>
+</figcaption>
     
 </figure>
 
 <figure>
-    <img 
-        src="noisy_di_32_samples.png" 
+    <img
+        src="noisy_di_32_samples.png"
         
         
         
     >
     
-    <figcaption>32 candidate sample DI, one sample chosen via RIS</figcaption>
+    <figcaption><p>32 candidate sample DI, one sample chosen via RIS</p>
+</figcaption>
     
 </figure>
 </p>
@@ -179,39 +184,42 @@ Path Reuse in Real-time</a> and <a rel="nofollow noreferrer" href="https://inter
 <p>We must also trace a ray to test visibility, as the reservoir comes from a neighboring pixel, and we cannot assume that the same light sample visible at the neighbor pixel is also visible for the current pixel.</p>
 <p>Unlike a lot of other ReSTIR implementations, we only ever use 1 spatial sample. Using more than 1 sample does not tend to improve quality, and increases performance costs. We cannot, however, skip spatial resampling entirely. Having a source of new samples from other pixels is crucial to prevent artifacts from temporal resampling.</p>
 <figure>
-    <img 
-        src="spatial_baseline.jpg" 
+    <img
+        src="spatial_baseline.jpg"
         
         
         
     >
     
-    <figcaption>1 random spatial sample, 6.4 ms</figcaption>
+    <figcaption><p>1 random spatial sample, 6.4 ms</p>
+</figcaption>
     
 </figure>
 <p>Spatial sampling is probably the least well-researched part of ReSTIR. I tried a couple of other schemes, including trying to reuse reservoirs across a workgroup/subgroup similar to <a rel="nofollow noreferrer" href="https://iribis.github.io/publication/2025_Stratified_Histogram_Resampling">Histogram Stratification for Spatio-Temporal Reservoir Sampling</a>, but none of them worked out well.</p>
 <p>Subgroups-level resampling was very cheap, but had tiling artifacts, and was not easily portable to different machines with different amounts of threads per workgroup.</p>
 <figure>
-    <img 
-        src="spatial_subgroup.jpg" 
+    <img
+        src="spatial_subgroup.jpg"
         
         
         
     >
     
-    <figcaption>Subgroup-level spatial resampling, 7.3 ms</figcaption>
+    <figcaption><p>Subgroup-level spatial resampling, 7.3 ms</p>
+</figcaption>
     
 </figure>
 <p>Workgroup-level resampling had much better quality, but was twice as expensive compared to 1 spatial sample, and introduced correlations that broke the denoiser.</p>
 <figure>
-    <img 
-        src="spatial_workgroup.jpg" 
+    <img
+        src="spatial_workgroup.jpg"
         
         
         
     >
     
-    <figcaption>Workgroup-level spatial resampling, 12 ms</figcaption>
+    <figcaption><p>Workgroup-level spatial resampling, 12 ms</p>
+</figcaption>
     
 </figure>
 <p>In the end, I stuck with the 1 random spatial sample I described above.</p>
@@ -222,14 +230,15 @@ Path Reuse in Real-time</a> and <a rel="nofollow noreferrer" href="https://inter
 <p>I did try out shading the pixel using all 3 samples (initial, temporal, and spatial), weighed by their resampling probabilities as <a rel="nofollow noreferrer" href="https://cwyman.org/papers/hpg21_rearchitectingReSTIR.pdf">Rearchitecting Spatiotemporal Resampling for Production</a> suggests, but had noisier results compared to shading using the final reservoir only. I'm not sure if I messed up the implementation or what.</p>
 <p>Overall the DI pass uses two raytraces per pixel (1 initial, 1 spatial).</p>
 <figure>
-    <img 
-        src="noisy_di.png" 
+    <img
+        src="noisy_di.png"
         
         
         
     >
     
-    <figcaption>DI with 32 initial candidates, 1 temporal resample, and 1 spatial resample</figcaption>
+    <figcaption><p>DI with 32 initial candidates, 1 temporal resample, and 1 spatial resample</p>
+</figcaption>
     
 </figure>
 <h3 id="restir-gi">ReSTIR GI<a class="zola-anchor" href="#restir-gi" aria-label="Anchor link for: restir-gi" style="visibility: hidden;"></a>
@@ -257,14 +266,15 @@ Path Reuse in Real-time</a> and <a rel="nofollow noreferrer" href="https://inter
 <p>We start by tracing a ray along a random direction chosen from a uniform hemisphere distribution. At some point I also want to try using <a rel="nofollow noreferrer" href="https://github.com/electronicarts/fastnoise">spatiotemporal blue noise</a>. Although DLSS-RR recommends white noise, the docs do say that blue noise with a sufficiently long period can also work.</p>
 <p>At the ray's hit point, we need to obtain an estimate of the incoming irradiance, which becomes the outgoing radiance towards the current pixel, i.e. the path's contribution.</p>
 <figure>
-    <img 
-        src="noisy_gi_one_sample.png" 
+    <img
+        src="noisy_gi_one_sample.png"
         
         
         
     >
     
-    <figcaption>One sample GI</figcaption>
+    <figcaption><p>One sample GI</p>
+</figcaption>
     
 </figure>
 <p>To obtain irradiance, we query the world cache at the hit point (more on this later).</p>
@@ -303,26 +313,28 @@ Path Reuse in Real-time</a> and <a rel="nofollow noreferrer" href="https://inter
 <p>Temporal reservoir selection for GI is a little different from DI.</p>
 <p>In addition to reprojecting based on motion vectors, we jitter the reprojected location by a few pixels in either direction using <a rel="nofollow noreferrer" href="https://www.amazon.com/GPU-Zen-Advanced-Rendering-Techniques/dp/B0DNXNM14K">permutation sampling</a>. This essentially adds a small spatial component to the temporal resampling, which helps break up temporal correlations.</p>
 <figure>
-    <img 
-        src="no_permutation_sampling.png" 
+    <img
+        src="no_permutation_sampling.png"
         
         
         
     >
     
-    <figcaption>No permutation sampling: The denoiser (DLSS-RR) produces blotchy noise</figcaption>
+    <figcaption><p>No permutation sampling: The denoiser (DLSS-RR) produces blotchy noise</p>
+</figcaption>
     
 </figure>
 <p>I also tried permutation sampling for ReSTIR DI, and while it did reduce correlation artifacts, it also added even worse artifacts because we reuse visibility, which becomes very obvious under permutation sampling. Tracing an extra ray to validate visibility would fix this, but I'm not quite ready to pay that performance cost.</p>
 <figure>
-    <img 
-        src="di_permutation_sampling.png" 
+    <img
+        src="di_permutation_sampling.png"
         
         
         
     >
     
-    <figcaption>DI: Permutation sampling and visibility reuse do not work well together</figcaption>
+    <figcaption><p>DI: Permutation sampling and visibility reuse do not work well together</p>
+</figcaption>
     
 </figure>
 <p>Spatial reservoir selection for GI is identical to DI.</p>
@@ -339,14 +351,15 @@ Path Reuse in Real-time</a> and <a rel="nofollow noreferrer" href="https://inter
 <p>Since we're using DLSS-RR for denoising, we can simply add the GI on top of the existing framebuffer (holding the DI). There's no need to write to a separate buffer for use with a separate denoising process, unlike a lot of other GI implementations.</p>
 <p>Overall the GI pass uses two raytraces per pixel (1 initial, 1 spatial), same as DI.</p>
 <figure>
-    <img 
-        src="noisy_gi.png" 
+    <img
+        src="noisy_gi.png"
         
         
         
     >
     
-    <figcaption>GI with 1 initial candidate, 1 temporal resample, and 1 spatial resample</figcaption>
+    <figcaption><p>GI with 1 initial candidate, 1 temporal resample, and 1 spatial resample</p>
+</figcaption>
     
 </figure>
 <h3 id="interlude-what-is-restir-doing">Interlude: What is ReSTIR Doing?<a class="zola-anchor" href="#interlude-what-is-restir-doing" aria-label="Anchor link for: interlude-what-is-restir-doing" style="visibility: hidden;"></a>
@@ -557,14 +570,15 @@ Path Reuse in Real-time</a> and <a rel="nofollow noreferrer" href="https://inter
 </span><span style="color:#657b83;">}
 </span></code></pre>
 <figure>
-    <img 
-        src="world_cache_far.png" 
+    <img
+        src="world_cache_far.png"
         
         
         
     >
     
-    <figcaption>World cache from further away, showing LOD</figcaption>
+    <figcaption><p>World cache from further away, showing LOD</p>
+</figcaption>
     
 </figure>
 <h4 id="cache-decay">Cache Decay<a class="zola-anchor" href="#cache-decay" aria-label="Anchor link for: cache-decay" style="visibility: hidden;"></a>
@@ -629,26 +643,28 @@ Path Reuse in Real-time</a> and <a rel="nofollow noreferrer" href="https://inter
 <p>As an example: In frame 5, world cache cell A samples a light source. In frame 6, a different world cache cell B samples cell A. In frame 7, yet another world cache cell C samples cell B. We've now formed a multi-bounce path <code>light source-&gt;A-&gt;B-&gt;C</code>, and once ReSTIR GI gets involved, <code>light source-&gt;A-&gt;B-&gt;C-&gt;primary surface-&gt;camera</code>.</p>
 <p>By having the cache sample itself, we get full-length multi-bounce paths, instead of just single-bounce paths. In indoor scenes that make heavy use of indirect lighting, the difference is pretty dramatic.</p>
 <p><figure>
-    <img 
-        src="cornell_box_no_multi_bounce.png" 
+    <img
+        src="cornell_box_no_multi_bounce.png"
         
         
         
     >
     
-    <figcaption>Single-bounce lighting</figcaption>
+    <figcaption><p>Single-bounce lighting</p>
+</figcaption>
     
 </figure>
 
 <figure>
-    <img 
-        src="cornell_box_multi_bounce.png" 
+    <img
+        src="cornell_box_multi_bounce.png"
         
         
         
     >
     
-    <figcaption>Multi-bounce lighting</figcaption>
+    <figcaption><p>Multi-bounce lighting</p>
+</figcaption>
     
 </figure>
 </p>
@@ -677,38 +693,41 @@ Path Reuse in Real-time</a> and <a rel="nofollow noreferrer" href="https://inter
 </h3>
 <p>Once we have our noisy estimate of the scene, we run it through DLSS-RR to upscale, antialias, and denoise it.</p>
 <p><figure>
-    <img 
-        src="noisy_full.png" 
+    <img
+        src="noisy_full.png"
         
         
         
     >
     
-    <figcaption>Noisy and aliased image</figcaption>
+    <figcaption><p>Noisy and aliased image</p>
+</figcaption>
     
 </figure>
 
 <figure>
-    <img 
-        src="denoised_full.png" 
+    <img
+        src="denoised_full.png"
         
         
         
     >
     
-    <figcaption>Denoised and antialaised image</figcaption>
+    <figcaption><p>Denoised and antialaised image</p>
+</figcaption>
     
 </figure>
 
 <figure>
-    <img 
-        src="pathtraced.png" 
+    <img
+        src="pathtraced.png"
         
         
         
     >
     
-    <figcaption>Pathtraced reference</figcaption>
+    <figcaption><p>Pathtraced reference</p>
+</figcaption>
     
 </figure>
 </p>
@@ -730,26 +749,28 @@ Path Reuse in Real-time</a> and <a rel="nofollow noreferrer" href="https://inter
 </blockquote>
 
 <p><figure>
-    <img 
-        src="denoised_di.png" 
+    <img
+        src="denoised_di.png"
         
         
         
     >
     
-    <figcaption>Denoised and antialaised image - DI only</figcaption>
+    <figcaption><p>Denoised and antialaised image - DI only</p>
+</figcaption>
     
 </figure>
 
 <figure>
-    <img 
-        src="denoised_gi.png" 
+    <img
+        src="denoised_gi.png"
         
         
         
     >
     
-    <figcaption>Denoised and antialaised image - GI only</figcaption>
+    <figcaption><p>Denoised and antialaised image - GI only</p>
+</figcaption>
     
 </figure>
 </p>
@@ -759,38 +780,41 @@ Path Reuse in Real-time</a> and <a rel="nofollow noreferrer" href="https://inter
 </h3>
 <p>Timings for all scenes were measured on an RTX 3080, rendered at 1600x900, and upscaled to 3200x1800 using DLSS-RR performance mode.</p>
 <p><figure>
-    <img 
-        src="pica_pica_perf.png" 
+    <img
+        src="pica_pica_perf.png"
         
         
         
     >
     
-    <figcaption>PICA PICA</figcaption>
+    <figcaption><p>PICA PICA</p>
+</figcaption>
     
 </figure>
 
 <figure>
-    <img 
-        src="bistro_perf.png" 
+    <img
+        src="bistro_perf.png"
         
         
         
     >
     
-    <figcaption>Bistro</figcaption>
+    <figcaption><p>Bistro</p>
+</figcaption>
     
 </figure>
 
 <figure>
-    <img 
-        src="cornell_box_perf.png" 
+    <img
+        src="cornell_box_perf.png"
         
         
         
     >
     
-    <figcaption>Cornell Box</figcaption>
+    <figcaption><p>Cornell Box</p>
+</figcaption>
     
 </figure>
 </p>
@@ -839,14 +863,15 @@ Path Reuse in Real-time</a> and <a rel="nofollow noreferrer" href="https://inter
 <p>The ReSTIR DI initial and temporal pass is mainly limited by loads from global memory (blue bar), which source-code level profiling reveals to come from loading <code>ResolvedLightSamplePacked</code> samples from light tiles during initial sampling.</p>
 <p>The ReSTIR DI spatial and shade pass, and both ReSTIR GI passes, are limited by raytracing throughput (yellow bar).</p>
 <figure>
-    <img 
-        src="nsight_trace.png" 
+    <img
+        src="nsight_trace.png"
         
         
         
     >
     
-    <figcaption>NSight Graphics GPU Trace</figcaption>
+    <figcaption><p>NSight Graphics GPU Trace</p>
+</figcaption>
     
 </figure>
 <p>There are typically three ways to improve memory-bound shaders:</p>
@@ -908,14 +933,15 @@ Path Reuse in Real-time</a> and <a rel="nofollow noreferrer" href="https://inter
 </span><span>reservoir.unbiased_contribution_weight </span><span style="color:#657b83;">=</span><span> direct_lighting.inverse_pdf </span><span style="color:#657b83;">* </span><span style="color:#859900;">uniform_hemisphere_inverse_pdf</span><span style="color:#657b83;">()</span><span>;
 </span></code></pre>
 <figure>
-    <img 
-        src="no_world_cache.png" 
+    <img
+        src="no_world_cache.png"
         
         
         
     >
     
-    <figcaption>Alternate GI scheme, without the world cache*</figcaption>
+    <figcaption><p>Alternate GI scheme, without the world cache*</p>
+</figcaption>
     
 </figure>
 <p>Despite the alternate scheme having higher variance and no multibounce pathtracing, it's actually <em>brighter</em> than using the world cache. For some reason, the voxelized nature of the world cache leads to a loss of energy.</p>
