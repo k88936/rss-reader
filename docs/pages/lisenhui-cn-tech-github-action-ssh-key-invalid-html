@@ -1,7 +1,0 @@
-<p><code>Github Action</code>是款非常不错的<code>CI/CD</code>工具，自从它问世以来发展的速度真可谓是快，在 <code>Github</code> 的官方市场中几乎能找到所有你想要使用的<code>Action</code>脚本进行引用。本博客也是基于<code>Github Action</code>进行远程部署的，与常规的<code>Github Pages</code>服务不同，本站的静态文件是部署在国内某云厂商的静态服务器上面的，通过 
-<a href="https://github.com/tzzs/server-shell" title="tzzs/server-shell" rel="noopener external nofollow noreferrer" target="_blank" class=" exturl">
- tzzs/server-shell
- 
- <i class="fa fa-external-link-alt"></i>
- 
-</a> Action 集成，实现远程执行服务端的命令，来拉取最新生成的静态文件。</p>

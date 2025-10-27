@@ -1,4 +1,0 @@
-<span property="schema:name" class="field field--name-title field--type-string field--label-hidden">Start NetBSD on a GPT partition with grub2</span>
-<span rel="schema:author" class="field field--name-uid field--type-entity-reference field--label-hidden"><span lang about="https://minux.hu/user/1" typeof="schema:Person" property="schema:name" datatype>Fekete Zoltán</span></span>
-<span property="schema:dateCreated" content="2024-02-08T07:49:28+00:00" class="field field--name-created field--type-created field--label-hidden"><time datetime="2024-02-08T08:49:28+01:00" title="Thursday, February 8, 2024 - 08:49" class="datetime">Thu, 02/08/2024 - 08:49</time>
-</span>

@@ -1,9 +1,0 @@
-<h2 id="背景">背景
-<a class="header-anchor" href="#%e8%83%8c%e6%99%af"></a>
-</h2><p>经过一番考虑还是把个人博客从Hexo引擎迁移到Hugo引擎，博客主题依旧还是沿用NexT。其实本来还担心又要折腾弄个全新的博客主题，后来Github上看到兰陵子分享的
-<a href="https://github.com/xtfly/hugo-theme-next" title="NexT" rel="noopener external nofollow noreferrer" target="_blank" class=" exturl">
- NexT
- 
- <i class="fa fa-external-link-alt"></i>
- 
-</a>主题，就直接拿过来引用。但在部署后发现还是有些地方需要改善，在此记录下改造优化的过程。如果正好你也喜欢这个主题，那么欢迎拿去使用，也欢迎交流反馈。</p>

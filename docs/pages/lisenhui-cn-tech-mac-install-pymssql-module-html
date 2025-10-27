@@ -1,1 +1,0 @@
-<p>在非<code>Windows</code>环境下去访问，连接 MSSQL 数据，本身就是件苦差事来的。自写<code>Python</code>程序以来在<code>ORM</code>方面都是使用<code>pyxxx</code>的模块，果不其然连接 MSSQL 也有个模块叫<code>pymssql</code>，只是实际使用中并不是特别的顺利。如笔者所处的环境就是如此，开发环境为<code>OSX 10.11</code>，发布环境为<code>CentOS 6.4</code>，按官方的安装步骤实行下来，Linux 环境是<code>OK</code>的，只是 Mac 环境下安装失败，错误的堆栈信息如下：</p>
