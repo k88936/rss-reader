@@ -7,7 +7,7 @@ export default defineConfig({
         vue(),
     ],
     build: {
-        outDir: 'docs',
+        outDir: 'dist',
     },
     base: '/rss-reader/',
     resolve: {
