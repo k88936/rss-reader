@@ -197,7 +197,6 @@ out
 
 # Nuxt.js build / generate output
 .nuxt
-dist
 
 # Gatsby files
 .cache/
@@ -241,7 +240,6 @@ dist
 # Recommended template: Node.gitignore
 
 node_modules/
-dist/
 npm-debug.log
 yarn-error.log
 
