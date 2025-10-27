@@ -1,0 +1,55 @@
+<p><em>Update: I originally quoted the average price of office space as $36 / square foot / month, where in reality it's per year. So I was accidentally weakening my own argument! The post has been updated to reflect the right number.</em></p>
+
+<p>The "open floor plan" has really taken over tech companies in San Francisco. Offices are organized as huge open spaces with row after row of tables. Employees sit next to each other and each have their own piece of desk space. Now, I don't want to comment on the effectiveness of open floor plans for fields other than my own. But for software development, this is <em>the single best way to sabotage the productivity of your entire engineering team</em>.</p>
+
+<h3>The problem</h3>
+
+<p>Programming is a very brain-intensive task. You have to hold all sorts of disparate information in your head at once and synthesize it into extremely precise code. It requires intense amounts of focus. Distractions and interruptions are death to the productivity of a programmer. And an open-floor plan encourages distractions like nothing else.</p>
+
+<p>First of all, you're in a room with dozens and dozens of other people. That's naturally going to be very noisy. People are talking all over the room. The person next to you is chewing on potato chips. You constantly hear people getting up and walking around. Hopefully you at least have carpeted floors, or else it's going to be REALLY loud. All day long doors to conference rooms are opening and closing. Noise breaks concentration. Broken concentration breaks productivity. If you're lucky you're one of those people who can work by drowning out the noise with music through your headphones. Otherwise, you're out of luck.</p>
+
+<p>Even worse than the noise is the fact that you are <em>very easy to interrupt</em> in an open floor plan. People tap you on the shoulder to ask you questions. Now maybe you're different than me, but I find it pretty hard to focus when someone starts talking to me as I'm working. It's frequent enough in an open floor plan that even just the <em>potential</em> of that happening hurts my concentration.</p>
+
+<p>There's evidence that open plan offices make it more likely for people <a href="http://www.sjweh.fi/show_abstract.php?abstract_id=3167">to get sick</a>. This is not really that surprising as with a big open space you'd expect germs to spread more easily. Besides that, the lack of privacy also <a href="http://theconversation.com/open-plan-offices-attract-highest-levels-of-worker-dissatisfaction-study-18246">bothers a lot of people</a>.</p>
+
+<p>I can't tell you how many times I've heard this comment from programmers: "I get most of my work done once most people have left the office and I can concentrate". This translates to "I can't do work during normal business hours!" Think about that. This is truly absurd. You should be able to work during working hours. </p>
+
+<h3>The "collaboration" justification</h3>
+
+<p>The most common justification I hear about the open floor plan is that it "encourages collaboration". Now it's true, the open floor plan does create the occasional opportunity for collaboration. You might overhear someone the row over talking about how they need to do some particular load testing of a database, and then you jump in with how you built such a tool for such a purpose. Everyone says "Hurrah!" and something truly valuable occurred. But in reality, these moments of true serendipitity are few and far between.</p>
+
+<p>The tradeoff for these moments is that all your working hours are now sabotaged by non-stop distractions that ruin your productivity. <em>The primary task of a programmer is writing code, which involves sitting at a desk and thinking and typing</em>. Code is not written in these supposed spontaneous acts of collaboration. A working environment should make your primary tasks as easy as possible, which for programming means encouraging focus and concentration.</p>
+
+<h3>Cost-effectiveness of open floor plans</h3>
+
+<p>Let's be honest though. Open floor plans are done because it's the most cost-effective way to squeeze as many people into one space as possible. Space is expensive so you should make as best use of it as you can. But does minimizing space REALLY minimize cost?  Because programmers aren't call center workers. They're very expensive, so sabotaging their productity is thereby very expensive. Let's play with some numbers to see how this plays out.</p>
+
+<p>I'm not sure on the exact numbers, but in San Francisco a programmer probably costs you on average $100K a year in salary. With benefits the total cost is in the neighborhood of $120K. So a programmer is a $10K / month investment.</p>
+
+<p>The average price per square foot per month of an office in San Francisco is <a href="http://www.entrepreneur.com/article/227319">$36 / year</a>, or $3 / month. But let's say the average rate is $10 a month, since more expensive rates favor open floor plans, and I want to drive the point home. If you actually look at a sample of rates for <a href="http://42floors.com/office-space/ny/new-york">New York</a> and <a href="http://42floors.com/office-space/ca/san-francisco-bay-area">San Francisco</a>, you'll see that in reality almost no offices are nearly as expensive as $10 / month.</p>
+
+<p>With an open floor plan, let's say a programmer takes up an average of 6ft x 6ft of space. So the cost of space per programmer per month is 10 * 6 * 6 = $360 / month. This means the cost per programmer including space is $10360 / month.</p>
+
+<p>Let's say that in a non open-floor plan each programmer requires four times the amount of space as an open-floor plan environment – an average of 12ft x 12ft. That's actually quite a lot of space. In this case, the cost of space per programmer per month results in $1440 / month, making the cost of a programmer including space $11440 / month. This makes a non-open-floor-plan programmer 10.1% more expensive than an open-floor-plan programmer, or put another way an open-floor-plan programmer is 9.2% less expensive than a non-open-floor plan programmer.</p>
+
+<p>So on a per programmer basis, if the open floor plan lowers productivity by less than 9.2%, it's worth it. But this seems overly optimistic. In my experience working in an open floor plan my productivity is cut by half or worse. Plus there are things I literally am unable to do in such an office because they require too much focus. So my own estimate of my productivity decrease in such an office could be closer to a <em>75% decrease</em>!</p>
+
+<p>This analysis doesn't even take into account that if your programmers are more productive, <em>you need less programmers</em>. You only need half the programmers if your programmers are twice as effective. This drives your space needs in half, vastly skewing the numbers further in favor of non-open-floor plans. Unless my estimates of productivity decrease or space needs are <em>way, way off</em>, the open floor plan is not even close to worth it.</p>
+
+<h3>Alternatives</h3>
+
+<p>I don't know what the "best" arrangement is for an office for programmers. Perhaps it's 1 person offices, 2 person offices, or 3-5 person offices. Perhaps offices combined with open "collaboration areas" is the right approach. But certainly the open floor plan as practiced today is not it.</p>
+
+<p>It might be possible to establish a culture that enforces a library-like environment on an open floor plan. If talking too loudly got you "shushed", then it would certainly be a lot quieter and easier to concentrate. I don't know of any company that has created a culture like this, but it's certainly an interesting idea. Personally though I think that creating a good work environment through physical means will be much more robust than doing so through cultural means.</p>
+
+<p>Of course, having an alternative environment that allows for focus and concentration does not mean that spontaneous collaboration goes away. Because, surprise! – your employees still interact with each other at lunch, in the kitchen, in meetings, and in all the other natural places that people socialize. </p>
+
+<h3>Conclusion</h3>
+
+<p>Another thing that people like about the open floor plan is that it "looks good" and has the "startup feel". Well, I don't know about you, but to me the startup feel is about shipping quickly and getting things done. I would greatly, greatly prefer an office environment that helped me do that rather than get in my way.</p>
+
+<p>The open floor plan really only works when you're really small, when it's essentially equivalent to one of those "5 man offices". But once you start to get bigger, say the 15 person range, it starts becoming unwieldy. Once you're big enough and have the resources to customize the office environment, I think it's incredibly important to find an office environment that works better. </p>
+
+<p>Here's an idea. Establish a culture that encourages employees to work from home as much as they want. They should really understand that face time is completely irrelevant. Then, measure how many people come in each day. Do polls to see how productive people find the office. If the numbers are low, <em>then there's something wrong with your office environment</em>. This puts the burden on you, as the employer, to make an office environment that people actually want to work in.</p>
+
+<p><em>You should follow me on Twitter <a href="https://twitter.com/nathanmarz">here</a>.</em></p>

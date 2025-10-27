@@ -1,0 +1,8 @@
+<p>Hue is a Web applications that enables you to easily interact with an Hadoop cluster. Hue applications let you browse HDFS, Jobs, run Hive, Pig and Cloudera Impala queries, manage the Hive Metastore, HBase, Sqoop, ZooKeeper, MapReduce jobs, and create and schedule worklows with Oozie.</p>
+<p>更加关于HUE的介绍及演示可访问其官方网站：
+<a href="http://gethue.com" title="http://gethue.com" rel="noopener external nofollow noreferrer" target="_blank" class=" exturl">
+ http://gethue.com
+ 
+ <i class="fa fa-external-link-alt"></i>
+ 
+</a></p>

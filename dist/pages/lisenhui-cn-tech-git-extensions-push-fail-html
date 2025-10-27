@@ -1,0 +1,23 @@
+<h2 id="问题现身">问题现身
+<a class="header-anchor" href="#%e9%97%ae%e9%a2%98%e7%8e%b0%e8%ba%ab"></a>
+</h2><p>555~，今天体验了一把安装最新程序的“快感”！！！</p>
+<p>在使用Git Extensisons推送最新写的文章到Github时，遇到了个SSH KEY认证无效的莫名错误。事情的发生是这样的：今天在首次打开Git Extensions软件时，它非常友好的弹出更新提示窗口，然后就手不自觉的点击了下确认按钮。结果更新好后，在推送文章到Github时就发生了如下面一样神奇的错误阻拦：</p>
+
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-0-1"><a class="lnlinks" href="#hl-0-1">1</a>
+</span><span class="lnt" id="hl-0-2"><a class="lnlinks" href="#hl-0-2">2</a>
+</span><span class="lnt" id="hl-0-3"><a class="lnlinks" href="#hl-0-3">3</a>
+</span><span class="lnt" id="hl-0-4"><a class="lnlinks" href="#hl-0-4">4</a>
+</span><span class="lnt" id="hl-0-5"><a class="lnlinks" href="#hl-0-5">5</a>
+</span><span class="lnt" id="hl-0-6"><a class="lnlinks" href="#hl-0-6">6</a>
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-java" data-lang="java"><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="n">FATAL</span><span class="w"> </span><span class="n">ERROR</span><span class="p">:</span><span class="w"> </span><span class="n">No</span><span class="w"> </span><span class="n">supported</span><span class="w"> </span><span class="n">authentication</span><span class="w"> </span><span class="n">methods</span><span class="w"> </span><span class="nf">available</span><span class="w"> </span><span class="p">(</span><span class="n">server</span><span class="w"> </span><span class="n">sent</span><span class="p">:</span><span class="w"> </span><span class="n">publickey</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nl">fatal</span><span class="p">:</span><span class="w"> </span><span class="n">Could</span><span class="w"> </span><span class="n">not</span><span class="w"> </span><span class="n">read</span><span class="w"> </span><span class="n">from</span><span class="w"> </span><span class="n">remote</span><span class="w"> </span><span class="n">repository</span><span class="p">.</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="n">Please</span><span class="w"> </span><span class="n">make</span><span class="w"> </span><span class="n">sure</span><span class="w"> </span><span class="n">you</span><span class="w"> </span><span class="n">have</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="n">correct</span><span class="w"> </span><span class="n">access</span><span class="w"> </span><span class="n">rights</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="n">and</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="n">repository</span><span class="w"> </span><span class="n">exists</span><span class="p">.</span></span></span></code></pre></td></tr></table>
+</div>
+</div>

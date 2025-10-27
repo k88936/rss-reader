@@ -1,0 +1,194 @@
+<blockquote>
+<p>文章封面使用 DALL·E 3 生成</p></blockquote>
+<p>NekoBox 自从 2020 年初上线以来，至今磕磕绊绊运行了四年。一开始我只是将其当做一个 CRUD 的练手项目，做完后丢到线上就没管了。谁知在 2022 年开始，这个小站不知什么原因，突然迎来了大量的注册用户，同时还有几个粘性很强的用户，个人主页上有上百条提问。（也是这两三个重度用户，页面改版前每天会跑掉我 3-4 块钱的 CDN 流量）</p>
+<p>我感叹自己又一次无心插柳柳成荫，于 2022 年底又写了很多新功能，功能包括数据导出、注销账号、防骚扰、内容安全、内部 BI 面板等等。就在我看着一切都将往好的方向发展时，去年二月被炸弹人搞了一波，这事之后再慢慢聊。从那之后 NekoBox 关站了几个月，后面数据全部迁移到境外，使用新的域名重新恢复了。</p>
+<p>我并没有大张旗鼓地去宣传恢复后的域名，原以为之前的用户就这样流失再也不见了。没曾想有铁粉，一遍遍刷着兔小巢上是否有新的动向，找到了我的新域名。这件事令我挺感动的。如今的 NekoBox 每天还有零零散散的几个新注册账号，和几条新增留言评论，我觉得自己不该一直“躺平摆烂式”管理，得想办法给这个小站加点新的元素。</p>
+<p>因此，NekoPixel 就诞生了。同 NekoBox 一样，它也是完全开源的：<a href="https://github.com/wuhan005/NekoPixel">https://github.com/wuhan005/NekoPixel</a></p>
+<h2 id="为什么选择做像素画">为什么选择做像素画？</h2>
+<p>我一直不想宣传 NekoBox，不想让它被太多人知道或被滥用。究其原因，这是我一个人因为兴趣开发运营的站点，我没有那么多精力去即时响应它发生的问题。当我在兔小巢上收到了新的用户反馈时，我只能等到一个不怎么忙且不怎么困的周末，才能静下心来好好写代码开发。我也在刻意降低 NekoBox 的社交属性。访客只能通过给定的链接看到注册用户的提问箱，没有其它任何热门用户推荐的功能。不同的注册用户之间，只能是在现实中或者其它平台上建立联系，在 NekoBox 中，他们互相不会打扰到对方。</p>
+<p>既然不方便强调独立个体，那就展现群体的力量！</p>
+<p>一群人在网络上一起绘制一幅图画，最早好像是从 Reddit 开始的，后面 B站在 2017 年暑假做了个<a href="https://live.bilibili.com/pages/1702/pixel-drawing">夏日绘板</a>的活动，用户每间隔一段冷却时间，可以拥有几个像素点，在一张共享的画布上作画。虽然当时B站还没上市，但用户体量是摆在那的，整场活动下来难免有用脚本捣乱的人。但好在最后效果挺好，可以说是 B站二次元属性最后的余晖了。时至今日，当年的活动页还有人在“缅怀”。我认为日后 B站不太有机会再举办这样的活动了，既赚不到钱，还得在内容安全上加大投入。</p>
+<p>NekoBox 就很适合做这个，不同兴趣爱好的用户可以画自己喜欢的东西，但前端又不会知道是谁主导绘制的。再加上 NekoBox 的用户本来就不多，大家圈地自萌玩一玩多好。</p>
+<h2 id="如何实现的">如何实现的？</h2>
+<p>像素画的前端开发难度远大于后端。我们先从相对简单的后端讲起。</p>
+<p>通过直接生啃 B站夏日绘板的前端（具体文件在 <code>pixel-drawing.d41b770e4052375671dc.js</code>），我们可以知道这是一个 1280 x 720 的图片。通过魔改的 Vue DevTools，可以直接看到其 Vue data 部分的内容：</p>
+<p><img src="https://github.red/images/2024/02/bilibili-painting-vue-tools.png" alt="bilibili-painting-vue-tools"></p>
+<p>在 <code>colorMaps</code> 对象存储的就是页面上调色盘的颜色。<code>colorMaps</code> 的 Value 是对应颜色的十六进制，Key 则是从 <code>0</code> 开始一直递增到 <code>A</code> <code>B</code> <code>C</code>&hellip; 的索引。那么考虑使用一位的字母或数字作为 Key，我们可以表达 36 种颜色（<code>0</code>-<code>9</code>，<code>A</code>-<code>Z</code>），要是加上特殊符号全角半角，则可以表示更多。</p>
+<p>在页面的 <code>1.0b2b4b3ccd53641b013c.js</code> 文件中，我们可以看到其返回了很长一串字符串：</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span>webpackJsonp([<span style="color:#a5d6ff">1</span>],{<span style="color:#a5d6ff">1697</span><span style="color:#ff7b72;font-weight:bold">:</span><span style="color:#ff7b72">function</span>(Q,O,E){
+</span></span><span style="display:flex;"><span> <span style="color:#a5d6ff">&#34;use strict&#34;</span>;<span style="color:#ff7b72">function</span> L(){
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">return</span><span style="color:#a5d6ff">&#34;MGE9EEEE0000090000001100000000&#34;</span>...<span style="color:#a5d6ff">&#34;111011101&#34;</span> <span style="color:#8b949e;font-style:italic">// 就是这一段几百KB的
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span> }Object.defineProperty(O,<span style="color:#a5d6ff">&#34;__esModule&#34;</span>,{value<span style="color:#ff7b72;font-weight:bold">:!</span><span style="color:#a5d6ff">0</span>}),O.getFreeSketchingBitmap<span style="color:#ff7b72;font-weight:bold">=</span>L}});
+</span></span></code></pre></div><p>该字符串中的每个字符是一个像素点，其对应的就是上述 <code>colorMaps</code> 中 Key 所指的颜色。前端通过解析该字符串，在 Canvas 中绘制出原本的图片。这种存储方式颇有点 bitmap 的味道。那么对于后端而言，我们只需要想办法能存储，并快速返回这段字符串即可。</p>
+<h3 id="mongodbpostgres">MongoDB？Postgres！</h3>
+<p>GitHub 上的开源大多是使用 MongoDB 来存储单个像素点，最后汇集起来返回。但我们这个场景下其实不太需要 NoSQL 的灵活功能，我便决定依旧使用 Postgres 来实现。我在 Postgres 中，创建一张名为 <code>canvas_pixels</code> 的表，共 921600 行（1280*720），用于存储整个画面的<strong>最新</strong>像素。</p>
+<table>
+<thead>
+<tr>
+<th>字段名</th>
+<th>类型</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>user_id</code></td>
+<td>INT</td>
+<td>最后绘制该像素的用户 ID</td>
+</tr>
+<tr>
+<td><code>x</code></td>
+<td>INT</td>
+<td>像素在画布上的 X 值</td>
+</tr>
+<tr>
+<td><code>y</code></td>
+<td>INT</td>
+<td>像素在画布上的 Y 值</td>
+</tr>
+<tr>
+<td><code>index</code></td>
+<td>STRING</td>
+<td>像素的颜色索引</td>
+</tr>
+<tr>
+<td><code>color</code></td>
+<td>STRING</td>
+<td>冗余字段，存储像素的十六进制编码</td>
+</tr>
+</tbody>
+</table>
+<p>整张表很简单易懂对不对？然后就可以愉快的使用 SQL，现将 <code>x</code> 和 <code>y</code> 排序，保证他们在画布上是依次排列出来的，再将 <code>index</code> 颜色索引字符串合并即可，如此简单粗暴的方法， 就可以将上面的字符串生成出来了啦~ 查询用时在 400ms 左右。</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-postgresql" data-lang="postgresql"><span style="display:flex;"><span><span style="color:#ff7b72">SELECT</span>
+</span></span><span style="display:flex;"><span> STRING_AGG(t<span style="color:#a5d6ff">.</span><span style="color:#ff7b72">index</span>, <span style="color:#a5d6ff">&#39;&#39;</span>)
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">FROM</span> (
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">SELECT</span>
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">INDEX</span>
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">FROM</span>
+</span></span><span style="display:flex;"><span> <span style="color:#a5d6ff">&#34;canvas_pixels&#34;</span>
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">WHERE</span>
+</span></span><span style="display:flex;"><span> x <span style="color:#ff7b72;font-weight:bold">&gt;=</span> <span style="color:#a5d6ff">0</span> <span style="color:#ff7b72">AND</span> y <span style="color:#ff7b72;font-weight:bold">&gt;=</span> <span style="color:#a5d6ff">0</span> <span style="color:#ff7b72">AND</span> x <span style="color:#ff7b72;font-weight:bold">&lt;=</span> <span style="color:#a5d6ff">1280</span> <span style="color:#ff7b72">AND</span> y <span style="color:#ff7b72;font-weight:bold">&lt;=</span> <span style="color:#a5d6ff">720</span>
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">ORDER</span> <span style="color:#ff7b72">BY</span>
+</span></span><span style="display:flex;"><span> y, x
+</span></span><span style="display:flex;"><span>) <span style="color:#ff7b72">AS</span> t
+</span></span></code></pre></div><p>但只存这张表会有一个问题，新的像素绘制将老的记录给盖掉了，我们没法追踪整张画布上图像随时间的变化。因此还有张 <code>pixels</code> 表来归档存储所有用户的每次像素操作。必要时可以通过 Scan 这张表，做出像 <a href="https://www.bilibili.com/video/av13900223">av13900223</a> 的画板变化动画。</p>
+<p>当用户绘制一个像素时，我们先往 <code>pixels</code> 插入一条数据，再更新 <code>canvas_pixels</code>，两个操作包在一个事务中即可。当然这里我有意画蛇添足用了 Trigger 触发器来做，也是想实际体验下触发器的使用。下方这段触发器的代码是直接让 ChatGPT 写的，可以看到它创建了一个函数，先从 <code>colors</code> 表中拿到十六进制颜色所对应的索引，然后更新 <code>canvas_pixels</code> 中对应的像素记录。</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-postgresql" data-lang="postgresql"><span style="display:flex;"><span><span style="color:#ff7b72">CREATE</span> <span style="color:#ff7b72">OR</span> <span style="color:#ff7b72">REPLACE</span> <span style="color:#ff7b72">FUNCTION</span> public<span style="color:#a5d6ff">.</span>upsert_canvas_pixel()
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">RETURNS</span> <span style="color:#ff7b72">trigger</span>
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">LANGUAGE</span> plpgsql
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">AS</span> <span style="color:#79c0ff">$function$
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff">DECLARE
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"> colorIndex TEXT;
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff">BEGIN
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"> SELECT index INTO colorIndex FROM colors WHERE color = NEW.color LIMIT 1;
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff">
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"> IF colorIndex IS NOT NULL THEN
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"> UPDATE canvas_pixels
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"> SET color = NEW.color, index = colorIndex
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"> WHERE x = NEW.x AND y = NEW.y;
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff">
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"> IF NOT FOUND THEN
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"> INSERT INTO canvas_pixels(x, y, color, index)
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"> VALUES (NEW.x, NEW.y, NEW.color, colorIndex);
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"> END IF;
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"> ELSE
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"> RAISE EXCEPTION &#39;Color not found in colors table.&#39;;
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"> END IF;
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff">
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"> RETURN NEW;
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff">END;
+</span></span></span><span style="display:flex;"><span><span style="color:#79c0ff">$function$</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">--- 创建触发器
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span><span style="color:#ff7b72">CREATE</span> <span style="color:#ff7b72">OR</span> <span style="color:#ff7b72">REPLACE</span> <span style="color:#ff7b72">TRIGGER</span> trigger_upsert_canvas_pixel <span style="color:#ff7b72">AFTER</span> <span style="color:#ff7b72">INSERT</span> <span style="color:#ff7b72">ON</span> pixels <span style="color:#ff7b72">FOR</span> <span style="color:#ff7b72">EACH</span> <span style="color:#ff7b72">ROW</span> <span style="color:#ff7b72">EXECUTE</span> <span style="color:#ff7b72">FUNCTION</span> upsert_canvas_pixel ();
+</span></span></code></pre></div><p>上层的 RESTful API 那就随便糊一糊了，创建像素点的时候往 <code>pixels</code> 插一条记录即可，这里就不再赘述。</p>
+<h2 id="困难重重的-canvas">困难重重的 Canvas</h2>
+<p>NekoPixel 最难的部分在前端，更确切地说是在 Canvas。一开始我打算直接裸写 HTML + JavaScript，然后被一堆 <code>EventListener</code>搞得很烦，最后还是决定上 Vue3。</p>
+<p>先明确一下前端总体的功能：</p>
+<ul>
+<li>绘制像素：我们需要将后端返回的字符串转化成十六进制颜色，一个像素一个像素地绘制到 Canvas 上。</li>
+<li>滚轮缩放：用户滚动鼠标滚轮，可以实现画布的放大缩小。</li>
+<li>点击拖动：用户在放大画布后，点击画布可随意拖动查看。</li>
+<li>用户绘制：用户选择颜色后，点击 Canvas，将颜色填充到鼠标所指的像素上。</li>
+</ul>
+<h3 id="绘制像素">绘制像素</h3>
+<p>首先前端请求接口，拿到颜色的字符到十六进制的映射表，然后将后端返回的字符串，一个个字符转换成十六进制颜色数组。然后将颜色绘制上去。</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#ff7b72">const</span> imageData <span style="color:#ff7b72;font-weight:bold">=</span> baseContext.value.createImageData(width, height)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">const</span> arrayBuffer <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#ff7b72">new</span> ArrayBuffer(imageData.data.length)
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">const</span> clampedArray <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#ff7b72">new</span> Uint8ClampedArray(arrayBuffer)
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">const</span> uint32Array <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#ff7b72">new</span> Uint32Array(arrayBuffer)
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">for</span> (<span style="color:#ff7b72">let</span> i <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">0</span>; i <span style="color:#ff7b72;font-weight:bold">&lt;</span> pixels.canvas.length; i<span style="color:#ff7b72;font-weight:bold">++</span>) {
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">const</span> index <span style="color:#ff7b72;font-weight:bold">=</span> pixels.canvas[i]
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">const</span> color <span style="color:#ff7b72;font-weight:bold">=</span> colorMap.get(index) <span style="color:#ff7b72;font-weight:bold">??</span> [<span style="color:#a5d6ff">0</span>, <span style="color:#a5d6ff">0</span>, <span style="color:#a5d6ff">0</span>]
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">const</span> pixelValue <span style="color:#ff7b72;font-weight:bold">=</span> (<span style="color:#a5d6ff">255</span> <span style="color:#ff7b72;font-weight:bold">&lt;&lt;</span> <span style="color:#a5d6ff">24</span>) <span style="color:#ff7b72;font-weight:bold">|</span> (color[<span style="color:#a5d6ff">2</span>] <span style="color:#ff7b72;font-weight:bold">&lt;&lt;</span> <span style="color:#a5d6ff">16</span>) <span style="color:#ff7b72;font-weight:bold">|</span> (color[<span style="color:#a5d6ff">1</span>] <span style="color:#ff7b72;font-weight:bold">&lt;&lt;</span> <span style="color:#a5d6ff">8</span>) <span style="color:#ff7b72;font-weight:bold">|</span> color[<span style="color:#a5d6ff">0</span>]; <span style="color:#8b949e;font-style:italic">// 注意: 这里使用的是big-endian
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span> uint32Array[i] <span style="color:#ff7b72;font-weight:bold">=</span> pixelValue;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>imageData.data.set(clampedArray)
+</span></span><span style="display:flex;"><span>baseContext.value.putImageData(imageData, <span style="color:#a5d6ff">0</span>, <span style="color:#a5d6ff">0</span>)
+</span></span></code></pre></div><p>通过阅读代码，你会发现我们是将像素绘制到了在代码中新建的 <code>baseContext</code> 中，而不是 DOM 上展示的 <code>canvasPixels</code>。这是因为 Canvas 绘制刷新相当于直接将像素盖上去了，我们在后续点击拖动的过程中，看似是在拖动一张大的画布，Canvas 负责展示画布的一部分，其实 Canvas 是在不停地重绘覆盖之前的内容。因此需要有一份完整的备份，页面上的 Canvas 只是从备份中选取指定的部分展示。</p>
+<p>还有一个小细节是 Canvas 的 <code>ctx.imageSmoothingEnabled</code> 这个属性，一开始我发现图片绘制到 Canvas 上，放大后整个是糊的，不像 B站一样放大是棱角分明的像素点。问题就出在这个属性上，Canvas 默认将其设置为 <code>True</code>，即开启图像平滑，我们需要设置成 <code>False</code> 才能在 Canvas 放大后显示像素点。</p>
+<h3 id="滚轮缩放">滚轮缩放</h3>
+<p>用户在 Canvas 上滑动滚轮，我们需要处理 Canvas 的 <code>@wheel</code> 事件。首先使用 <code>preventDefault()</code> 来禁用默认的效果，防止整个浏览器页面被放大了。然后通过事件的 <code>deltaY</code> 属性的正负来判断是放大还是缩小，设置缩放比例后，重绘画布。</p>
+<p>画布的缩放，可以直接用 Canvas Context 的 <code>scale()</code>方法：</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span>ctx.scale(ratio.value, ratio.value)
+</span></span></code></pre></div><p>关于画布刷新函数 <code>refreshCanvas()</code>，ChatGPT 告诉我了超好用的 <code>save()</code> 和 <code>restore()</code> 来保存和还原画布状态。</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span>ctx.save()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>ctx.clearRect(<span style="color:#a5d6ff">0</span>, <span style="color:#a5d6ff">0</span>, paintingCanvas.value.width, paintingCanvas.value.height)
+</span></span><span style="display:flex;"><span>ctx.scale(ratio.value, ratio.value)
+</span></span><span style="display:flex;"><span>ctx.translate(deltaX.value, deltaY.value)
+</span></span><span style="display:flex;"><span>ctx.drawImage(baseCanvas.value, <span style="color:#a5d6ff">0</span>, <span style="color:#a5d6ff">0</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>ctx.restore()
+</span></span></code></pre></div><p>当调用 <code>save()</code> 时，Canvas 的当前全部状态将被放入栈中，相当于当下成为了 Canvas 的一个默认状态，在 <code>save()</code> 后的任何修改，都是在这个默认状态之上进行。当我们的改动完成后，使用 <code>restore()</code> 将保存的状态从栈中弹出，恢复状态。</p>
+<h3 id="点击拖动">点击拖动</h3>
+<p>点击拖动需要同时处理 <code>@mousedown</code> <code>@mousemove</code> <code>@mouseup</code> 三个事件，分别对应用户操作中的鼠标点击、鼠标移动拖动、鼠标抬起结束拖动。这边使用 <code>isMoving</code> 变量来判断当前鼠标点击，是要拖动还是要画像素点。Canvas Context 中使用 <code>translate()</code> 方法来平移画布，我们根据鼠标拖动事件的增量来计算平移的距离即可：</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span> <span style="color:#8b949e;font-style:italic">// Move canvas with translate.
+</span></span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"></span><span style="color:#ff7b72">if</span> (event.buttons <span style="color:#ff7b72;font-weight:bold">===</span> <span style="color:#a5d6ff">1</span>) {
+</span></span><span style="display:flex;"><span> deltaX.value <span style="color:#ff7b72;font-weight:bold">+=</span> event.movementX <span style="color:#ff7b72;font-weight:bold">/</span> ratio.value
+</span></span><span style="display:flex;"><span> deltaY.value <span style="color:#ff7b72;font-weight:bold">+=</span> event.movementY <span style="color:#ff7b72;font-weight:bold">/</span> ratio.value
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">if</span> (deltaX.value <span style="color:#ff7b72;font-weight:bold">&gt;</span> <span style="color:#a5d6ff">0</span>) {
+</span></span><span style="display:flex;"><span> deltaX.value <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">0</span>
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">if</span> (deltaY.value <span style="color:#ff7b72;font-weight:bold">&gt;</span> <span style="color:#a5d6ff">0</span>) {
+</span></span><span style="display:flex;"><span> deltaY.value <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">0</span>
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">if</span> (baseContext.value) {
+</span></span><span style="display:flex;"><span> refreshCanvas()
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="用户绘制">用户绘制</h3>
+<p>用户绘制即在 <code>@mousedown</code> 的时候，判断 <code>isMoving === false</code> 时，将对应像素点的颜色，填充进上面提到的备份 Canvas <code>baseContext</code> 中，再用 <code>refreshCanvas()</code> 函数刷到页面上的 Canvas 里。最后用户需要手动点击页面上的结束绘制，这时将用户绘制的像素点信息发送到后端接口入库保存。</p>
+<h2 id="如何引入到现有项目中">如何引入到现有项目中？</h2>
+<p>以上就是 NekoPixel 的实现原理和关键点，你可以对照开源的代码仔细分析。</p>
+<p>NekoPixel 是一个由 Vue3 编写的前后端分离的应用，我该如何将其引入到我的前后端不分离的 NekoBox 中呢？我了解到 Vue 支持 UMD (Universal Module Definition) 组件化构建，最终产物是一个 JavaScript 文件，将其内嵌到 NekoBox 页面中，然后设置其 Mount 到指定的 <code>&lt;div&gt;</code> 元素中即可。</p>
+<p>你可以在 <a href="https://github.com/wuhan005/NekoPixel/blob/master/web/config/vite.config.umd.ts">vite.config.umd.ts</a> 中看到其 VIte 构建配置。构建出来的前端产物将被发布为 NPM 包：<a href="https://www.npmjs.com/package/@e99p1ant/neko-pixel-umd">@e99p1ant/neko-pixel-umd</a>，找个 NPM 镜像源引入其 JavaScript 和 CSS 到 NekoBox 中即可使用。日后需要更新，也只用在 NekoBox 的模板中修改下 NPM 的版本号即可，十分方便。</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-html" data-lang="html"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">&lt;!-- CSS 样式 --&gt;</span>
+</span></span><span style="display:flex;"><span>&lt;<span style="color:#7ee787">link</span> rel<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;stylesheet&#34;</span> href<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;https://unpkg.com/@e99p1ant/neko-pixel-umd@0.0.17/style.css&#34;</span>/&gt;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">&lt;!-- 挂载 NekoPixel 的 div 标签 --&gt;</span>
+</span></span><span style="display:flex;"><span>&lt;<span style="color:#7ee787">div</span> id<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;app&#34;</span>&gt;&lt;/<span style="color:#7ee787">div</span>&gt;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">&lt;!-- 自定义配置 --&gt;</span>
+</span></span><span style="display:flex;"><span>&lt;<span style="color:#7ee787">script</span>&gt;
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">var</span> NEKO_CONFIG <span style="color:#ff7b72;font-weight:bold">=</span> {pixelBaseURL<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">&#39;/api/v1/pixel&#39;</span>}
+</span></span><span style="display:flex;"><span>&lt;/<span style="color:#7ee787">script</span>&gt;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">&lt;!-- NekoPixel UMD 产物 --&gt;</span>
+</span></span><span style="display:flex;"><span>&lt;<span style="color:#7ee787">script</span> src<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;https://unpkg.com/@e99p1ant/neko-pixel-umd@0.0.17/neko-pixel-app.umd.js&#34;</span>&gt;&lt;/<span style="color:#7ee787">script</span>&gt;
+</span></span></code></pre></div><p>你可能注意到了上面代码中的 <code>NEKO_CONFIG</code> 属性，在 NekoPixel 的 <a href="https://github.com/wuhan005/NekoPixel/blob/master/web/src/api/interceptor.ts">interceptor.ts</a> 中，我通过全局环境下的该变量设置 axios 请求库的 <code>baseURL</code>。这样其实就简单实现了外部与 UMD 组件的沟通。</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#ff7b72">if</span>(window.NEKO_CONFIG){
+</span></span><span style="display:flex;"><span> axios.defaults.baseURL <span style="color:#ff7b72;font-weight:bold">=</span> window.NEKO_CONFIG.pixelBaseURL;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>通过修改原本的 <code>baseURL</code>，将 NekoPixel 画板的所有请求指向 NekoBox 的 <code>/pixel</code> 下，<code>/pixel</code> 路由转发用户请求到服务器上的 NekoPixel。相当于 NekoBox 在中间做了层反代 <a href="https://github.com/NekoWheel/NekoBox/blob/master/route/pixel/pixel.go#L23-L62">pixel.go</a>，为的是能将绘制像素点的用户 ID 带上，放到最终请求入库保存。</p>
+<h2 id="最后说几句">最后说几句</h2>
+<p>NekoPixel 是我今年在老家过年的时候开发的，发布上线后，我简单的用像素点写了个 <code>NKBOX</code>。后续真的有大触在上面画了像素画！我的 NekoBox 账号也收到了用户匿名反馈说很喜欢这个新功能。</p>
+<p><img src="https://github.red/images/2024/02/neko-pixel-0224.png" alt="neko-pixel-0224"></p>
+<p>但其实还有很多需要完善的地方，比如画板不会向鼠标所在的位置缩放（还是 Y7 提的呜呜呜）、加载画板的时候没有提示、用户绘制时的验证与限流等，都是要努力去实现的。</p>
+<p>自从过年那阵子，就有人一直在 DDoS NekoBox 及其子域。刚开始的时候毫无防御被刷了一波阿里云账单，后续由于阿里云产品的各种离谱设定，加上工单客服给的防御方案根本不起作用，我将 NekoBox 以及自己的其他服务由阿里云迁移到了 Cloudflare 上，这才有所缓解。特别是前些日子一晚上打出了 <strong>10T</strong> 的流量！这要是还放阿里云上，我直接就 5000 块没了。</p>
+<p>互联网上还是坏人多呀，一开始是疯狂刷我 NekoBox 上挂的支付宝收款码图片。Y7 也劝我不要再将 NekoBox 的打赏记录公开出来，省得有人眼红搞事，但我想着这是需要对社区公开的信息，且打赏的人可能也是抱着能被展示出来的心情才打赏的。</p>
+<p>我也在想 NekoBox 这个站还要不要继续搞下去，更深层次的，我是不是不应该再抱着所谓“开源”和“用爱发电”的心情去面对技术。就像我最近博客收到的一条评论中所提及的，是不是用技术以及信息差去割韭菜是不是才是更重要的？以前看到很多 GitHub 上千 stars 项目的作者，在个人 Profile 里发 want a job，当时还疑惑他们这么出名这么厉害，怎么会没工作的呢？最近这段时间，我开始慢慢理解了。我开始越发觉得“开源”本身是奢侈的。每次发现我的一些开源项目被人拿去商用赚的盆满钵满的时候，我什么也得不到，所谓的“协议”也只是自欺欺人罢了。我现在日常把“开源”当做乐趣，实在是一种“不自量力”的行为。当我下个月没地方住、下顿饭没钱吃的时候，所谓的“社区”又在哪呢？</p>

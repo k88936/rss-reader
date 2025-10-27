@@ -1,0 +1,128 @@
+<blockquote>
+<p>文章封面使用 DALL·E 3 生成</p></blockquote>
+<p>从三月底开始一直比较忙，最近一切尘埃落定，自己在家也休息了几天，这才能做点自己的事情。</p>
+<p>由于一些原因 <span class="heimu" onclick="()=>{}">（是的，我要入职腾讯了）</span>，我准备将之前部署在 Cloudflare Pages 上的博客，也就是你现在看到的这个站点，迁移到国内腾讯云上。本以为是很简单的一个操作，完全没有必要大费周章地专门写一篇文章来记录，但现实是我在腾讯云上来来回回试了好几个产品，最终才勉强将这整套的持续集成方案给搭起来。</p>
+<p>我以前一直是阿里云的忠实用户。但我对阿里云是又爱又恨，没少骂过阿里云残缺的产品功能和听不懂人话的弱智客服。甚至以前在 EFC 上班的时候，路过英国中心楼下想到阿里云就气不打一处来。但即使是这样，阿里云还是全中国排名第一的云，这说明什么？说明其他家的云更是草台班子！</p>
+<p>说回腾讯云，我大一的时候，曾在腾讯云上开过学生机，后面毕业了优惠没了也就销毁了。腾讯云给我的第一感觉是他的 UI 做得很舒服，操作反馈颇有点 Azure 的感觉。但除开 UI 之外，产品的功能设计还有很大的提升空间。</p>
+<p>我感觉国内做云的，都是先拿类 OpenStack 做一套管控机房物理资源的系统，然后开始卖 ECS 这样的云主机，卖了一阵子后觉得我可以在一台 ECS 上装点数据库软件、监控软件、消息队列中间件等东西，然后单独拆成如 RDS 这样的服务来卖。卖了一阵子后，发现又可以把好多台 ECS 合起来卖 Kubernetes 集群托管，Kubernetes 托管卖了之后又发现可以在上面二开跑点容器卖 Serverless 服务&hellip;&hellip;</p>
+<p>就这样在之前的产品的能力上糊一层然后演化成新的产品。</p>
+<p>我不好评价这样的做法是对还是错。我认为复用已有能力做新产品前，对于新产品的定位以及将具备的核心功能，必须要想清楚。倘若底层的功能过于局限，或者必要配置项比较“狭窄”，则应该考虑另起炉灶而不是在上面糊一层兼容的 Shim。</p>
+<h2 id="web-应用托管-webify">Web 应用托管 Webify</h2>
+<p>我一开始是无脑选择腾讯云的 <a href="https://cloud.tencent.com/product/webify">Webify</a> 来部署我的静态页面。从名字就可以看出它是借鉴的 Netlify，产品形态上跟 Netlify、Vercel、Cloudflare Pages 等页面托管产品差不多。</p>
+<p>但问题就出在——腾讯云没有将 Webify 作为的一个单独的产品进行研发，它是属于腾讯云 Cloudbase 云开发产品下的一个子功能！这个 Cloudbase 是啥？是一个类似于 LeanCloud 或者 Heroku 一样的东西，用户在上面托管 Serverless 应用，同时使用 Cloudbase 提供的存储、数据库、云函数等功能。</p>
+<p>Webify 作为 Cloudbase 产品的一个子功能，复用了 Cloudbase 部署应用时的 CI/CD 工作流。对于 Cloudbase 而言这个 Webify 实例是一个按量计费的 <code>WebifyPackage</code> ”环境“，在控制台上就莫名其妙地将 Cloudbase 的“环境“这个概念集成进了 Webify 产品中，但是这个“环境”是系统创建的，你控制台点进去还会报错说无权限！</p>
+<p>在产品计费上，Webify 有自己的一套按月付费的包，包含 CDN 流量、静态存储容量等内容。但这些用量又和底层的 Cloudbase 的用量藕断丝连。以至于我发工单问客服 CDN 流量用完了是怎么计费，他先是说流量用完后直接回原，跟 CDN 服务无关，一会又给我发 CDN 的计费文档，我指出他说得前后矛盾之后，过了一会直接电话打过来跟我解释才讲明白。（我发现现在阿里云和腾讯云的客服水平都变差了，动不动就一个电话过来解释，为啥不能线上消息或者文档说明白？）</p>
+<p><img src="https://github.red/images/2024/04/tencent-cloud-workorder-01.png" alt="tencent-cloud-workorder"></p>
+<p>但以上种种也都只是控制台操作上有些不合理，让我来试下实际产品怎么样。</p>
+<p>首先是 Weblify 不支持 Hugo 站点的自动构建，不像 Cloudflare Pages 或者 Vercel 那样，选择好仓库后能自动推断出技术栈，并补全构建命令。Weblify 只支持常见的 JavaScript 框架编写的项目。</p>
+<p>解决的办法也不难，我稍微拐个弯，在 GitHub 上建一个仓库，存放构建好的 Hugo 站点文件即可。只需在原 Hugo 项目的 GitHub Actions 流水线中加条 Hugo 构建并推送到仓库即可。</p>
+<p>在 Weblify 上配置 GitHub OAuth 授权后，选择存放构建后静态资源的仓库，直接静态托管该仓库的内容。然后 Webify 构建又报错了&hellip;&hellip;</p>
+<p><img src="https://github.red/images/2024/04/cloudbase-ci-error.png" alt="cloudbase-ci-error"></p>
+<p>根据构建日志，我发现这垃圾玩意是把 <code>git pull</code> 下来的仓库内容，打成 ZIP 压缩包，再用 Cloudbase CLI 推送上去，然后这 Cloudbase CLI 不支持推送超过 100MB 的文件！发工单问客服，答曰：</p>
+<blockquote>
+<p>Webify目前限制构建产物的体积在100MB内，建议客户减少部署包的体积。
+图片、音视频等大体积的资源，可以使用CLI工具手动上传到环境内的某个固定目录。</p></blockquote>
+<p>哈？？？我站点超过 100MB 还不能自动构建还得手动上传？？？本来用 Weblify 就是图个方便，最后还要我自己上传？</p>
+<p>没办法，我打算把 CLI 手动上传的步骤放到 GitHub Actions 的工作流里，即 Hugo 构建完后直接上传至 Weblify。搞了半天成功了，结果 Webify 访问网页直接显示 <code>NO ROUTE</code> 报错，且在控制台上也完全没有找到默认主页、404 页面的配置项。我想就算我解决了 <code>NO ROUTE</code> 的问题，后面默认主页和 404 页面配置不了也还是残废，索性直接申请退款，放弃！</p>
+<h2 id="回归-cos--cdn">回归 COS + CDN</h2>
+<p>那只能回到传统的静态网站部署方案：将静态文件上传至 COS（腾讯云的对象存储），然后前面套个 CDN。</p>
+<p>继续改 GitHub Actions 流水线，将构建好的产物上传至 COS Bucket。然后我发现官方提供的 <a href="https://github.com/TencentCloud/cos-action">COS Action</a> 就是个 Bug 百出的垃圾！这里我要实名 diss 这个仓库的原作者 <a href="https://github.com/mingshun">mingshun</a> 我不知道你是不是鹅厂的，但我知道你肯定没认真测试过你写的代码！</p>
+<p>例如以下代码 <a href="https://github.com/TencentCloud/cos-action/blob/master/index.js#L110C5-L110C43">TencentCloud/cos-action@index.js#L110</a>：</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span>} <span style="color:#ff7b72">while</span> (data.IsTruncated <span style="color:#ff7b72;font-weight:bold">===</span> <span style="color:#a5d6ff">&#39;true&#39;</span>);
+</span></span></code></pre></div><p>这个 <code>IsTruncated</code> 传进来只能是 Boolean 类型的 <code>true</code> 或者 <code>false</code>，你拿他跟一个字符串类型的<code>'true'</code> 强比较，这里恒为 <code>false</code>，导致这个 <code>while</code> 循环永远也跳不出来，一直卡着。我睡一觉醒来后发现我的 Workflow 跑了六个小时，然后被 GitHub 因为超时干掉了。</p>
+<p>除了上面的这位原作者，还有 <a href="https://github.com/ShirasawaSama">Shirasawa</a> 这位，因为我有朋友也关注了这位老哥，因此我就不喷了。我只能说老哥你多看下 COS SDK 的源码吧，明明就有 <code>accelerate</code> 这个加速域名参数的，你非得自己实现个：</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span>Domain<span style="color:#ff7b72;font-weight:bold">:</span> core.getInput(<span style="color:#a5d6ff">&#39;accelerate&#39;</span>) <span style="color:#ff7b72;font-weight:bold">===</span> <span style="color:#a5d6ff">&#39;true&#39;</span> <span style="color:#ff7b72;font-weight:bold">?</span> <span style="color:#a5d6ff">&#39;{Bucket}.cos.accelerate.myqcloud.com&#39;</span> <span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#79c0ff">undefined</span>,
+</span></span></code></pre></div><p>搞得后面不开<code>accelerate</code> 那就是直接 Domain 为 <code>undefined</code> 然后报错。</p>
+<p>没办法，鉴于官方的 Actions 质量如此之差，我索性 Fork 改了个自己用：<a href="https://github.com/wuhan005/tencent-cos-action/">wuhan005/tencent-cos-action</a>。然后我惊讶的发现，从 GitHub Actions 的美国节点，即使走 accelerate 加速域名上传文件到位于上海的 COS Bucket，也是 1-2 秒上传一个文件，我每次部署都要上传 1000+ 个文件，直接大半个小时过去了，这个部署上传的时间是我无法接受的。</p>
+<h3 id="coding">CODING</h3>
+<p>那我得想办法让 Hugo 在境内的节点进行构建，然后从境内传到 COS Bucket 中。这次，我盯上了腾讯云自己搞的代码托管平台 CODING，本质上就是个啥都有的缝合怪。</p>
+<p>好在他可以添加外部的 GitHub 仓库，并通过 GitHub OAuth 授权后，在仓库中安装 CODING 的 GitHub App，配置 WebHook。GitHub 仓库有新的推送后，触发 CODING 的流水线进行构建。经过数次调试后，最终可用的 CODING 流水线文件内容如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>pipeline {
+</span></span><span style="display:flex;"><span> agent any
+</span></span><span style="display:flex;"><span> stages {
+</span></span><span style="display:flex;"><span> stage(&#39;检出&#39;) {
+</span></span><span style="display:flex;"><span> steps {
+</span></span><span style="display:flex;"><span> checkout([$class: &#39;GitSCM&#39;,
+</span></span><span style="display:flex;"><span> branches: [[name: GIT_BUILD_REF]],
+</span></span><span style="display:flex;"><span> userRemoteConfigs: [[
+</span></span><span style="display:flex;"><span> url: GIT_REPO_URL,
+</span></span><span style="display:flex;"><span> credentialsId: CREDENTIALS_ID
+</span></span><span style="display:flex;"><span> ]]])
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span> stage(&#39;安装 Hugo&#39;) {
+</span></span><span style="display:flex;"><span> steps {
+</span></span><span style="display:flex;"><span> sh &#39;apt install snapd&#39;
+</span></span><span style="display:flex;"><span> sh &#39;snap install hugo dart-sass&#39;
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span> stage(&#39;构建&#39;) {
+</span></span><span style="display:flex;"><span> steps {
+</span></span><span style="display:flex;"><span> sh &#39;hugo --minify&#39;
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span> stage(&#39;上传到 COS Bucket&#39;) {
+</span></span><span style="display:flex;"><span> steps {
+</span></span><span style="display:flex;"><span> sh &#34;coscmd config -a ${COS_SECRET_ID} -s ${COS_SECRET_KEY} -b ${COS_BUCKET_NAME} -r ${COS_BUCKET_REGION}&#34;
+</span></span><span style="display:flex;"><span> sh &#34;coscmd upload -rfs --delete public/ /&#34;
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span> stage(&#34;刷新 CDN 缓存&#34;) {
+</span></span><span style="display:flex;"><span> steps {
+</span></span><span style="display:flex;"><span> sh &#34;pip install --upgrade tencentcloud-sdk-python&#34;
+</span></span><span style="display:flex;"><span> sh &#34;python ./dev/refresh-tencent-cdn.py -i ${COS_SECRET_ID} -k ${COS_SECRET_KEY}&#34;
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>我在 Hugo 仓库中加了个刷新腾讯云 CDN 缓存的 Python 脚本，上传成功后再执行这个脚本刷新 CDN 缓存。现在完整构建并部署一次的时间大约在 3-4 分钟。</p>
+<p><img src="https://github.red/images/2024/04/coding-ci.png" alt="coding-ci"></p>
+<p>勉强能接受吧，要知道在 Cloudflare Pages 上可是 1-2 分钟就能完成，并且还不需要我自己做这个多的配置！！</p>
+<h2 id="说回-cdn-防盗刷">说回 CDN 防盗刷</h2>
+<p>费劲周折，我总算是成功的将博客部署到了腾讯云上。</p>
+<p>之前迁移至 Cloudflare 的原因是我七牛云和阿里云都因为 CDN 被盗刷，导致一夜之间账单欠了 ￥600+。我也不知道互联网上为什么会有这么多干着这些损人不利己的蠢事的人。</p>
+<p>因此在迁移之前，我十分谨慎地调研过腾讯云的 CDN 防盗刷功能，最后的结论是发现他们做得居然还不错，可以说是已经相当尽力了。在 COS 对象存储的「安全管理」菜单下，居然有一个「盗刷风险监测」功能！从各个维度评估了是否有盗刷风险，真的让人眼前一亮！建议阿里云赶紧跟进下。</p>
+<p><img src="https://github.red/images/2024/04/tencent-cos-security-detection.png" alt="tencent-cos-security-detection"></p>
+<p>我总结了下，具体是这几个方面的配置，以及我自己的配置值。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center">所属产品</th>
+<th style="text-align: center">配置项</th>
+<th style="text-align: center">备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center">对象存储 COS</td>
+<td style="text-align: center">存储桶权限</td>
+<td style="text-align: center">配置为<code>私有读写</code>，授权 CDN 子用户访问，其余公网请求全部 ban 掉</td>
+</tr>
+<tr>
+<td style="text-align: center">内容分发网络 CDN</td>
+<td style="text-align: center">防盗链配置</td>
+<td style="text-align: center">配置白名单 Referer（治标不治本，CC攻击加个头就行）</td>
+</tr>
+<tr>
+<td style="text-align: center">内容分发网络 CDN</td>
+<td style="text-align: center">IP访问限频配置</td>
+<td style="text-align: center">10QPS（单个 IP 限制，有一定效果）</td>
+</tr>
+<tr>
+<td style="text-align: center">内容分发网络 CDN</td>
+<td style="text-align: center">下行限速配置</td>
+<td style="text-align: center">全部内容，限速 1024KB/s（这个值我感觉还可以再低，防止被刷流量）</td>
+</tr>
+<tr>
+<td style="text-align: center">内容分发网络 CDN</td>
+<td style="text-align: center">用量封顶配置</td>
+<td style="text-align: center">流量每五分钟瞬时用量超过 2GB、HTTPS 请求数每五分钟超过 100 万次、当天 24 点前累计流量超过 10GB。（触发后会直接停掉 CDN 服务，防止一觉醒来账单爆炸）</td>
+</tr>
+</tbody>
+</table>
+<p>以上配置是否能真的防住 CC 攻击，还得看腾讯云的用量封顶配置多久生效。虽然官方说是 10 分钟左右，这个时间我觉得还是有些长，万一对面 10 分钟打出了 1 TB 流量呢？但同时腾讯云官方又给出了一种通过定时 Serverless 函数，请求腾讯云 API 检测 CDN 用量，超过用量后使用 API 关闭 CDN 服务的方法。由于是自建 Serverless 定时函数，时间周期可以设的更短，这个后续我可以尝试下。</p>
+<h2 id="最后说几句">最后说几句</h2>
+<p>后续我可能会把阿里云集群上的业务也迁到腾讯云上来。</p>
+<p>最近一个多月以来自己得睡眠质量不是很好，总是忧心忡忡。好在现在都已尘埃落定，我如愿拿到了腾讯的 Offer，自己这波“金三银四”还算顺利。这过程中的怀疑、悔恨、不甘，现在回想起来也都不重要了。</p>
+<p>站在人生的又一个起点，我还依旧觉得没什么实感。对于后面匆匆收拾东西，搬去上海，我也不确定自己是否准备好了。但我可以肯定的是，自己已经跳出了原来的舒适圈，面前的是另一个更舒适的舒适圈还是更艰难的挑战，这还尚不可知。</p>
+<p><img src="https://github.red/images/2024/04/tencent-offer-accepted.png" alt="tencent-offer-accepted"></p>
