@@ -54,10 +54,16 @@
     "url": "https://minux.hu/rss.xml",
     "folder": ""
   },
-
+  {
+    "name": "alrawsabed",
+    "url": "https://alrawasabed.com/rss.xml",
+    "folder": ""
+  },
   {
     "name":"Red Thought",
     "url":"https://feeds.feedburner.com/thoughtsfromtheredplanet?format=xml",
     "folder":""
   }
+  
+  
 ]
