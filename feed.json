@@ -63,7 +63,10 @@
     "name":"Red Thought",
     "url":"https://feeds.feedburner.com/thoughtsfromtheredplanet?format=xml",
     "folder":""
+  },
+  {
+    "name": "Razonyang",
+    "url": "https://razonyang.com/zh-hans/index.xml",
+    "folder": ""
   }
-  
-  
 ]
