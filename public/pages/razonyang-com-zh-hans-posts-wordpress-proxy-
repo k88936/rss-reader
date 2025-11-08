@@ -1,0 +1,1 @@
+<p>如果你的 WordPress 所在服务器在境内，应该是无法在线自动更新的，这是因为境内发出的请求，WordPress 都会返回 429 Too Many Requests。本篇介绍如何通过代理解决。</p>

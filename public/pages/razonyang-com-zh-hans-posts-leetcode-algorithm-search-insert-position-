@@ -1,0 +1,2 @@
+<p>现给出一个已排序（升序）的数组和一个 <strong>target</strong> 值，如果找到该 <strong>target</strong>，则返回其所在数组的索引。<br>
+如果没有找到，则按照升序，返回 <strong>target</strong> 应被插入的位置。</p>

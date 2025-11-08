@@ -1,0 +1,10 @@
+<p>前段时间导入了 WSL 备份，可能期间出了些许问题，导致 WSL 的默认登录用户为 <code>root</code>，本文将记录如何通过修改 <code>/etc/wsl.conf</code> 配置来设置默认用户。</p>
+<h2 id="配置">配置</h2>
+<p>编辑 <code>/etc/wsl.conf</code>，追加以下配置，修改其中的 <code>username</code> 并保存，然后重启 WSL 即可。</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="ln">1</span><span class="cl">[user]
+</span></span><span class="line"><span class="ln">2</span><span class="cl">default=username
+</span></span></code></pre></div>
+
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="ln">1</span><span class="cl">wsl --shutdown
+</span></span><span class="line"><span class="ln">2</span><span class="cl">wsl
+</span></span></code></pre></div>

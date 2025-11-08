@@ -1,0 +1,7 @@
+<p>SSH 秘钥提供了另一种身份验证的方法，其最大的好处是可以避免重复输入账号和密码。特别地，当你开启双重认证（2FA）时，你还需要额外生成访问令牌（access token）以替代密码，而且访问令牌难以记忆和存放不安全，这是十分头疼的。所以本文将介绍如何添加 SSH 秘钥到 GitHub，让开发更舒适。</p>
+
+ <blockquote
+ 
+ class="blockquote border-start ps-3 py-1 border-primary border-4">
+ <p>本文不仅适用于 GitHub，同样可用于其他 Git 平台，如：GitLab、Gitee 等。</p>
+ </blockquote>

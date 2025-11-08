@@ -1,0 +1,11 @@
+<p>Proxy SwitchyOmega 于谷歌浏览器商店现已不再可用，你将会看到以下信息：</p>
+
+ <blockquote
+ 
+ class="blockquote border-start ps-3 py-1 border-primary border-4">
+ <p>This extension is no longer available because it doesn&rsquo;t follow best practices for Chrome extensions.</p>
+ </blockquote>
+<p>幸好，我们可以使用 <a
+ href="https://chromewebstore.google.com/detail/proxy-switchyomega-3-zero/pfnededegaaopdmhkdmcofjmoldfiped?hl=en"
+ 
+ target="_blank" rel="noopener noreferrer">ZeroOmega</a> 替代，不过需要手动重新配置了。</p>

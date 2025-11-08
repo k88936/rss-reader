@@ -1,0 +1,2 @@
+<p>今天对 Arch Linux 系统进行全量更新重启后，发现外置显示器无法识别了，查看 <code>dmesg</code> 的信息后，发现 NVIDIA 模块并未成功加载。经查阅 WIKI 后，需要设置 <code>ibt=off</code> 内核参数。
+本文将记录 GRUB 如何设置 Linux 内核参数。</p>

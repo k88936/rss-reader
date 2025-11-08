@@ -1,0 +1,16 @@
+<h2 id="错误">错误</h2>
+<p>当拉取不带有 <code>docker.io</code> 前缀的 Docker Hub 镜像时，会出现以下类似错误：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="ln">1</span><span class="cl">Error: short-name &#34;hugomods/hugo&#34; did not resolve to an alias and no unqualified-search registries are defined in &#34;/etc/containers/registries.conf&#34;
+</span></span><span class="line"><span class="ln">2</span><span class="cl">[server] | Error: no container with name or ID &#34;razonyang-blog_server_1&#34; found: no such container
+</span></span></code></pre></div><h2 id="解决方法">解决方法</h2>
+<p>为了默认从 Docker Hub 拉取镜像，需要编辑 <code>/etc/containers/registries.conf</code> 并将 <code>docker.io</code> 追加到 <code>unqualified-search-registries</code> 数组。</p>
+
+ <blockquote
+ 
+ class="blockquote border-start ps-3 py-1 border-primary border-4">
+ <p>![NOTE]
+记得删除注释符 <code>#</code>，以使配置生效。</p>
+ </blockquote>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="ln">1</span><span class="cl">sudo /etc/containers/registries.conf
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-toml" data-lang="toml"><span class="line"><span class="ln">1</span><span class="cl"><span class="nx">unqualified-search-registries</span> <span class="p">=</span> <span class="p">[</span><span class="s2">&#34;docker.io&#34;</span><span class="p">]</span>
+</span></span></code></pre></div><p>保存后重新拉取镜像即可，一般不需要重启 Podman 服务。</p>

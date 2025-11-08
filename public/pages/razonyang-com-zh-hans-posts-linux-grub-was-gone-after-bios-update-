@@ -1,0 +1,6 @@
+<p>笔者笔记本（ThinkPad X1 Extreme）是双系统引导，昨天更新了下版本 1.25 的 BIOS ，然后发现我的 GRUB 引导不见了&hellip;无论如何都是引导 Windows，笔者尝试了以下方法：</p>
+<ul>
+<li><code>chroot</code> 到 Linux，重建 GRUB：<code>grub-install</code> 和 <code>grub-mkconfig</code></li>
+<li>关闭 Windows 快速启动，<code>bcdedit /set &quot;{bootmgr}&quot; path &quot;\EFI\Arch\grubx64.efi&quot;</code></li>
+</ul>
+<p>无果，在 BIOS Boot 或 Boot Menu 中都没有 GRUB 的踪影。</p>

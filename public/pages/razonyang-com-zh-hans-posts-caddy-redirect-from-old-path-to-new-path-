@@ -1,0 +1,4 @@
+<p>最近笔者将博客主题更换为 <a
+ href="https://github.com/razonyang/hugo-theme-bootstrap"
+ 
+ target="_blank" rel="noopener noreferrer">Bootstrap</a>，为了以后方便增添和区分繁体中文，打算将以前简体中文路径由 <code>/zh/</code> 改为 <code>/zh-cn/</code>。而笔者使用的是 Caddy 2 服务器，正好相关教程太少，顺便写一篇教程，以记录和方便其他有类似需求的小伙伴们。</p>
