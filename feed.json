@@ -79,7 +79,12 @@
     "url":"https://marc-b-reynolds.github.io/feed.xml",
     "folder":""
   },
-  
+  {
+    "name":"abhinavsarkar",
+    "url":"https://abhinavsarkar.net/everything.atom",
+    "folder":""
+  },
+
   {
     "name": "Razonyang",
     "url": "https://razonyang.com/zh-hans/index.xml",
