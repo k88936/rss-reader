@@ -1,0 +1,5 @@
+<p>上篇文章笔者<a
+ href="https://razonyang.com/zh-hans/blog/linux/replace-extensions-via-rename/"
+ 
+ >利用 rename 批量替换文件后缀名</a>，以将站点语言 <code>zh-cn</code>、<code>zh-tw</code> 分别改为了 <code>zh-hans</code>、 <code>zh-hant</code>。
+但这是不够的，还需要将旧路径重定向到新路径。由于笔者将站点容器化，利用 Nginx 来处理请求，并部署到个人的 k3s 集群，本文将简单说明如何使用 Nginx 进行重定向。</p>

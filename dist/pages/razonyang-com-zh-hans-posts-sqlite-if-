@@ -1,0 +1,1 @@
+<p>SQLite 并没有 IF 方法，不过我们可以使用 CASE WHEN 代替。</p>

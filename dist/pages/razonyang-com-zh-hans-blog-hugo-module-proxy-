@@ -1,0 +1,8 @@
+<p>众所周知 Go Module 服务器被墙了，因此需要指定代理服务器或者全局 VPN，而代理服务器比较简单方便，如：<a
+ href="https://goproxy.cn/"
+ 
+ target="_blank" rel="noopener noreferrer">GOPROXYCN</a> 和 <a
+ href="https://goproxy.io/"
+ 
+ target="_blank" rel="noopener noreferrer">GOPROXYIO</a>。
+而笔者之前很长一段时间利用 Hugo Module 来安装和更新主题，速度十分缓慢，而且经常失败，即使我设置了 <code>GO_PROXY</code> 环境变量。</p>

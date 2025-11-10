@@ -1,0 +1,1 @@
+<p>由于 Hugo 本地化功能仅支持 <code>zh-hans</code> 和 <code>zh-hant</code>，不支持 <code>zh-cn</code>、<code>zh-tw</code>、<code>zh-hk</code> 等中文语言代码，而笔者站点基于文件后缀名进行多语言化的，要更改语言代码，需要批量修改文件后缀名，而这正是本文主角 rename 的大显身手的时候。</p>

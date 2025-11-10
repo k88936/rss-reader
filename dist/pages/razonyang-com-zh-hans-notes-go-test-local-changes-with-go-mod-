@@ -1,0 +1,5 @@
+<p>最近笔者正在为自己写的主题 <a
+ href="https://github.com/razonyang/hugo-theme-bootstrap"
+ 
+ target="_blank" rel="noopener noreferrer">Hugo Bootstrap</a> 做一个默认模板，以便新手快速入门。
+主题将作为 Go Module 进行安装，但期间发现一些小 Bug，本地调试会更便捷，于是乎有了这篇文章。</p>

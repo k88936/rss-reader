@@ -1,0 +1,81 @@
+<p>前段时间重新导入了 WSL 的备份，然而 Docker Desktop 检测不到已经导入的 WSL，而这可能是因为 WSL 的版本问题。</p>
+<p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ <picture class="d-block text-center" >
+ <source srcset="https://razonyang.com/zh-hans/notes/docker/desktop-does-not-detect-wsl-distros/setting-wsl_hu_2a5066c93121a946.webp" type="image/webp" />
+ <img class="img-fluid" src="https://razonyang.com/zh-hans/notes/docker/desktop-does-not-detect-wsl-distros/setting-wsl.ea11c09965b5d108b801147b93b3766f.png" alt="Docker Desktop WSL integration" loading="lazy" height="608" width="822" />
+</picture>
+</p>
+<h2 id="检测-wsl-版本">检测 WSL 版本</h2>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="ln">1</span><span class="cl">wsl --list --verbose
+</span></span><span class="line"><span class="ln">2</span><span class="cl"> NAME STATE VERSION
+</span></span><span class="line"><span class="ln">3</span><span class="cl">* AlmaLinuxOS-9 Stopped <span class="m">2</span>
+</span></span><span class="line"><span class="ln">4</span><span class="cl"> Ubuntu Running <span class="m">1</span>
+</span></span><span class="line"><span class="ln">5</span><span class="cl"> docker-desktop-data Stopped <span class="m">2</span>
+</span></span><span class="line"><span class="ln">6</span><span class="cl"> docker-desktop Stopped <span class="m">2</span>
+</span></span></code></pre></div>
+
+<p>很显然，其中 <code>Ubuntu</code> 的版本为 <code>1</code>，Docker Desktop 自然无法检测到该 WSL 发行版。</p>
+<h2 id="设置-wsl-版本">设置 WSL 版本</h2>
+<p>解决方法很简单，只需要将 WSL 版本转换为 <code>2</code> 即可。</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="ln">1</span><span class="cl">wsl --set-version Ubuntu <span class="m">2</span>
+</span></span></code></pre></div>
+
+<p>转换完成后，重启 Docker Desktop，就可以看到相应的 WSL 发行版了，勾选再次重启 Docker Desktop 即可。</p>
+<p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ <picture class="d-block text-center" >
+ <source srcset="https://razonyang.com/zh-hans/notes/docker/desktop-does-not-detect-wsl-distros/setting-wsl2_hu_79c0ce3941670ac3.webp" type="image/webp" />
+ <img class="img-fluid" src="https://razonyang.com/zh-hans/notes/docker/desktop-does-not-detect-wsl-distros/setting-wsl2.9e307361180c4e2321ae876d22bb5982.png" alt="Docker Desktop WSL integration" loading="lazy" height="654" width="956" />
+</picture>
+</p>

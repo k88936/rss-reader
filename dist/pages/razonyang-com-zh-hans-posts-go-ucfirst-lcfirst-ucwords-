@@ -1,0 +1,1 @@
+<p>PHP 中 <code>ucfirst</code>、<code>lcfirst</code> 和 <code>ucwords</code> 在 Go 语言中可以通过 <code>strings</code> 和 <code>clevergo.tech/strutil</code> 实现。</p>

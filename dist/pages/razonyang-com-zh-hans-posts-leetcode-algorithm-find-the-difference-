@@ -1,0 +1,1 @@
+<p>给定两个只包含小写字母的字符串 <strong>s</strong> 和 <strong>t</strong>，其中字符串 <strong>t</strong> 是由字符串 <strong>s</strong> 乱序后，再在随机位置添加一个字母而成，请找到该随机添加的字母。</p>

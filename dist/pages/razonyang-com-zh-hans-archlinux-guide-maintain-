@@ -1,0 +1,25 @@
+<h2 id="背景">背景</h2>
+<p>Arch Linux 安装后，难免会遇到一些问题，从而导致无法正常开机，比如：</p>
+<ul>
+<li>由于 Xorg 安装不成功，而又未经验证，将桌面显示管理器（如 SDDM）设为开机自启时，则会导致无法看到图形界面或命令行终端界面，从而无法进行任何操作，这种情况则需要禁止桌面显示管理器开机自启，直至相关问题得以解决。</li>
+<li>某些系统错误导致无法开机，比如前些天笔者老笔记本出现了 “Failed to load kernel“ 的错误。</li>
+<li>LVM 分区容量调整。</li>
+</ul>
+<h2 id="准备">准备</h2>
+<p>你需要准备一个 LiveUSB，也就是用于系统安装的 U 盘，笔者建议保留一个独立的 U 盘，方便后续维护。</p>
+<h2 id="原理">原理</h2>
+<p>由于系统无法开机等原因，而无法<strong>直接</strong>在原系统上修正错误，所以我们需要通过外部工具（LiveUSB）进入（<code>arch-chroot</code>）系统，然后对原系统进行修改。</p>
+<h2 id="步骤">步骤</h2>
+<ol>
+<li>开机启动 LiveUSB</li>
+<li><a
+ href="https://razonyang.com/zh-hans/archlinux-guide/partition/#挂载分区"
+ 
+ >挂载系统的分区</a>，请按照自己系统的分区情况进行挂载，并确保挂载无误。</li>
+<li><a
+ href="https://razonyang.com/zh-hans/archlinux-guide/installation/#网络"
+ 
+ >连接网络</a>，可选。</li>
+<li><code>arch-chroot /mnt</code> 进入新系统后，进行问题排查和修复。</li>
+<li>问题修复后，重启机器并进入原系统验证。</li>
+</ol>

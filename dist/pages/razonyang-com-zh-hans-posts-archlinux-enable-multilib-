@@ -1,0 +1,1 @@
+<p>Arch Linux 有些软件是 32 位的，我们需要开启 multilib 才可以安装。下面介绍如何 Arch Linux 如何开启 multilib。</p>

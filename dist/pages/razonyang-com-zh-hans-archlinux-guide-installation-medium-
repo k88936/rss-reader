@@ -1,0 +1,29 @@
+<h2 id="准备">准备</h2>
+<ul>
+<li>一个 U 盘</li>
+<li>Arch Linux 的 ISO 文件，可从 <a
+ href="https://archlinux.org/download/"
+ 
+ target="_blank" rel="noopener noreferrer">Download</a> 页面获取。</li>
+</ul>
+<h2 id="制作">制作</h2>
+<h3 id="dd">dd</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="ln">1</span><span class="cl">sudo dd <span class="nv">bs</span><span class="o">=</span>4M <span class="k">if</span><span class="o">=</span>/path/to/archlinux.iso <span class="nv">of</span><span class="o">=</span>/dev/sdx <span class="nv">status</span><span class="o">=</span>progress <span class="o">&amp;&amp;</span> sync
+</span></span></code></pre></div>
+
+<ul>
+<li><code>if</code> - input file，改成下载的 ISO 镜像的路径。</li>
+<li><code>of</code> - output file，将 <code>/dev/sdx</code> 改为挂载的 U 盘，可以通过 <code>lsblk</code> 查看。</li>
+</ul>
+<h3 id="其他">其他</h3>
+<p>也可以通过 <a
+ href="https://rufus.ie/"
+ 
+ target="_blank" rel="noopener noreferrer">Rufus</a> 和 <a
+ href="https://sourceforge.net/p/usbwriter/wiki/Documentation/"
+ 
+ target="_blank" rel="noopener noreferrer">USBwriter</a> 之类的软件制作启动 U 盘。</p>
+<p>接下来，我们就可以启动 LiveUSB <a
+ href="https://razonyang.com/zh-hans/archlinux-guide/installation/"
+ 
+ >安装 Arch Linux</a> 了。</p>

@@ -1,0 +1,8 @@
+<p>最近将数据库服务迁移到阿里云的 RDS（MySQL 5.7） 时出现错误：</p>
+
+ <blockquote
+ 
+ class="blockquote border-start ps-3 py-1 border-primary border-4">
+ <p>Specified key was too long; max key length is 767 bytes</p>
+ </blockquote>
+<p>只需要修改参数 <strong>innodb_large_prefix</strong> 为 <strong>ON</strong> 即可。</p>

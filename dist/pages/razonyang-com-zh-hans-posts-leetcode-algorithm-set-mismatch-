@@ -1,0 +1,2 @@
+<p>集合 <strong>S</strong> 一般包含数字 <strong>1~n</strong>，但由于数据错误，其中的一个数字重复了，导致缺失了某一数字。</p>
+<p>现给出一个数组 <strong>nums</strong>，请找出其中重复和缺失的数字。</p>
