@@ -1,4 +1,4 @@
-<figure><img src="https://github.com/veekaybee/veekaybee.github.io/assets/3837836/dbbb8ee7-f19f-44df-bce7-2612817cacd2" width="400">
+<figure><img src="https://veekaybee.github.io/images/308389132-dbbb8ee7-f19f-44df-bce7-2612817cacd2.png" width="400">
 </figure>
 
 <!-- raw HTML omitted -->
@@ -75,23 +75,23 @@
 </li>
 <li><strong>The output</strong>: Generally for for chat completions tasks, <a href="https://arxiv.org/abs/2311.17301">the model returns the statistical likelihood</a> that any given word completes a phrase. It does this again and again for every word in the phrase, because of its autoregressive nature.</li>
 </ul>
-<p><figure><img src="https://github.com/veekaybee/veekaybee.github.io/assets/3837836/86da416b-c6d8-4fb7-abf9-fcd2a80a1614" width="400">
+<p><figure><img src="https://veekaybee.github.io/images/308907331-86da416b-c6d8-4fb7-abf9-fcd2a80a1614.png" width="400">
 </figure>
 
 <a href="https://arxiv.org/abs/2311.17301">Source.</a></p>
 <p>If the model is served as a consumer end-product, it only returns the actual text output based on the highest probabilities, with numerous strategies for <a href="https://huggingface.co/blog/how-to-generate">how that text is selected.</a></p>
-<figure><img src="https://github.com/veekaybee/veekaybee.github.io/assets/3837836/cb311adb-79f3-4eea-85be-7329e4aeb111" width="600">
+<figure><img src="https://veekaybee.github.io/images/307919510-cb311adb-79f3-4eea-85be-7329e4aeb111.png" width="600">
 </figure>
 
 <p>In short, we convert inputs to outputs using an equation. In addition to the model&rsquo;s output, we also have the model itself that is generated as an artifact of the modeling process.</p>
-<figure><img src="https://github.com/veekaybee/veekaybee.github.io/assets/3837836/67102dbc-d049-4131-997a-df1fa5378f91" width="600">
+<figure><img src="https://veekaybee.github.io/images/307919802-67102dbc-d049-4131-997a-df1fa5378f91.png" width="600">
 </figure>
 
 <h2 id="starting-with-a-simple-model">Starting with a simple model</h2>
 <p>Let&rsquo;s take a step back from the complexity of transformers and build a small linear regression model in PyTorch. Lucky for us, <a href="https://d2l.ai/chapter_linear-regression/index.html">linear regression is also</a> a (shallow) neural network, so we can work with it in PyTorch and map our simple model to more complex ones using the same framework.</p>
 <p>Linear regression takes a set of numerical inputs and generates a set of numerical outputs. (In contrast to transformers, which take a set of text inputs and generates a set of text inputs and their related numerical probabilities.)</p>
 <p>For example, let&rsquo;s say that we produce <a href="https://www.greatitalianchefs.com/features/hazelnuts-piedmont">artisinal hazlenut spread</a> for statisticians, and want to predict how many jars of Nulltella we&rsquo;ll produce on any given day. Let&rsquo;s say we have some data available to us, and that is, how many hours of sunshine we have per day, and how many jars of Nulltella we&rsquo;ve been able to produce every day.</p>
-<figure><img src="https://github.com/veekaybee/veekaybee.github.io/assets/3837836/66ca00e6-1baf-4eb0-9d3d-112966beb797" width="200">
+<figure><img src="https://veekaybee.github.io/images/308394339-66ca00e6-1baf-4eb0-9d3d-112966beb797.png" width="200">
 </figure>
 
 <p>It turns out that we feel more inspired to produce hazlenut spread when it&rsquo;s sunny out, and we can clearly see this relationship between input and output in our data (we do not produce Nulltella Friday-Sunday because we prefer to spend those days writing about data serialization formats):</p>
@@ -121,7 +121,7 @@
 <p>We optimize this function <a href="https://arxiv.org/abs/1609.04747">through gradient descent</a>, where we start with either zeros or randomly-initialized weights and continue recalculating both the weights and error term until we come to an optimal stopping point.
 We’ll know we&rsquo;re succeeding because our loss, as calculated by RMSE should incrementally decrease in every training iteration.</p>
 <p>Here&rsquo;s the whole model learning process end-to-end (with the exception of tokenization, which we only do for models where features are text and we want to do language modeling):</p>
-<figure><img src="https://github.com/veekaybee/veekaybee.github.io/assets/3837836/9f8fb4b8-4b19-45e2-bb04-7657e447d42f" width="600">
+<figure><img src="https://veekaybee.github.io/images/307921248-9f8fb4b8-4b19-45e2-bb04-7657e447d42f.png" width="600">
 </figure>
 
 <h1 id="writing-the-model-code">Writing the model code</h1>
@@ -297,12 +297,12 @@ We’ll know we&rsquo;re succeeding because our loss, as calculated by RMSE shou
 <p>While those models are training, she needs to save snapshots of their progress in such a way that they can be reloaded and resumed, in case the hardware fails or the job is preempted. Once models are trained, the researcher will want to load them again (potentially both a final snapshot, and some of the partially-trained checkpoints) in order to run evaluations and experiments on them.</p>
 </blockquote>
 <p>What do we mean by serialization? It&rsquo;s the process of writing objects and classes from our programming runtime to a file. Deserialization is the process of converting data on disk to programming language objects in memory. We now need to seralize the data into a bytestream that we can write to a file.</p>
-<figure><img src="https://github.com/veekaybee/veekaybee.github.io/assets/3837836/47228a07-abc0-410f-b62b-48b756e3b30a" width="600">
+<figure><img src="https://veekaybee.github.io/images/307925917-47228a07-abc0-410f-b62b-48b756e3b30a.png" width="600">
 </figure>
 
 <p>Why <a href="https://stackoverflow.com/questions/28552540/why-is-serialization-called-serialization">&ldquo;serialization&rdquo;</a>? Because back in the Old Days, data used to be stored on tape, which required bits to be in order sequentially on tape.</p>
 <p>Since many transformer-style models are trained using PyTorch these days, artifacts use PyTorch&rsquo;s <code>save</code> implementation for serializing objects to disk.</p>
-<figure><img src="https://github.com/veekaybee/veekaybee.github.io/assets/3837836/da1b0b43-de7e-4e78-ae06-32a21a018a08" width="600">
+<figure><img src="https://veekaybee.github.io/images/307916099-da1b0b43-de7e-4e78-ae06-32a21a018a08.png" width="600">
 </figure>
 
 <h1 id="what-is-a-file">What is a file</h1>
@@ -552,7 +552,7 @@ for GGML files, the quantization version is encoded in the ftype divided by 1000
 </span></span></span></code></pre></div><p>Then, we have the tensors</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#66d9ef">gguf_tensor_info_t</span>
 </span></span></code></pre></div><p>The entire file looks like this, and when we work with readers like <code>llama.cpp</code> and <code>ollama</code>, they take this spec and write code to open these files and read them.</p>
-<figure><img src="https://github.com/veekaybee/veekaybee.github.io/assets/3837836/0da77173-fd21-470c-90d1-fa31bcfc7119" width="600">
+<figure><img src="https://veekaybee.github.io/images/308998206-0da77173-fd21-470c-90d1-fa31bcfc7119.png" width="600">
 </figure>
 
 <h1 id="conclusion">Conclusion</h1>
