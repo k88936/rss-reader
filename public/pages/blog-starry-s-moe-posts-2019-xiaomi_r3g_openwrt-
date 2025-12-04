@@ -2,7 +2,8 @@
 <hr>
 <meting-js server="netease" type="song" id="22802176" theme="#233333"></meting-js>
 <blockquote>
-<p>本篇由于创作时间过于久远，部分下载链接可能失效，因长期未更新，教程仅供参考。</p></blockquote>
+<p>本篇由于创作时间过于久远，部分下载链接可能失效，因长期未更新，教程仅供参考。</p>
+</blockquote>
 <h2 id="准备工作">准备工作</h2>
 <p>你至少需要以下工具：</p>
 <ul>
@@ -15,7 +16,8 @@
 </ul>
 <h2 id="ssh到路由器">SSH到路由器</h2>
 <blockquote>
-<p>路由器重启后指示灯会变为蓝色, 若变为红色则为刷机失败。</p></blockquote>
+<p>路由器重启后指示灯会变为蓝色, 若变为红色则为刷机失败。</p>
+</blockquote>
 <p>安装开发者固件并开启SSH权限：</p>
 <ol>
 <li>
@@ -48,7 +50,8 @@
 </ul>
 <h2 id="刷入bootloader推荐可选">刷入Bootloader（推荐/可选）</h2>
 <blockquote>
-<p>该步骤可选是因为Breed不支持直接刷入Openwrt固件, 可参考<a href="https://www.right.com.cn/forum/forum.php?mod=viewthread&amp;tid=267455">这篇帖子</a>, 不过为了防止变砖, 还是推荐刷Breed。</p></blockquote>
+<p>该步骤可选是因为Breed不支持直接刷入Openwrt固件, 可参考<a href="https://www.right.com.cn/forum/forum.php?mod=viewthread&amp;tid=267455">这篇帖子</a>, 不过为了防止变砖, 还是推荐刷Breed。</p>
+</blockquote>
 <p>Breed原作者为hackpascal, <a href="https://breed.hackpascal.net/">此处为下载地址</a>, 文件名为<code>breed-mt7621-xiaomi-r3g.bin</code></p>
 <p>第一种方法是ssh到路由器后通过<code>wget</code>下载breed文件再刷入（需要确保路由器联网）, 下载地址为https所以需要加上<code>--no-check-certificate</code>参数。</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-gdscript3" data-lang="gdscript3"><span class="line"><span class="cl"><span class="n">cd</span> <span class="o">/</span><span class="n">tmp</span>
@@ -74,7 +77,8 @@
 <blockquote>
 <p>如果kernel0存在kernel1不存在, 那么启动kernel0
 如果kernel1存在kernel0不存在, 那么启动kernel1
-如果kernel0和kernel1都存在, 那么检查环境变量 <code>xiaomi.r3g.bootfw</code> 的值, 如果存在且值为 2, 那么启动kernel1, 否则启动kernel0</p></blockquote>
+如果kernel0和kernel1都存在, 那么检查环境变量 <code>xiaomi.r3g.bootfw</code> 的值, 如果存在且值为 2, 那么启动kernel1, 否则启动kernel0</p>
+</blockquote>
 <p>简单来说就是：路由器有两个内核, 需要在Breed里设置环境变量让路由器启动kernel1。</p>
 <ol>
 <li>刷入Openwrt固件到Kernel1</li>
@@ -91,7 +95,8 @@
 </ol>
 <h3 id="没有刷入breed的刷机方法">没有刷入Breed的刷机方法</h3>
 <blockquote>
-<p><a href="https://openwrt.org/toh/xiaomi/mir3g">OpenWrt官网提供的教程</a>是在没有刷入Breed的情况下刷入OpenWrt固件的。</p></blockquote>
+<p><a href="https://openwrt.org/toh/xiaomi/mir3g">OpenWrt官网提供的教程</a>是在没有刷入Breed的情况下刷入OpenWrt固件的。</p>
+</blockquote>
 <p>ssh到路由器, 导入固件后刷机。</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">mtd write openwrt-18.06.2-ramips-mt7621-mir3g-squashfs-kernel1.bin kernel1
 </span></span><span class="line"><span class="cl">mtd write openwrt-18.06.2-ramips-mt7621-mir3g-squashfs-rootfs0.bin rootfs0

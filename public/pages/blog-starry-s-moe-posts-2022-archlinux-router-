@@ -1,6 +1,7 @@
 <p>之前买了个NanoPi R4S，当时给他装了Arch Linux ARM并用<code>systemd-networkd</code>配置了一个简易的软路由。不过<code>systemd-networkd</code>不支持PPPoE，所以当时我是把R4S接在租的房子的主路由下做子路由的，然后再给R4S接了一个小米路由器当作无线AP。最近从北京搬回家了所以想直接使用R4S做家里的主路由，因为<a href="/posts/2022/nanopi-r4s/">R4S上手体验</a>的那篇文章已经写完很久了，所以就不打算在那篇博客上做修改了，而是新开（水）了一篇博客。</p>
 <blockquote>
-<p>这里偷偷骂一下长城宽带没人反对吧</p></blockquote>
+<p>这里偷偷骂一下长城宽带没人反对吧</p>
+</blockquote>
 <h2 id="准备工作">准备工作</h2>
 <p>按照Arch Wiki的<a href="https://wiki.archlinux.org/title/Router#Connection_sharing">Router页面</a>，你的电脑需要符合安装Arch Linux的基础硬件要求，且至少具备俩物理网口。</p>
 <p>个人觉得软路由没必要非得刷*WRT或者其他路由器专用系统，也没必要搞个爱快群辉什么的系统，我只想给他装我喜欢的发行版，然后我自己配置我需要的服务，只要有两个以上的物理网口就可以配置路由功能，给他们配置DHCP和流量转发就完事了，这样搞出来的路由器更符合咱自己的需求，相对来讲也更灵活一些，不用受限于那些路由器/NAS定制的系统，而缺点则是比较折腾，有可能不稳定。</p>
@@ -26,7 +27,8 @@
 IPv6的局域网网段为<code>fd00::/8</code>，通俗一点讲就是<code>fd**</code>开头的一般都是局域网的IP地址。</p>
 <p>之后给WAN口配置DHCP或PPPoE协议。</p>
 <blockquote>
-<p>配置DHCP的方式自行翻Wiki或者看example，这里不重复讲了。</p></blockquote>
+<p>配置DHCP的方式自行翻Wiki或者看example，这里不重复讲了。</p>
+</blockquote>
 <p>在配置PPPoE之前需要安装<code>ppp</code>。</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl"># /etc/netctl/extern0-profile
 </span></span><span class="line"><span class="cl"># Config file for public interface (WAN)

@@ -3,7 +3,8 @@
 <meting-js server="netease" type="song" id="590252" theme="#233333"></meting-js>
 <h2 id="起因">起因</h2>
 <blockquote>
-<p>这段基本是废话，可以直接跳过……</p></blockquote>
+<p>这段基本是废话，可以直接跳过……</p>
+</blockquote>
 <p>旧笔记本经常蓝屏死机掉驱动重启，送修过一次但依旧没修好，于是把它当有问题的二手电脑卖掉了，买了今年新出的联想 ThinkBook 16 Gen6。因为咱有台式，所以笔记本的需求就是轻薄，Linux 友好，便宜就行。之前总是被笔记本的双显卡驱动折磨得头疼，英伟达显卡驱动 4202 年了依旧是那么的拉跨，相同规格的 AMD 版本比 Intel 便宜好几百，所以最终选的这个能 PD 充电，只有 AMD 集显，8 核 16 线程 32G 内存的电脑，只想拿它写代码，本地跑编译，跑 KVM 虚拟机用（稍微吐嘈一下某 ARM 架构的电脑，KVM 虚拟机各种限制，想建一个 NAT 类型的 Libvirt Network 都不行）。</p>
 <p>为避免引战，这里先只说一下咱个人的观点，可能是因为折腾 Linux 系统时间很久了吧所以对咱来说最舒服的系统还是 Linux，咱很赞同 Linus TechTips 这个视频里对 macOS 的吐嘈，因为 Win/Linux 与 macOS 的键盘、快捷键、手势操作、鼠标指针加速度不一致，所以想同时适应两套不同的手势快捷键、鼠标加速度很是让人头疼。不过这些在倒是能在长时间的适应之后通过修改系统设置的快捷键布局、安装第三方的鼠标加速度修复工具、和第三方输入法来缓解。</p>
 <iframe src="//player.bilibili.com/player.html?isOutside=true&aid=563073437&bvid=BV1Rv4y127d5&cid=904126423&p=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"></iframe>
