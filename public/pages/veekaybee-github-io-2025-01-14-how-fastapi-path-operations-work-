@@ -25,7 +25,6 @@
 </span></span><span style="display:flex;"><span> <span style="color:#66d9ef">for</span> key, val <span style="color:#f92672">in</span> params<span style="color:#f92672">.</span>items():
 </span></span><span style="display:flex;"><span> self<span style="color:#f92672">.</span>data_store<span style="color:#f92672">.</span>put_data(val[<span style="color:#ae81ff">0</span>])
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span> <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">return_k_json</span>(self, k:dict)<span style="color:#f92672">-&gt;</span> BinaryIO:
 </span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#34;&#34;&#34;
 </span></span></span><span style="display:flex;"><span><span style="color:#e6db74"> Return json response
@@ -37,7 +36,6 @@
 </span></span><span style="display:flex;"><span> <span style="color:#75715e"># BufferedIOBase that writes to a stream</span>
 </span></span><span style="display:flex;"><span> <span style="color:#75715e"># See https://docs.python.org/3/library/io.html#io.BufferedIOBase.write</span>
 </span></span><span style="display:flex;"><span> self<span style="color:#f92672">.</span>wfile<span style="color:#f92672">.</span>write(json<span style="color:#f92672">.</span>dumps(k)<span style="color:#f92672">.</span>encode(<span style="color:#e6db74">&#39;utf-8&#39;</span>))
-</span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span> <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">bad_request</span>(self):
 </span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#34;&#34;&#34;
@@ -70,7 +68,6 @@
 </span></span><span style="display:flex;"><span> <span style="color:#66d9ef">else</span>:
 </span></span><span style="display:flex;"><span> self<span style="color:#f92672">.</span>bad_request()
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> __name__ <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;__main__&#34;</span>:
 </span></span><span style="display:flex;"><span> host <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;localhost&#34;</span>
 </span></span><span style="display:flex;"><span> port <span style="color:#f92672">=</span> <span style="color:#ae81ff">8000</span>
@@ -80,7 +77,7 @@
 </span></span><span style="display:flex;"><span> server<span style="color:#f92672">.</span>serve_forever()
 </span></span></code></pre></div><p>What&rsquo;s going on here?</p>
 <p>Let’s say that we produce Nulltella, an artisinal hazlenut spread for statisticians, and are looking to build a web app that keeps track of <a href="https://vickiboykis.com/2024/02/28/gguf-the-long-way-around/">all of our Nulltella jars so we can later stand up a prediction service.</a></p>
-<figure><img src="https://github.com/veekaybee/veekaybee.github.io/assets/3837836/66ca00e6-1baf-4eb0-9d3d-112966beb797" width="200">
+<figure><img src="https://veekaybee.github.io/images/308394339-66ca00e6-1baf-4eb0-9d3d-112966beb797.png" width="200">
 </figure>
 
 <p>We would start by designing a super simple API: As users,</p>
@@ -106,7 +103,7 @@
 <li>The parameters we pass to the path request so that we can do something with them</li>
 <li>A route to a method inside our application itself that processes the data</li>
 </ol>
-<p>In our simple server, the heart of the routing happens at the method level. If we send a base path, we return <code>{&quot;ciao&quot;: &quot;mondo&quot;}</code>. Otherwise, we return the amount of jars we&rsquo;ve passed in via the request path by parsing the parameters in the path.</p>
+<p>In our simple server, the heart of the routing happens at the method level. If we send a base path, we return <code>{&quot;ciao&quot;: &quot;mondo&quot;}</code> . Otherwise, we return the amount of jars we&rsquo;ve passed in via the request path by parsing the parameters in the path.</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">do_GET</span>(self) <span style="color:#f92672">-&gt;</span> <span style="color:#66d9ef">None</span>:
 </span></span><span style="display:flex;"><span> request_path <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>path
 </span></span><span style="display:flex;"><span>
@@ -120,7 +117,7 @@
 </span></span><span style="display:flex;"><span> <span style="color:#66d9ef">else</span>:
 </span></span><span style="display:flex;"><span> self<span style="color:#f92672">.</span>bad_request()
 </span></span><span style="display:flex;"><span> self<span style="color:#f92672">.</span>end_headers()
-</span></span></code></pre></div><p>We can see how this can become complicated quickly. For example, what if we have multiple operations we perform during a <code>GET</code>: what if we get data from a database, or a cache, or we retrieve assets? We&rsquo;ll have different methods that we process depending on how the path is parsed. What if we also have <code>PUT/DELETE</code> verbs? What if we need authentication? To write to a database? Static pages? Our code complexity relative to our starting point starts to grow, and we now need a framework.</p>
+</span></span></code></pre></div><p>We can see how this can become complicated quickly. For example, what if we have multiple operations we perform during a <code>GET</code> : what if we get data from a database, or a cache, or we retrieve assets? We&rsquo;ll have different methods that we process depending on how the path is parsed. What if we also have <code>PUT/DELETE</code> verbs? What if we need authentication? To write to a database? Static pages? Our code complexity relative to our starting point starts to grow, and we now need a framework.</p>
 <h2 id="starlette">Starlette</h2>
 <p>Early Python web dev frameworks include juggernauts <a href="https://www.david-dahan.com/blog/comparing-fastapi-and-django">Django</a> and Flask. More recently, since Python&rsquo;s async story has grown stronger, frameworks like <a href="https://www.starlette.io/">Starlette</a> have come onto the scene to include async functionality out of the box.</p>
 <p>Starlette was built by the creator of Django Rest Framework and includes lightweight operations for the core functionality of HTTP calls and additional operations like web sockets, with the added bonus of being async by default.</p>
@@ -129,10 +126,8 @@
 </span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> starlette.responses <span style="color:#f92672">import</span> JSONResponse
 </span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> starlette.routing <span style="color:#f92672">import</span> Route
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#66d9ef">async</span> <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">homepage</span>(request):
 </span></span><span style="display:flex;"><span> <span style="color:#66d9ef">return</span> JSONResponse({<span style="color:#e6db74">&#39;ciao&#39;</span>: <span style="color:#e6db74">&#39;mondo&#39;</span>})
-</span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span>app <span style="color:#f92672">=</span> Starlette(debug<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>, routes<span style="color:#f92672">=</span>[Route(<span style="color:#e6db74">&#39;/&#39;</span>, homepage),])
 </span></span></code></pre></div><p>We start an instance of a Starlette application, which has <a href="https://github.com/encode/starlette/blob/7c0d1e6d1a499e6eeb68d447321838be3927e83b/starlette/routing.py#L208">processes routes.</a> <a href="https://www.starlette.io/routing/">Each route is linked</a>, at the path level, to the actual method it calls. If Starlette sees that specific route, it calls the method, taking into account logic for parsing and reading HTTP request headers and bodies.</p>
@@ -159,7 +154,6 @@
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span>app <span style="color:#f92672">=</span> FastAPI()
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#a6e22e">@app.get</span>(<span style="color:#e6db74">&#34;/&#34;</span>)
 </span></span><span style="display:flex;"><span><span style="color:#66d9ef">async</span> <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">root</span>():
 </span></span><span style="display:flex;"><span> <span style="color:#66d9ef">return</span> {<span style="color:#e6db74">&#34;ciao&#34;</span>: <span style="color:#e6db74">&#34;mondo&#34;</span>}
@@ -167,8 +161,8 @@
 </span></span><span style="display:flex;"><span><span style="color:#a6e22e">@app.get</span>(<span style="color:#e6db74">&#34;/jars/</span><span style="color:#e6db74">{id}</span><span style="color:#e6db74">&#34;</span>)
 </span></span><span style="display:flex;"><span><span style="color:#66d9ef">async</span> <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">get_jars</span>(id):
 </span></span><span style="display:flex;"><span> <span style="color:#66d9ef">return</span> {<span style="color:#e6db74">&#34;message&#34;</span>: <span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;jars: </span><span style="color:#e6db74">{</span>id<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>}
-</span></span></code></pre></div><p>In development, FastAPI uses <a href="https://www.uvicorn.org/"><code>uvicorn</code></a>, an <a href="https://asgi.readthedocs.io/en/latest/">ASGI server</a> to listen for incoming requests and handle them according to the routes defined in your application.</p>
-<p>Uvicorn initializes the ASGI server, binds it to a <a href="https://github.com/encode/uvicorn/blob/ae8253f10b9f73f10e92be52a0d9f70696b77c62/uvicorn/server.py#L115">socket connections</a> on <a href="https://github.com/encode/uvicorn/blob/ae8253f10b9f73f10e92be52a0d9f70696b77c62/uvicorn/main.py#L73">port <code>8000</code></a>, and starts listening for incoming connections. So, when we send a <code>GET</code> request to the main route hosted by default on port 8000, we expect to get back <code>ciao mondo</code> as a response.</p>
+</span></span></code></pre></div><p>In development, FastAPI uses <a href="https://www.uvicorn.org/"> <code>uvicorn</code> </a>, an <a href="https://asgi.readthedocs.io/en/latest/">ASGI server</a> to listen for incoming requests and handle them according to the routes defined in your application.</p>
+<p>Uvicorn initializes the ASGI server, binds it to a <a href="https://github.com/encode/uvicorn/blob/ae8253f10b9f73f10e92be52a0d9f70696b77c62/uvicorn/server.py#L115">socket connections</a> on <a href="https://github.com/encode/uvicorn/blob/ae8253f10b9f73f10e92be52a0d9f70696b77c62/uvicorn/main.py#L73">port <code>8000</code> </a>, and starts listening for incoming connections. So, when we send a <code>GET</code> request to the main route hosted by default on port 8000, we expect to get back <code>ciao mondo</code> as a response.</p>
 <p>Like our previous applications, FastAPI is still delegating path operations and methods to a router that processes them and parses parameters, but it wraps these in a <a href="https://nedbatchelder.com/blog/202210/decorator_shortcuts.html">Python decorator</a>. This is easier to write, but adds a level of complexity at the layer of understanding how the path processing actually happens.</p>
 <p>When we perform a path operation in FastAPI, we&rsquo;re performing the equivalent work of routing that we do with our simple method, but with a lot more rigor and nested definitions.</p>
 <p>Within our simple server, we:</p>
@@ -193,5 +187,5 @@
 <p>This is purely the set of steps that happens for correct routing - and we didn&rsquo;t yet address how the path parameters in the path are processed.</p>
 <h1 id="path-parameter-routing">Path Parameter Routing</h1>
 <p>Path parameter routing happens in Starlette, where <a href="https://github.com/encode/starlette/blob/0109dce29b76c64e93c56c01fa5020860f935ed3/starlette/requests.py#L182">path parameters are parsed out</a> of the <a href="https://github.com/encode/starlette/blob/0109dce29b76c64e93c56c01fa5020860f935ed3/starlette/requests.py#L76">request</a> into a dictionary (just like we do in our simple web application), via the magic of <a href="https://github.com/encode/starlette/blob/0109dce29b76c64e93c56c01fa5020860f935ed3/starlette/templating.py#L123">Jinja Templating.</a></p>
-<h2 id="tldr">TL;DR</h2>
+<h2 id="tl-dr">TL; DR</h2>
 <p>When we write a route in FastAPI that accepts path parameters, we are creating a lengthy callstack that goes through several levels of logic in FastAPI using decorators as input into an application that routes requests and appends methods using decorators to a group of route methods; those requests are then passed onto Starlette which does the work of parsing the path variables, using Jinja templates, into dictionaries which the application can then work with and return data to you!</p>

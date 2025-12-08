@@ -1,8 +1,8 @@
 <figure><img src="https://veekaybee.github.io/images/308389132-dbbb8ee7-f19f-44df-bce7-2612817cacd2.png" width="400">
 </figure>
 
-<!-- raw HTML omitted -->
-<!-- raw HTML omitted -->
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 <p><strong>Table of Contents</strong></p>
 <ul>
 <li><a href="#how-we-use-llm-artifacts">How We Use LLM Artifacts</a></li>
@@ -30,7 +30,7 @@
 </li>
 <li><a href="#conclusion">Conclusion</a></li>
 </ul>
-<!-- raw HTML omitted -->
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 <h1 id="how-we-use-llm-artifacts">How We Use LLM Artifacts</h1>
 <p>Large language models today are <a href="https://vickiboykis.com/2024/01/15/whats-new-with-ml-in-production/">consumed in one of several ways</a>:</p>
 <ol>
