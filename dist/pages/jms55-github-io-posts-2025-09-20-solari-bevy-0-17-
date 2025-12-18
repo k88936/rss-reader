@@ -713,7 +713,7 @@ Path Reuse in Real-time</a> and <a rel="nofollow noreferrer" href="https://inter
         
     >
     
-    <figcaption><p>Denoised and antialaised image</p>
+    <figcaption><p>Denoised and antialiased image</p>
 </figcaption>
     
 </figure>
@@ -756,7 +756,7 @@ Path Reuse in Real-time</a> and <a rel="nofollow noreferrer" href="https://inter
         
     >
     
-    <figcaption><p>Denoised and antialaised image - DI only</p>
+    <figcaption><p>Denoised and antialiased image - DI only</p>
 </figcaption>
     
 </figure>
@@ -769,7 +769,7 @@ Path Reuse in Real-time</a> and <a rel="nofollow noreferrer" href="https://inter
         
     >
     
-    <figcaption><p>Denoised and antialaised image - GI only</p>
+    <figcaption><p>Denoised and antialiased image - GI only</p>
 </figcaption>
     
 </figure>
@@ -940,7 +940,7 @@ Path Reuse in Real-time</a> and <a rel="nofollow noreferrer" href="https://inter
         
     >
     
-    <figcaption><p>Alternate GI scheme, without the world cache*</p>
+    <figcaption><p>Alternate GI scheme, without the world cache</p>
 </figcaption>
     
 </figure>

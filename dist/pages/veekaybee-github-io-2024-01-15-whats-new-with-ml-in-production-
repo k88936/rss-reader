@@ -9,7 +9,7 @@ Image with some help from <a href="https://dingboard.com/">Dingboard.</a></p>
 <figure><img src="https://veekaybee.github.io/images/296805624-608a2fa7-89c2-49a7-ad92-6fe348a3d0b0.png" width="600">
 </figure>
 
-<p>In the first half of the 20th century, when digital communication in the then-nascent telephone industry exploded,scientists and engineers <a href="https://www.nature.com/articles/s42254-022-00426-6">at Bell Labs</a> started studying the projection and representation of information. In developing this field, scientists like Harry Nyquist,Ralph Hartley, and Claude Shannon were concerned with irregularities in information transfer, particularly across radio signals . Information theory was developed to solve the problem of transmitting a message, via radio, telephone, or television, with the most accuracy. It turned out that the most efficient way to inspect information was to not look at the actual data, but to analyze the statistical properties of that message. So, much of the science work centered around creating approximate representations of data. For example, Kolmogorov complexity, was developed as an notion that describes how much information is needed to represent something. In the case of a string, it&rsquo;s the shortest program that can generate that string. The more complex that string is, the higher specification a program.</p>
+<p>In the first half of the 20th century, when digital communication in the then-nascent telephone industry exploded, scientists and engineers <a href="https://www.nature.com/articles/s42254-022-00426-6">at Bell Labs</a> started studying the projection and representation of information. In developing this field, scientists like Harry Nyquist, Ralph Hartley, and Claude Shannon were concerned with irregularities in information transfer, particularly across radio signals . Information theory was developed to solve the problem of transmitting a message, via radio, telephone, or television, with the most accuracy. It turned out that the most efficient way to inspect information was to not look at the actual data, but to analyze the statistical properties of that message. So, much of the science work centered around creating approximate representations of data. For example, Kolmogorov complexity, was developed as an notion that describes how much information is needed to represent something. In the case of a string, it&rsquo;s the shortest program that can generate that string. The more complex that string is, the higher specification a program.</p>
 <p>What came out of the early work in information theory was that, in order to efficiently work with large amounts of information, we need to be able to effectively compress it into as little space as we can without losing fidelity of that information.</p>
 <p>Given the continued explosion of text, and later multi-modal (voice, video, etc.) information, the algorithms developed around compression continued to stay relevant. Compression is the same fundamental concept underlying both traditional machine learning models and LLMs, although this idea is usually burried under layers of other context.</p>
 <figure><img src="https://veekaybee.github.io/images/296808672-33ef2ef7-4461-406f-9d33-8d8e783cea71.png" width="600">
@@ -85,10 +85,10 @@ Image with some help from <a href="https://dingboard.com/">Dingboard.</a></p>
 </li>
 </ol>
 <p>And then we <strong>learn a model and build</strong> the <a href="https://machine-learning.paperspace.com/wiki/artifacts">model artifacts.</a> Model artifacts are data structures typically consisting of:</p>
-<pre><code>+ Weights and biases. These are numbers known as the model’s parameters. Weights are numbers determining how much input influences the outputs. Biases are additional parameters which are starting points for prediction. They act as offsets and allow the model to make predictions when data is missing 
-+ Code that describes the structure of the model, including its architecture, such as the decision tree or neural network, and the number of layers
-+ Dependencies and libraries the code and model use.
-+ Model metadata: date of training, description of the model, etc. 
+<pre><code>- Weights and biases. These are numbers known as the model’s parameters. Weights are numbers determining how much input influences the outputs. Biases are additional parameters which are starting points for prediction. They act as offsets and allow the model to make predictions when data is missing 
+- Code that describes the structure of the model, including its architecture, such as the decision tree or neural network, and the number of layers
+- Dependencies and libraries the code and model use.
+- Model metadata: date of training, description of the model, etc. 
 </code></pre>
 <ol start="3">
 <li>
@@ -99,7 +99,7 @@ Image with some help from <a href="https://dingboard.com/">Dingboard.</a></p>
 </ul>
 </li>
 </ol>
-<p>There are a number of different metrics to determine whether a model is “good,” such as root mean squared error, precision, or recall. Getting these metrics usually involves feeding test data into the model that the model has not been trained on, and observing how far away the predicted value is from the actual value.</p>
+<p>There are a number of different metrics to determine whether a model is “good, ” such as root mean squared error, precision, or recall. Getting these metrics usually involves feeding test data into the model that the model has not been trained on, and observing how far away the predicted value is from the actual value.</p>
 <ol start="4">
 <li>We deploy that model to <strong>production</strong>. Deployment of those models to production, including all the associated software development components which keep models running, like monitoring, model tracking, feature tracking, dashboards, and tuning of the application’s performance.</li>
 </ol>
@@ -171,10 +171,10 @@ Image with some help from <a href="https://dingboard.com/">Dingboard.</a></p>
 </table>
 <p>At their core, LLMs are also massive compression models that try to encode a world, but they have several new assumptions. First, LLM pretraining datasets are MASSIVE. We are no longer working with in-house, specialized data that models our world, i.e. clothes at Stitchfix or driver data at Uber, but from <a href="https://arxiv.org/abs/2310.20707">giant generalized datasets</a> that encompass all of public human activity on the internet. Most of these datasets are not revealed, from proprietary models like OpenAI&rsquo;s, but for similar, open datasets that are, we can see they encompass an <a href="https://arxiv.org/abs/2101.00027">enormous swath of human activity.</a></p>
 <p>Second, whereas traditional machine learning focused on hand-curating features, either through manual heuristics and knowledge of our product and line of business, <em>LLMs work best when we dump all our text data</em>, often unformatted although how unformatted it should be is a source of debate, into the model and let the layers sort it out.</p>
-<p><figure><img src="https://github.com/veekaybee/veekaybee.github.io/assets/3837836/272734c1-8471-4e8d-995c-ce222a5c77a7" width="600">
+<figure><img src="https://veekaybee.github.io/images/297174071-272734c1-8471-4e8d-995c-ce222a5c77a7.png" width="600">
 </figure>
 
-From: <a href="https://www.manning.com/books/deep-learning-with-pytorch">Deep Learning with PyTorch</a></p>
+<p>From: <a href="https://www.manning.com/books/deep-learning-with-pytorch">Deep Learning with PyTorch</a></p>
 <p>Third, because they are so huge and architecturally complex, LLMs are extremely compute-intensive to train (or pre-train), and because they&rsquo;re very good at transfer learning (i.e. between machine learning tasks), they&rsquo;re fairly easy to fine-tune.</p>
 <p>So, what are the implications in how we compress now?</p>
 <h3 id="weve-lost-fine-grained-control-over-the-input-data">We&rsquo;ve lost fine-grained control over the input data</h3>
@@ -187,7 +187,7 @@ From: <a href="https://www.manning.com/books/deep-learning-with-pytorch">Deep Le
 <p>When the data science boom hit in the early 2010s, the initial focus was on collecting as much data as possible, understanding a company’s datasets and creating models from them.</p>
 <p>Once companies realized they sat on potential goldmines of unstructured data – none of which were actionable – they started hiring data scientists to make sense of it all. The practice of modern data science arose from statisticians who observed the amount of data being generated and processed required methods beyond the scope of academic statistics and processing methods on single machines.</p>
 <p>At the same time, model artifacts and deliverables moved from pure one-off analyses that lived on individuals’ laptops, to production software such as the services powering web applications like Amazon and Netflix’s recommendations, risk scoring for fraud, and medical diagnostic tools. This software required models be portable, low-latency, and be managed in a central place, which meant building systems and platforms on which to manage them. The term “MLOps” arose to define the boundaries of model management and operationalization.</p>
-<p>As Marianne Bellotti describes in <a href="https://nostarch.com/kill-it-fire">“Kill It With Fire,”</a> software development paradigms are a cycle, a continuous tradeoff between how cheap it is to process data on a single machine versus sending it over the network.</p>
+<p>As Marianne Bellotti describes in <a href="https://nostarch.com/kill-it-fire">“Kill It With Fire, ”</a> software development paradigms are a cycle, a continuous tradeoff between how cheap it is to process data on a single machine versus sending it over the network.</p>
 <pre><code>“Technology is, and probably always will be, an expensive element of any organization’s operational model. A great deal of advancement and market co-creation in technology can be understood as the interplay between hardware costs and network costs. Computers are data processors. They move data around and rearrange it into different formats and displays for us. All advancements with data processors come down to one of two things: either you make the machine faster or you make the pipes delivering data faster.”
 </code></pre>
 <p>We started with mainframe processing. Once we broke apart the mainframe into personal computers that were cheaper, we could write code locally. Then, our computers became even smaller and internet bandwidth became cheap, it made more sense to process and develop over the wire, particularly since much of our code was now tied up in web applications that lived in server farms. So, we sent everything to the cloud and started bundling development there.</p>
@@ -198,15 +198,15 @@ From: <a href="https://www.manning.com/books/deep-learning-with-pytorch">Deep Le
 <li>Using your own trained, or more likely, fine-tuned model artifacts starting with a base model as an API or model hub model on your own public cloud GPU-based instances or in an HPC Slurm-style cluster. This is only now starting to pick up steam in 2024, but I expect it will grow, a lot.</li>
 </ol>
 <p>So what we&rsquo;ve done is changed the amount of the model we have agency over in the tradeoff for more generalizable compression. All of our data now does not live in-house, it only does in the case that we&rsquo;re fine-tuning it, and even then, we are likely using also at least some public datasets that have been put together specifically for the purporses for fine-tuning.<br>
-<figure><img src="https://github.com/veekaybee/veekaybee.github.io/assets/3837836/ce90319f-f17b-4b0b-8eac-c3a8880be4ef" width="600">
+<figure><img src="https://veekaybee.github.io/images/297181157-ce90319f-f17b-4b0b-8eac-c3a8880be4ef.png" width="600">
 </figure>
 </p>
 <p>In each of the cases, in gaining a larger amount of compressed data, we give up some degree of internal control over our model state. This is also the reason why <a href="https://arxiv.org/abs/2312.10997">RAG as an architecture</a> is so popular. At least 50% of LLM use-cases are straight-up search, because web search (except for Kagi, <a href="https://kagi.com/">everyone should use Kagi</a> it&rsquo;s great) is in a very bad state.</p>
-<figure><img src="https://github.com/veekaybee/veekaybee.github.io/assets/3837836/99a28ef1-aaa3-4fb9-ab9b-676bafcd3252" width="600">
+<figure><img src="https://veekaybee.github.io/images/297777441-99a28ef1-aaa3-4fb9-ab9b-676bafcd3252.png" width="600">
 </figure>
 
 <p>RAG gives us back some control because it allows us to perform the data updates and search fine-tuning we used to in traditional architectures but also combine the strength of the generalist model. In a lot of ways, we are just going back to Learn to Rank, but with less control over the first-pass model.</p>
-<figure><img src="https://github.com/veekaybee/veekaybee.github.io/assets/3837836/3d36a3e1-4267-4406-8ae3-b5183efacccb" width="600">
+<figure><img src="https://veekaybee.github.io/images/297777914-3d36a3e1-4267-4406-8ae3-b5183efacccb.png" width="600">
 </figure>
 
 <h3 id="textual-features-and-metrics-and-evaluation">Textual Features and Metrics and Evaluation</h3>
@@ -225,10 +225,10 @@ Apache Lucene: a search engine. Elasticsearch is one of the most popular distrib
 <p>Many of these tools were built under the assumptions of: we need to coordinate <a href="https://newsletter.vickiboykis.com/archive/logs-were-our-lifeblood-now-theyre-our-liability/">lots of small pieces of log data</a> flowing from our app&rsquo;s usage servers into a place where it can be aggregated for modeling, so we care about coordination of distributed systems.</p>
 <p>In the world of GPU training and serving, we now have a different problem. We need to get everything onto the GPU as fast as possible so we can process it, because <a href="https://horace.io/brrr_intro.html">it&rsquo;s inefficient to have the GPU idling</a>, waiting for more data operations.</p>
 <p>As a result, it makes sense to have special GPU clusters that we now need to manage <a href="https://github.com/stas00/ml-engineering/blob/master/insights/ai-battlefield.md#ml-engineers-hell">with specific considerations.</a></p>
-<p><figure><img src="https://github.com/veekaybee/veekaybee.github.io/assets/3837836/1c2a48a7-de84-4ce7-a05c-5587615042cc" width="600">
+<p><figure><img src="https://veekaybee.github.io/images/297787748-1c2a48a7-de84-4ce7-a05c-5587615042cc.png" width="600">
 </figure>
 
 from <a href="https://horace.io/brrr_intro.html">Making GPUs go BRRR</a></p>
-<h1 id="tldr">TL;DR</h1>
+<h1 id="tl-dr">TL; DR</h1>
 <p>There is a lot more we can write for each of these categories and I hope to dive deeper on some of them in future posts. The bottom line is that a lot has changed in leading-edge ML applications over the past year as we&rsquo;ve moved compression from inside our enterprises to the internet at large.</p>
 <p>We&rsquo;ve moved from smaller, business-specific models that perform specific tasks, to very large, generalist models that do one thing: text completion. Around these new models, we have a new set of metrics and operational and infrastructure concerns, particularly if we are using them as model artifacts (versus APIs). The interesting thing is that, now that we&rsquo;ve shifted from small to big, <a href="https://www.interconnects.ai/p/they-want-to-learn">the pendulum is again shifting</a> to smaller models that people are starting to fine-tune and run on their own, which will likely make everything I&rsquo;ve written here out of date in a month or two. One thing that remains constant is that we are still performing compression. The question is, where, and how much do we control it.</p>

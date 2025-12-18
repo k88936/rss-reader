@@ -1,6 +1,7 @@
 <p>为了让咱的 NAS 长时间稳定运行，斥巨资买了一台 APC BK650M2-CH，在 Arch Wiki 上看 APC 的 UPS 对 Linux 的支持比较友好，于是挑了个最便宜的带停电自动关机的 APC UPS，防止咱啥时候忘了交电费导致停电数据受损。</p>
 <blockquote>
-<p>参烤链接: <a href="https://wiki.archlinux.org/title/APC_UPS">APC UPS - ArchWiki</a></p></blockquote>
+<p>参烤链接: <a href="https://wiki.archlinux.org/title/APC_UPS">APC UPS - ArchWiki</a></p>
+</blockquote>
 <hr>
 <p>UPS 到手后花了半个多小时读使用说明书，然后第一件事是把 UPS 的断电报警蜂鸣器关掉，省得我不在公寓的时候停电了 UPS 叫个没完吵到邻居。</p>
 <p>之后在装 UPS 之前先把我电脑支架背面一团电线重新整理了一遍，现在是台式机、显示器、NAS、光猫、路由器、无线 AP 都放在一起了，他们的电源线、网线、数据线、显示器线都团在了一起，整理起来炒鸡麻烦。</p>
@@ -22,11 +23,13 @@
 </span></span></span><span class="line"><span class="cl"><span class="go">......
 </span></span></span></code></pre></div><p>先把 NAS 里所有的应用都停掉，之后编辑 <code>/etc/apcupsd/apcupsd.conf</code>，把 <code>TIMEOUT</code> 改为 <code>1</code>，然后给 UPS 断电，这时 NAS 会自动关机。</p>
 <blockquote>
-<p>UPS 重新连接电源后，NAS 可能会自动开机，我的 NAS 是这样，但不确定所有 NAS 都这样。</p></blockquote>
+<p>UPS 重新连接电源后，NAS 可能会自动开机，我的 NAS 是这样，但不确定所有 NAS 都这样。</p>
+</blockquote>
 <h2 id="配置自动休眠">配置自动休眠</h2>
 <p>按照 Wiki 配置停电后自动休眠 (Hibernate / 休眠到硬盘)。</p>
 <blockquote>
-<p>在此之前，需要创建 swap 分区 (或 swap file)，然后配置休眠需要的内核参数并重构 <code>initramfs</code>。</p></blockquote>
+<p>在此之前，需要创建 swap 分区 (或 swap file)，然后配置休眠需要的内核参数并重构 <code>initramfs</code>。</p>
+</blockquote>
 <p>以 root 用户创建 <code>/usr/local/bin/hibernate</code>：</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="cl"><span class="cp">#!/bin/bash
 </span></span></span><span class="line"><span class="cl"><span class="cp"></span><span class="c1"># Hibernate the system - designed to be called via symlink from /etc/apcupsd</span>
@@ -109,7 +112,8 @@
 </span></span></code></pre></div><p>接下来给 UPS 断电，NAS 会自动休眠，等 NAS 休眠后再过几分钟 UPS 也会关机。</p>
 <p>UPS 关机后，给 UPS 接上电源，这时 UPS 会自动开机，然后 NAS 也会从休眠中恢复。</p>
 <blockquote>
-<p>不要在 UPS 还没关机的时候给 UPS 重新接回电源，会导致 UPS 关机后 NAS 刚从休眠中恢复就被强制断电。</p></blockquote>
+<p>不要在 UPS 还没关机的时候给 UPS 重新接回电源，会导致 UPS 关机后 NAS 刚从休眠中恢复就被强制断电。</p>
+</blockquote>
 <h2 id="其他">其他</h2>
 <p>折腾 UPS 的时候顺手给 NAS 换了个散热器升级了一下内存。AMD 原装散热器有亿点点吵所以换成了咱之前买的 ITX 散热器。</p>
 <figure>

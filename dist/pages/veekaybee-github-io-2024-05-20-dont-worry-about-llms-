@@ -3,7 +3,7 @@
 
  
  <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden;">
- <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen="allowfullscreen" loading="eager" referrerpolicy="strict-origin-when-cross-origin" src="https://www.youtube.com/embed/Ik0voaZmf5A?si=h2Yfx5v_LIfWd6xz&amp;start=30316?autoplay=0&controls=1&end=0&loop=0&mute=0&start=0" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border:0;" title="YouTube video"
+ <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen="allowfullscreen" loading="eager" referrerpolicy="strict-origin-when-cross-origin" src="https://www.youtube.com/embed/Ik0voaZmf5A?si=h2Yfx5v_LIfWd6xz&amp; start=30316?autoplay=0&controls=1&end=0&loop=0&mute=0&start=0" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border:0;" title="YouTube video"
  ></iframe>
  </div>
 
@@ -48,7 +48,7 @@
 </figure>
 
 <p>There were too many open-ended options , a lot of people who were loud online. So, the developers decided to rent an Airbnb outside the city for a week so they could really focus, isolate, and ship some code. When they got together around a whiteboard, they frantically started researching what tools to build an LLM with, and what they saw was <a href="https://mattturck.com/mad2024/">this chart.</a></p>
-<p>“What do we do,” they asked. How were they going to compete in this insanely crowded market? More importantly, how could they as engineers even understand this landscape?</p>
+<p>“What do we do, ” they asked. How were they going to compete in this insanely crowded market? More importantly, how could they as engineers even understand this landscape?</p>
 <figure><img src="https://veekaybee.github.io/images/dontworryllms_11_resized.png" width="400">
 </figure>
 
@@ -79,9 +79,6 @@
 
 <p>So a bastaix would first put the stone on his back, and then move it all the way to the cathedral. Then, he would go back and move another stone. They did this all day, day-in and day out. The stones weighed 40 kg and the only protection they had was the turban on their head, called a capcana that rolled up above the neck.</p>
 <figure><img src="https://veekaybee.github.io/images/dontworryllms_17_resized.png" width="400">
-</figure>
-
-<figure><img src="https://github.com/veekaybee/veekaybee.github.io/assets/3837836/b84338a1-84a7-4ad5-825c-d273d4d2badc" width="400">
 </figure>
 
 <p>The machine learning engineer paused and said, you know, now that I’m telling this story, it reminds me of something, and that something is gradient descent.</p>
@@ -203,7 +200,7 @@
 <figure><img src="https://veekaybee.github.io/images/dontworryllms_45_resized.png" width="400">
 </figure>
 
-<p>Machine learning-based systems are typically also services in the backend of web applications.They are integrated into production workflows. But, they process data much differently. In these systems, we don’t start with business logic. We start with input data that we use to build a model that will suggest the business logic for us.</p>
+<p>Machine learning-based systems are typically also services in the backend of web applications. They are integrated into production workflows. But, they process data much differently. In these systems, we don’t start with business logic. We start with input data that we use to build a model that will suggest the business logic for us.</p>
 <figure><img src="https://veekaybee.github.io/images/dontworryllms_46_resized.png" width="400">
 </figure>
 
@@ -262,7 +259,7 @@
 <figure><img src="https://veekaybee.github.io/images/dontworryllms_58_resized.png" width="400">
 </figure>
 
-<p>She writes that keeping track of translation between human and code logic is hard. “When you are writing code, your mind is full of details, millions of bits of knowledge. This knowledge is in human form, which is to say rather chaotic. For example, try to think of everything you know about something as simple as an invoice. Now try to tell an alien how to prepare one. That is programming&hellip;To program is to translate between the chaos of human life and the line-by-line world of computer language.”</p>
+<p>She writes that keeping track of translation between human and code logic is hard. “When you are writing code, your mind is full of details, millions of bits of knowledge. This knowledge is in human form, which is to say rather chaotic. For example, try to think of everything you know about something as simple as an invoice. Now try to tell an alien how to prepare one. That is programming&hellip; To program is to translate between the chaos of human life and the line-by-line world of computer language.”</p>
 <p>She says that, in order to do this, a developer must not “lose attention. As the human world-knowledge tumbles about in your mind, you must keep typing, typing. You must not be interrupted.”</p>
 <p>In this kind of environment, you are information-constrained, but focused. It is harder to get through a mistake, but easier to find it and test possible solutions because the feedback cycle is fairly short. The reason this was the case was because, in earlier times, developers worked closer to the machine, closer to the metal, closer to the source of the computation, and even though there were interruptions and blockers, they were different.</p>
 <p>Most programs were written and compiled locally in languages like C. There were much fewer third-party libraries. Implementations were written from scratch, and the main source of information were books, man pages, and Usenet. The approximate user experience would be similar to writing python by only being able to access python.org.</p>
@@ -273,7 +270,7 @@
 <figure><img src="https://veekaybee.github.io/images/dontworryllms_60_resized.png" width="400">
 </figure>
 
-<p>These days, it is extremely hard to be close to the metal, because when we work with distributed systems, and machine learning, and the cloud, each of these have been built on top of the levels of turtles that previous developers have built, and it is easier to get distracted.When you throw non-deterministic LLMs and the distributed systems used to train and serve them into the mix, you come up with a special kind of hell that makes it impossible to have a good developer experience.</p>
+<p>These days, it is extremely hard to be close to the metal, because when we work with distributed systems, and machine learning, and the cloud, each of these have been built on top of the levels of turtles that previous developers have built, and it is easier to get distracted. When you throw non-deterministic LLMs and the distributed systems used to train and serve them into the mix, you come up with a special kind of hell that makes it impossible to have a good developer experience.</p>
 <p>What we can do is what people have always done: <a href="https://reprex.tidyverse.org/">create reprex</a>. A reprex is a reproducible example, an idea that comes from the R community. In R, it’s fairly easy because it’s a self-contained piece of software, but we can also strive for the same thing.</p>
 <figure><img src="https://veekaybee.github.io/images/dontworryllms_61_resized.png" width="400">
 </figure>
@@ -313,21 +310,9 @@
 <figure><img src="https://veekaybee.github.io/images/dontworryllms_70_resized.png" width="400">
 </figure>
 
-<p>There’s a lot going on here, and it seems to be coming from importlib rather than Ray itself, but Ray uses importlib as a dependency. So, in order to isolate it, the team went into the module in Ray that calls importlib, which lives in <code>python/ray/_private/utils.py</code>.</p>
-<figure><img src="https://github.com/veekaybee/veekaybee.github.io/assets/3837836/785667f9-a7d7-457a-98b1-0fdcd0212162" width="400">
-</figure>
-
+<p>There’s a lot going on here, and it seems to be coming from importlib rather than Ray itself, but Ray uses importlib as a dependency. So, in order to isolate it, the team went into the module in Ray that calls importlib, which lives in <code>python/ray/_private/utils.py</code> .</p>
 <p>What the team then did was to <a href="https://github.com/ray-project/ray/blob/683d7f378b913b943f7edf5cdca6548e807f33ed/python/ray/_private/utils.py#L1163">find the method</a> that opens the import path, and created a reprex for the issue, where they took that exact method calling importlib.import_module, put it into a notebook, and called the code directly.</p>
-<figure><img src="https://github.com/veekaybee/veekaybee.github.io/assets/3837836/9bbc78a8-7886-49db-8936-7c498acb8eb2" width="400">
-</figure>
-
 <p>This directly didn’t work, and they proved it without using any external dependencies or Ray itself - they found the source of the issue. Which meant that, in their case, they couldn’t use the nested path to build their model deployment, but for simplicity’s sake, they could serve it from the root level. It turns out that the issue was in the import_attr, which meant that they had to include the config file and the script to launch the cluster in the same root-level of the repository.</p>
-<figure><img src="https://github.com/veekaybee/veekaybee.github.io/assets/3837836/e81f1a73-a28c-4eab-aa4e-20178203a192" width="400">
-</figure>
-
-<figure><img src="https://github.com/veekaybee/veekaybee.github.io/assets/3837836/4b69210a-f0a3-423b-8667-1030cb5ec90d" width="400">
-</figure>
-
 <p>They weren’t done yet, though. When they tried to deploy this, they also got a 404 error when they tried to download the deployable from the Git hash. This is because they were trying to enable asset downloads, aka our Topic trend detection code, from a private GitHub repo onto the head node in the cluster for running the code. Initially, they tried to use a fine-grained PAT: This didn&rsquo;t work, so they had to use a legacy GitHUB token. Along the way, they learned that Ray uses a library called <code>smart_open</code> for streaming files from S3/GitHub, which helped them troubleshoot further issues.</p>
 <p>All of this is abstracted away from us by the YAML, quickly-changing documentation, and multiple parts of the system. To get from that to the piece of information you need, the team needed to ruthlessly strip out all areas of detail and focus on the problem, and, hopefully, get to a reproducible example. This is getting closer to the metal, this is attention.</p>
 <p>Finally, the team had a prototype running in production. With this issue resolved, the team moved on, and was successfully able to deploy the topic detection app, much to the delight of the CEO. Everyone got raises and lived happily ever after in their own castles in Florence.</p>
