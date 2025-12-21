@@ -38,4 +38,5 @@
  <blockquote>
  <p>(其它版本可参考此篇文章)
 另在测试中发个问题，使用<code>Apache Nifi</code>内嵌的<code>Zookeeper</code>搭建伪集群里启动总是提示端口占用的问题，故放弃只采用了单结点启动。</p>
+
  </blockquote>
