@@ -25,21 +25,21 @@
 <p>CNI 配置文件为 JSON 格式，以下是一个样例配置文件：</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="line"><span class="cl"><span class="p">{</span>
 </span></span><span class="line"><span class="cl">  <span class="c1">// CNI Spec Version
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="nt">&#34;cniVersion&#34;</span><span class="p">:</span> <span class="s2">&#34;1.0.0&#34;</span><span class="p">,</span>
+</span></span></span><span class="line"><span class="cl">  <span class="nt">&#34;cniVersion&#34;</span><span class="p">:</span> <span class="s2">&#34;1.0.0&#34;</span><span class="p">,</span>
 </span></span><span class="line"><span class="cl">  <span class="c1">// Network name.
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;dbnet&#34;</span><span class="p">,</span>
+</span></span></span><span class="line"><span class="cl">  <span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;dbnet&#34;</span><span class="p">,</span>
 </span></span><span class="line"><span class="cl">  <span class="nt">&#34;plugins&#34;</span><span class="p">:</span> <span class="p">[</span>
 </span></span><span class="line"><span class="cl">    <span class="p">{</span>
 </span></span><span class="line"><span class="cl">      <span class="c1">// CNI Plugin Binary name
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>      <span class="nt">&#34;type&#34;</span><span class="p">:</span> <span class="s2">&#34;bridge&#34;</span><span class="p">,</span>
+</span></span></span><span class="line"><span class="cl">      <span class="nt">&#34;type&#34;</span><span class="p">:</span> <span class="s2">&#34;bridge&#34;</span><span class="p">,</span>
 </span></span><span class="line"><span class="cl">      <span class="c1">// CNI Plugin specific parameters...
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>      <span class="nt">&#34;bridge&#34;</span><span class="p">:</span> <span class="s2">&#34;cni0&#34;</span><span class="p">,</span>
+</span></span></span><span class="line"><span class="cl">      <span class="nt">&#34;bridge&#34;</span><span class="p">:</span> <span class="s2">&#34;cni0&#34;</span><span class="p">,</span>
 </span></span><span class="line"><span class="cl">      <span class="c1">// Dictionary with IPAM (IP Address Management) specific values.
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>      <span class="nt">&#34;ipam&#34;</span><span class="p">:</span> <span class="p">{</span>
+</span></span></span><span class="line"><span class="cl">      <span class="nt">&#34;ipam&#34;</span><span class="p">:</span> <span class="p">{</span>
 </span></span><span class="line"><span class="cl">        <span class="c1">// IPAM Plugin Binary name
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>        <span class="nt">&#34;type&#34;</span><span class="p">:</span> <span class="s2">&#34;host-local&#34;</span><span class="p">,</span>
+</span></span></span><span class="line"><span class="cl">        <span class="nt">&#34;type&#34;</span><span class="p">:</span> <span class="s2">&#34;host-local&#34;</span><span class="p">,</span>
 </span></span><span class="line"><span class="cl">        <span class="c1">// IPAM specific params...
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>        <span class="nt">&#34;subnet&#34;</span><span class="p">:</span> <span class="s2">&#34;10.1.0.0/16&#34;</span><span class="p">,</span>
+</span></span></span><span class="line"><span class="cl">        <span class="nt">&#34;subnet&#34;</span><span class="p">:</span> <span class="s2">&#34;10.1.0.0/16&#34;</span><span class="p">,</span>
 </span></span><span class="line"><span class="cl">        <span class="nt">&#34;gateway&#34;</span><span class="p">:</span> <span class="s2">&#34;10.1.0.1&#34;</span><span class="p">,</span>
 </span></span><span class="line"><span class="cl">        <span class="nt">&#34;routes&#34;</span><span class="p">:</span> <span class="p">[</span>
 </span></span><span class="line"><span class="cl">            <span class="p">{</span> <span class="nt">&#34;dst&#34;</span><span class="p">:</span> <span class="s2">&#34;0.0.0.0/0&#34;</span> <span class="p">}</span>
@@ -66,7 +66,7 @@
 <p>打开<a href="https://github.com/containernetworking/plugins/blob/main/plugins/main/ptp/ptp.go">样例 p2p CNI 插件代码</a>，先看他的 <code>main</code> 函数只有简洁的一行 <code>skel.PluginMain</code>，这个方法会处理环境变量传入的 CNI 参数，加载 Config，执行相应的 COMMAND。</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nx">skel</span><span class="p">.</span><span class="nf">PluginMain</span><span class="p">(</span><span class="nx">cmdAdd</span><span class="p">,</span><span class="w"> </span><span class="nx">cmdCheck</span><span class="p">,</span><span class="w"> </span><span class="nx">cmdDel</span><span class="p">,</span><span class="w"> </span><span class="nx">version</span><span class="p">.</span><span class="nx">All</span><span class="p">,</span><span class="w"> </span><span class="nx">bv</span><span class="p">.</span><span class="nf">BuildString</span><span class="p">(</span><span class="s">&#34;ptp&#34;</span><span class="p">))</span><span class="w">
-</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
 </span></span></span></code></pre></div><h4 id="add-命令">ADD 命令</h4>
 <p>ADD 命令用于为容器创建网卡（或修改已有的网卡），找一下 p2p CNI 插件的 <code>cmdAdd</code> 函数，大致简化一下里面的代码流程为：</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span><span class="w"> </span><span class="nf">cmdAdd</span><span class="p">(</span><span class="nx">args</span><span class="w"> </span><span class="o">*</span><span class="nx">skel</span><span class="p">.</span><span class="nx">CmdArgs</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span><span class="w">
@@ -112,7 +112,7 @@
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// Some other IP forward (masquerade) operations...</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">types</span><span class="p">.</span><span class="nf">PrintResult</span><span class="p">(</span><span class="nx">result</span><span class="p">,</span><span class="w"> </span><span class="nx">conf</span><span class="p">.</span><span class="nx">CNIVersion</span><span class="p">)</span><span class="w">
-</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
 </span></span></span></code></pre></div><p>简单概括样例 P2P Plugin 的 ADD 命令流程大致为：</p>
 <ol>
 <li>加载 CNI Config 配置文件</li>
@@ -157,7 +157,7 @@
 </span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="p">}</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">err</span><span class="w">
-</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
 </span></span></span></code></pre></div><p>简单概括 DEL 命令流程大致为：</p>
 <ol>
 <li>加载 CNI Config 配置文件</li>
@@ -238,7 +238,7 @@ CHECK 命令将 <code>prevResult</code> 记录的状态信息和设定的期望�
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="w">
-</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
 </span></span></span></code></pre></div><p>样例 P2P 插件的 DEL 命令流程大致为：</p>
 <ol>
 <li>加载 CNI Config 配置文件</li>
@@ -260,10 +260,10 @@ CHECK 命令将 <code>prevResult</code> 记录的状态信息和设定的期望�
 </span></span><span class="line"><span class="cl"><span class="gp">$</span> sudo cp ptp /var/lib/rancher/k3s/data/current/bin/
 </span></span></code></pre></div><p>创建一个 <code>NetworkAttachmentDefinition</code> Custom Resource，将 p2p 的 CNI Config 存储在这里，配置 Pod 使用 ptp CNI 插件。</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;k8s.cni.cncf.io/v1&#34;</span><span class="w">
-</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">NetworkAttachmentDefinition</span><span class="w">
-</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">NetworkAttachmentDefinition</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">metadata</span><span class="p">:</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">ptp-conf</span><span class="w">
-</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">spec</span><span class="p">:</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">config</span><span class="p">:</span><span class="w"> </span><span class="s1">&#39;{
 </span></span></span><span class="line"><span class="cl"><span class="s1">  &#34;cniVersion&#34;: &#34;1.0.0&#34;,
 </span></span></span><span class="line"><span class="cl"><span class="s1">  &#34;type&#34;: &#34;ptp&#34;,
@@ -281,11 +281,11 @@ CHECK 命令将 <code>prevResult</code> 记录的状态信息和设定的期望�
 </span></span></span></code></pre></div><h3 id="创建样例-workload">创建样例 Workload</h3>
 <p>接下来可以创建样例工作负载，设置 <code>k8s.v1.cni.cncf.io/networks</code> Annotation 定义 Pod 的第二网卡由上述的 P2P 插件创建。为便于折腾这里的样例负载为 DaemonSet，并赋予容器 Privileged 权限。</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l">apps/v1</span><span class="w">
-</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">DaemonSet</span><span class="w">
-</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">metadata</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l">DaemonSet</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">metadata</span><span class="p">:</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">example-ds</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l">default</span><span class="w">
-</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">spec</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">spec</span><span class="p">:</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">selector</span><span class="p">:</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">matchLabels</span><span class="p">:</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l">example-alpine-ds</span><span class="w">
@@ -307,7 +307,7 @@ CHECK 命令将 <code>prevResult</code> 记录的状态信息和设定的期望�
 </span></span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-console" data-lang="console"><span class="line"><span class="cl"><span class="gp">$</span> vim example-ds.yaml
 </span></span><span class="line"><span class="cl"><span class="gp">$</span> k apply -f example-ds.yaml
 </span></span><span class="line"><span class="cl"><span class="go">daemonset.apps/example-ds created
-</span></span></span><span class="line"><span class="cl"><span class="go"></span><span class="gp">$</span> k get pods -o wide
+</span></span></span><span class="line"><span class="cl"><span class="gp">$</span> k get pods -o wide
 </span></span><span class="line"><span class="cl"><span class="go">NAME               READY   STATUS    RESTARTS   AGE   IP           NODE    NOMINATED NODE   READINESS GATES
 </span></span></span><span class="line"><span class="cl"><span class="go">example-ds-4865k   1/1     Running   0          3s    10.42.1.7    k3s-2   &lt;none&gt;           &lt;none&gt;
 </span></span></span><span class="line"><span class="cl"><span class="go">example-ds-9g5kp   1/1     Running   0          3s    10.42.0.12   k3s-1   &lt;none&gt;           &lt;none&gt;
@@ -332,7 +332,7 @@ CHECK 命令将 <code>prevResult</code> 记录的状态信息和设定的期望�
 </span></span></span><span class="line"><span class="cl"><span class="go">       valid_lft forever preferred_lft forever
 </span></span></span><span class="line"><span class="cl"><span class="go">    inet6 fe80::680b:7dff:fe4b:6fc5/64 scope link
 </span></span></span><span class="line"><span class="cl"><span class="go">       valid_lft forever preferred_lft forever
-</span></span></span><span class="line"><span class="cl"><span class="go"></span><span class="gp">#</span> ip r
+</span></span></span><span class="line"><span class="cl"><span class="gp">#</span> ip r
 </span></span><span class="line"><span class="cl"><span class="go">default via 10.42.0.1 dev eth0
 </span></span></span><span class="line"><span class="cl"><span class="go">10.42.0.0/24 dev eth0 scope link  src 10.42.0.12
 </span></span></span><span class="line"><span class="cl"><span class="go">10.42.0.0/16 via 10.42.0.1 dev eth0
@@ -418,7 +418,7 @@ CHECK 命令将 <code>prevResult</code> 记录的状态信息和设定的期望�
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
 </span></span></code></pre></div><p>设置 CNI 环境变量，传递 CHECK 命令需要的参数。如果实在不清楚 NETNS 和 CONTAINERID 的话，可以魔改 ADD 和 DEL 命令的代码，把参数打印到某个日志文件中。</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="cl"><span class="cp">#!/bin/bash
-</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl"><span class="nb">export</span> <span class="nv">CNI_PATH</span><span class="o">=</span><span class="s2">&#34;/var/lib/rancher/k3s/data/current/bin&#34;</span>
 </span></span><span class="line"><span class="cl"><span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span><span class="nv">$CNI_PATH</span>:<span class="nv">$PATH</span>
 </span></span><span class="line"><span class="cl"><span class="nb">export</span> <span class="nv">CNI_CONTAINERID</span><span class="o">=</span><span class="s2">&#34;f19d5f601d6227bdf0cb28b43862632e98ecd23cd44d08e8ba1b2d8f27c9639c&#34;</span>

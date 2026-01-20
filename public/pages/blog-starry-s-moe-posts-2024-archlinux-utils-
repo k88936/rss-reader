@@ -5,11 +5,11 @@
 <h2 id="装系统">装系统</h2>
 <p>Arch Wiki 的 Installation Guide 在使用 <code>pacstrap</code> 装系统时只写了最基础的软件包 <code>base</code>, <code>linux</code> 和 <code>linux-firmware</code>，可以在这一步补充亿些常用的软件。</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="cl">pacstrap -K /mnt base linux linux-firmware <span class="se">\
-</span></span></span><span class="line"><span class="cl"><span class="se"></span>    base-devel gcc grub amd-ucode intel-ucode <span class="se">\
-</span></span></span><span class="line"><span class="cl"><span class="se"></span>    zsh zsh-syntax-highlighting zsh-autosuggestions <span class="se">\
-</span></span></span><span class="line"><span class="cl"><span class="se"></span>    vim neovim git openbsd-netcat <span class="se">\
-</span></span></span><span class="line"><span class="cl"><span class="se"></span>    sudo man-db htop wget <span class="se">\
-</span></span></span><span class="line"><span class="cl"><span class="se"></span>    fastfetch
+</span></span></span><span class="line"><span class="cl">    base-devel gcc grub amd-ucode intel-ucode <span class="se">\
+</span></span></span><span class="line"><span class="cl">    zsh zsh-syntax-highlighting zsh-autosuggestions <span class="se">\
+</span></span></span><span class="line"><span class="cl">    vim neovim git openbsd-netcat <span class="se">\
+</span></span></span><span class="line"><span class="cl">    sudo man-db htop wget <span class="se">\
+</span></span></span><span class="line"><span class="cl">    fastfetch
 </span></span></code></pre></div><p>进 chroot 后编辑 <code>/etc/pacman.conf</code>，添加以下配置，启用 Arch Linux CN。</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl"># /etc/pacman.conf
 </span></span><span class="line"><span class="cl">[archlinuxcn]
@@ -81,30 +81,30 @@
 </span></span></code></pre></div><h2 id="常用命令行工具">常用命令行工具</h2>
 <p>如果只作为服务器 / 不包含图形的虚拟机使用的话，装这些咱常用软件，这部分因人而异，仅供参考。</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="cl">sudo pacman -S go <span class="se">\
-</span></span></span><span class="line"><span class="cl"><span class="se"></span>    kubectl helm <span class="se">\
-</span></span></span><span class="line"><span class="cl"><span class="se"></span>    docker docker-buildx <span class="se">\
-</span></span></span><span class="line"><span class="cl"><span class="se"></span>    podman <span class="se">\
-</span></span></span><span class="line"><span class="cl"><span class="se"></span>    privoxy <span class="se">\
-</span></span></span><span class="line"><span class="cl"><span class="se"></span>    proxychains <span class="se">\
-</span></span></span><span class="line"><span class="cl"><span class="se"></span>    wireguard-tools <span class="se">\
-</span></span></span><span class="line"><span class="cl"><span class="se"></span>    axel aria2 <span class="se">\
-</span></span></span><span class="line"><span class="cl"><span class="se"></span>    ffmpeg <span class="se">\
-</span></span></span><span class="line"><span class="cl"><span class="se"></span>    jq go-yq <span class="se">\
-</span></span></span><span class="line"><span class="cl"><span class="se"></span>    jdk8-openjdk <span class="se">\
-</span></span></span><span class="line"><span class="cl"><span class="se"></span>    lm_sensors <span class="se">\
-</span></span></span><span class="line"><span class="cl"><span class="se"></span>    net-tools traceroute <span class="se">\
-</span></span></span><span class="line"><span class="cl"><span class="se"></span>    openssh <span class="se">\
-</span></span></span><span class="line"><span class="cl"><span class="se"></span>    nodejs npm <span class="se">\
-</span></span></span><span class="line"><span class="cl"><span class="se"></span>    python3 python-pip <span class="se">\
-</span></span></span><span class="line"><span class="cl"><span class="se"></span>    btrfs-progs <span class="se">\
-</span></span></span><span class="line"><span class="cl"><span class="se"></span>    <span class="nb">bind</span> <span class="se">\
-</span></span></span><span class="line"><span class="cl"><span class="se"></span>    ethtool <span class="se">\
-</span></span></span><span class="line"><span class="cl"><span class="se"></span>    bc <span class="se">\
-</span></span></span><span class="line"><span class="cl"><span class="se"></span>    age
+</span></span></span><span class="line"><span class="cl">    kubectl helm <span class="se">\
+</span></span></span><span class="line"><span class="cl">    docker docker-buildx <span class="se">\
+</span></span></span><span class="line"><span class="cl">    podman <span class="se">\
+</span></span></span><span class="line"><span class="cl">    privoxy <span class="se">\
+</span></span></span><span class="line"><span class="cl">    proxychains <span class="se">\
+</span></span></span><span class="line"><span class="cl">    wireguard-tools <span class="se">\
+</span></span></span><span class="line"><span class="cl">    axel aria2 <span class="se">\
+</span></span></span><span class="line"><span class="cl">    ffmpeg <span class="se">\
+</span></span></span><span class="line"><span class="cl">    jq go-yq <span class="se">\
+</span></span></span><span class="line"><span class="cl">    jdk8-openjdk <span class="se">\
+</span></span></span><span class="line"><span class="cl">    lm_sensors <span class="se">\
+</span></span></span><span class="line"><span class="cl">    net-tools traceroute <span class="se">\
+</span></span></span><span class="line"><span class="cl">    openssh <span class="se">\
+</span></span></span><span class="line"><span class="cl">    nodejs npm <span class="se">\
+</span></span></span><span class="line"><span class="cl">    python3 python-pip <span class="se">\
+</span></span></span><span class="line"><span class="cl">    btrfs-progs <span class="se">\
+</span></span></span><span class="line"><span class="cl">    <span class="nb">bind</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">    ethtool <span class="se">\
+</span></span></span><span class="line"><span class="cl">    bc <span class="se">\
+</span></span></span><span class="line"><span class="cl">    age
 </span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl"><span class="c1"># golangci-lint</span>
 </span></span><span class="line"><span class="cl">paru -S golangci-lint-bin <span class="se">\
-</span></span></span><span class="line"><span class="cl"><span class="se"></span>    krew-bin
+</span></span></span><span class="line"><span class="cl">    krew-bin
 </span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl"><span class="c1"># 装完 Docker 后把普通用户添加到 docker group 中</span>
 </span></span><span class="line"><span class="cl">sudo usermod -aG docker <span class="nv">$USER</span>
@@ -198,20 +198,20 @@
 </span></span></code></pre></div><h2 id="常用的-gui-软件">常用的 GUI 软件</h2>
 <p>装好图形界面并顺利跑起来之后，就可以装常用的桌面软件了，下面这些是部分可能用到的软件，这些因人而异，仅供参考。</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="cl">sudo pacman -S vlc <span class="se">\
-</span></span></span><span class="line"><span class="cl"><span class="se"></span>    virt-manager <span class="se">\
-</span></span></span><span class="line"><span class="cl"><span class="se"></span>    ttf-monaco <span class="se">\
-</span></span></span><span class="line"><span class="cl"><span class="se"></span>    noto-fonts noto-fonts-cjk noto-fonts-emoji ttf-dejavu <span class="se">\
-</span></span></span><span class="line"><span class="cl"><span class="se"></span>    ibus ibus-rime <span class="se">\
-</span></span></span><span class="line"><span class="cl"><span class="se"></span>    firefox <span class="se">\
-</span></span></span><span class="line"><span class="cl"><span class="se"></span>    emacs
+</span></span></span><span class="line"><span class="cl">    virt-manager <span class="se">\
+</span></span></span><span class="line"><span class="cl">    ttf-monaco <span class="se">\
+</span></span></span><span class="line"><span class="cl">    noto-fonts noto-fonts-cjk noto-fonts-emoji ttf-dejavu <span class="se">\
+</span></span></span><span class="line"><span class="cl">    ibus ibus-rime <span class="se">\
+</span></span></span><span class="line"><span class="cl">    firefox <span class="se">\
+</span></span></span><span class="line"><span class="cl">    emacs
 </span></span></code></pre></div><p>在 AUR 中安装的软件：</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="cl">paru -S google-chrome <span class="se">\
-</span></span></span><span class="line"><span class="cl"><span class="se"></span>    visual-studio-code-bin
+</span></span></span><span class="line"><span class="cl">    visual-studio-code-bin
 </span></span></code></pre></div><h3 id="iommu-group">IOMMU Group</h3>
 <p>默认情况下 AMD CPU 不需要编辑内核参数就已经启用了 IOMMU Group，英特尔平台需要添加内核参数 <code>intel_iommu=on</code> 以启用 IOMMU Group。</p>
 <p>使用 <a href="https://wiki.archlinux.org/title/PCI_passthrough_via_OVMF#Ensuring_that_the_groups_are_valid">Arch Linux Wiki 提供的以下脚本</a>查看 PCI 设备的 IOMMU Group。</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="cl"><span class="cp">#!/bin/bash
-</span></span></span><span class="line"><span class="cl"><span class="cp"></span><span class="nb">shopt</span> -s nullglob
+</span></span></span><span class="line"><span class="cl"><span class="nb">shopt</span> -s nullglob
 </span></span><span class="line"><span class="cl"><span class="k">for</span> g in <span class="k">$(</span>find /sys/kernel/iommu_groups/* -maxdepth <span class="m">0</span> -type d <span class="p">|</span> sort -V<span class="k">)</span><span class="p">;</span> <span class="k">do</span>
 </span></span><span class="line"><span class="cl">    <span class="nb">echo</span> <span class="s2">&#34;IOMMU Group </span><span class="si">${</span><span class="nv">g</span><span class="p">##*/</span><span class="si">}</span><span class="s2">:&#34;</span>
 </span></span><span class="line"><span class="cl">    <span class="k">for</span> d in <span class="nv">$g</span>/devices/*<span class="p">;</span> <span class="k">do</span>

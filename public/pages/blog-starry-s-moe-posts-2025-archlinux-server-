@@ -40,11 +40,11 @@
 </span></span><span class="line"><span class="cl"><span class="go">[    0.796858] pci 0000:00:00.2: AMD-Vi: IOMMU performance counters supported
 </span></span></span><span class="line"><span class="cl"><span class="go">[    0.799440] AMD-Vi: Extended features (0x58f77ef22294a5a, 0x0): PPR NX GT IA PC GA_vAPIC
 </span></span></span><span class="line"><span class="cl"><span class="go">[    0.799447] AMD-Vi: Interrupt remapping enabled
-</span></span></span><span class="line"><span class="cl"><span class="go"></span><span class="err">
-</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="gp">$</span> sudo dmesg <span class="p">|</span> grep IOMMU
+</span></span></span><span class="line"><span class="cl"><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="gp">$</span> sudo dmesg <span class="p">|</span> grep IOMMU
 </span></span><span class="line"><span class="cl"><span class="go">[    0.741773] perf/amd_iommu: Detected AMD IOMMU #0 (2 banks, 4 counters/bank).
-</span></span></span><span class="line"><span class="cl"><span class="go"></span><span class="err">
-</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="gp">$</span> iommu.sh
+</span></span></span><span class="line"><span class="cl"><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="gp">$</span> iommu.sh
 </span></span><span class="line"><span class="cl"><span class="go">...
 </span></span></span><span class="line"><span class="cl"><span class="go">IOMMU Group 14:
 </span></span></span><span class="line"><span class="cl"><span class="go">	07:00.0 3D controller [0302]: NVIDIA Corporation GP104GL [Tesla P4] [10de:1abc] (rev a1)
@@ -66,7 +66,7 @@
 <p>因为显卡被直通给虚拟机，所以主机上不能运行 X Server，如果 libvirt 在启动虚拟机时卡住，可能是因为显卡驱动还在被主机加载，显卡设备依旧被主机使用而无法被直通给虚拟机。
 这是可以执行 <code>rmmod</code> 重新加载显卡驱动，让主机让出显卡给虚拟机使用。</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="cl"><span class="cp">#!/bin/bash
-</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl"><span class="c1"># reload-nvidia.sh</span>
 </span></span><span class="line"><span class="cl">sudo rmmod nvidia_drm nvidia_uvm nvidia_modeset nvidia
 </span></span><span class="line"><span class="cl">sudo modprobe nvidia nvidia_uvm
@@ -118,11 +118,11 @@
 </span></span><span class="line"><span class="cl">                                    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="o">*</span><span class="n">pfn</span><span class="p">)</span>
 </span></span><span class="line"><span class="cl">    <span class="p">{</span>
 </span></span><span class="line"><span class="cl">    <span class="cp">#if defined(NV_FOLLOW_PFN_PRESENT)
-</span></span></span><span class="line"><span class="cl"><span class="cp"></span>        <span class="k">return</span> <span class="nf">follow_pfn</span><span class="p">(</span><span class="n">vma</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">pfn</span><span class="p">);</span>
+</span></span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="nf">follow_pfn</span><span class="p">(</span><span class="n">vma</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">pfn</span><span class="p">);</span>
 </span></span><span class="line"><span class="cl">    <span class="cp">#else
-</span></span></span><span class="line"><span class="cl"><span class="cp"></span>        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+</span></span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
 </span></span><span class="line"><span class="cl">    <span class="cp">#endif
-</span></span></span><span class="line"><span class="cl"><span class="cp"></span>    <span class="p">}</span>
+</span></span></span><span class="line"><span class="cl">    <span class="p">}</span>
 </span></span></code></pre></div></li>
 </ol>
 <p>之后再编译时还会遇到 <code>error: 'no_llseek' undeclared here (not in a function); did you mean 'noop_llseek'?</code> 报错，搜了一下发现在 Kernel 6.12 中 <code>no_llseek</code> <a href="https://github.com/google/gasket-driver/commit/4b2a1464f3b619daaf0f6c664c954a42c4b7ce00.patch">已被移除</a>，
@@ -132,9 +132,9 @@
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-console" data-lang="console"><span class="line"><span class="cl"><span class="gp">$</span> <span class="nb">cd</span> /sys/bus/pci/devices/0000:07:00.0/mdev_supported_types
 </span></span><span class="line"><span class="cl"><span class="gp">$</span> ls
 </span></span><span class="line"><span class="cl"><span class="go">nvidia-157  nvidia-214  nvidia-243  nvidia-288  nvidia-289  nvidia-63  nvidia-64  nvidia-65  nvidia-66  nvidia-67  nvidia-68  nvidia-69  nvidia-70  nvidia-71
-</span></span></span><span class="line"><span class="cl"><span class="go"></span><span class="gp">$</span> cat nvidia-64/name
+</span></span></span><span class="line"><span class="cl"><span class="gp">$</span> cat nvidia-64/name
 </span></span><span class="line"><span class="cl"><span class="go">GRID P4-2Q
-</span></span></span><span class="line"><span class="cl"><span class="go"></span><span class="gp">$</span> cat nvidia-64/description
+</span></span></span><span class="line"><span class="cl"><span class="gp">$</span> cat nvidia-64/description
 </span></span><span class="line"><span class="cl"><span class="go">num_heads=4, frl_config=60, framebuffer=2048M, max_resolution=7680x4320, max_instance=4
 </span></span></span></code></pre></div><p><code>/sys/bus/pci/devices/0000:07:00.0/mdev_supported_types</code> 目录中存在许多不同种类的 vGPU 目录，Tesla P4 的 vGPU Type 的介绍可参照<a href="https://docs.nvidia.com/vgpu/14.0/grid-vgpu-user-guide/index.html#vgpu-types-tesla-p4">这里</a>。咱使用的是 Q 系列的 vGPU，<code>nvidia-64</code> 目录对应的是 <strong>2Q</strong> 系列的 vGPU，拥有 2G 显存，最多可创建 4 块 vGPU。</p>
 <p>生成几个 UUID 用于创建 vGPU 显卡。</p>
