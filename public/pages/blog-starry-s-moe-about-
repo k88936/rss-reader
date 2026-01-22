@@ -10,7 +10,7 @@
 <hr>
 <p>成分很杂：</p>
 <ul>
-<li>I use Arch btw</li>
+<li>I use Arch, btw.</li>
 <li>不写代码会死星人</li>
 <li>工作与容器、Kubernetes 相关</li>
 <li>业余摄影，相机 A7C2 + 适马定焦，可约人像/漫展/兽装摄影</li>
@@ -19,8 +19,8 @@
 <li>月厨</li>
 </ul>
 <h2 id="关于本站">关于本站</h2>
-<p>博客建于 2016 年 8 月，基于 <a href="https://hugo.io">Hugo</a> + <a href="https://github.com/adityatelange/hugo-PaperMod/">PaperMod</a>
-生成静态页托管在 <a href="https://pages.github.com/">GitHub Pages</a>。</p>
+<p>博客建于 2016 年 8 月，使用 <a href="https://hugo.io">Hugo</a> + <a href="https://github.com/adityatelange/hugo-PaperMod/">PaperMod</a>
+主题生成静态页托管在 <a href="https://pages.github.com/">GitHub Pages</a>。</p>
 <p>时间久远曾换过几个域名，现在使用 <code>starry-s.moe</code>。</p>
 <p>内容很杂，随缘更新。</p>
 <meting-js server="netease" type="playlist" id="8433061690" theme="#2E9AFE"></meting-js>
