@@ -24,3 +24,209 @@
 <p>时间久远曾换过几个域名，现在使用 <code>starry-s.moe</code>。</p>
 <p>内容很杂，随缘更新。</p>
 <meting-js server="netease" type="playlist" id="8433061690" theme="#2E9AFE"></meting-js>
+<style>
+    .sponsor-wrapper {
+        text-align: center;
+        margin: 40px 0;
+    }
+
+    .sponsor-trigger {
+        background-color: var(--entry);
+        color: var(--primary);
+        padding: 12px 24px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+    }
+
+    .sponsor-trigger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        border-color: var(--secondary);
+    }
+
+    .sponsor-trigger svg {
+        width: 20px;
+        height: 20px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+    .sponsor-content {
+        max-height: 0;
+        opacity: 0;
+        overflow: hidden;
+        transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease;
+
+        display: flex;
+        justify-content: center;
+        gap: 40px;
+        flex-wrap: wrap;
+    }
+
+    .sponsor-content.expanded {
+        max-height: 1000px;
+        opacity: 1;
+        margin-top: 40px;
+    }
+
+    .sponsor-card {
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 160px;
+    }
+
+    .sponsor-qr {
+        width: 160px;
+        height: 160px;
+        object-fit: contain;
+        border-radius: 12px;
+        margin-bottom: 12px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .sponsor-qr:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+    }
+
+    .sponsor-title {
+        font-weight: 600;
+        font-size: 1rem;
+        color: var(--primary);
+        margin-bottom: 4px;
+        text-align: center;
+    }
+
+    .sponsor-badge {
+        font-size: 0.75rem;
+        color: var(--entry);
+        background-color: var(--secondary);
+        padding: 2px 8px;
+        border-radius: 10px;
+        margin-bottom: 8px;
+        opacity: 0.8;
+    }
+
+    .sponsor-subtitle {
+        font-size: 0.85rem;
+        color: var(--secondary);
+        margin-bottom: 8px;
+        text-align: center;
+    }
+
+    .sponsor-address {
+        background: var(--code-block-bg);
+        border: 1px dashed var(--border);
+        color: var(--secondary);
+        padding: 4px 24px 4px 8px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-family: monospace;
+        width: 100%;
+        text-align: center;
+        cursor: pointer;
+        position: relative;
+        transition: all 0.2s;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .sponsor-address:hover { border-color: var(--primary); color: var(--primary); }
+    .sponsor-address::before { content: "❐"; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); opacity: 0.4; font-size: 0.7rem; }
+    .sponsor-address:hover::before { opacity: 1; }
+    .sponsor-address::after { content: "Copied!"; position: absolute; top: -25px; left: 50%; transform: translateX(-50%); background: var(--primary); color: var(--entry); padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+    .sponsor-address.copied::after { opacity: 1; }
+</style>
+
+<div class="sponsor-wrapper">
+    <button class="sponsor-trigger" onclick="toggleSponsor(this)">
+        <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+        <span>Buy Me a Coffee</span>
+    </button>
+
+    <div class="sponsor-content">
+        
+    <div class="sponsor-card">
+        <img class="sponsor-qr" src="images/wechat.png" alt="WeChat Pay">
+        <span class="sponsor-title">WeChat Pay</span>
+    
+        
+            <span class="sponsor-subtitle">Scan to Pay</span>
+        
+    
+        
+    </div>
+
+    <div class="sponsor-card">
+        <img class="sponsor-qr" src="images/alipay.png" alt="Alipay">
+        <span class="sponsor-title">Alipay</span>
+    
+        
+            <span class="sponsor-subtitle">Scan to Pay</span>
+        
+    
+        
+    </div>
+
+    <div class="sponsor-card">
+        <img class="sponsor-qr" src="images/btc.png" alt="BTC Taproot">
+        <span class="sponsor-title">BTC Taproot</span>
+    
+        
+    
+        
+            <div class="sponsor-address" onclick="copySponsorAddress(this, 'bc1ph52nmyh68v3n9xd9fg0rrghnqrwnzl38j0lhkmck3wftum5knqlqm0kqkd')" title="Click to copy">
+                bc1ph52nmyh68v3n9xd9fg0rrghnqrwnzl38j0lhkmck3wftum5knqlqm0kqkd
+            </div>
+        
+    </div>
+
+    <div class="sponsor-card">
+        <img class="sponsor-qr" src="images/usdt-arb.png" alt="USDT Arbitrum">
+        <span class="sponsor-title">USDT Arbitrum</span>
+    
+        
+    
+        
+            <div class="sponsor-address" onclick="copySponsorAddress(this, '0x39cB27Fd269E06b83885BFEB6E6596fA8B60b995')" title="Click to copy">
+                0x39cB27Fd269E06b83885BFEB6E6596fA8B60b995
+            </div>
+        
+    </div>
+
+
+    </div>
+</div>
+
+<script>
+    function toggleSponsor(btn) {
+        const content = btn.nextElementSibling;
+        content.classList.toggle('expanded');
+    }
+
+    function copySponsorAddress(element, text) {
+        navigator.clipboard.writeText(text).then(() => {
+            element.classList.add('copied');
+            setTimeout(() => { element.classList.remove('copied'); }, 2000);
+        }).catch(err => { console.error('Failed to copy: ', err); });
+    }
+</script>
+
