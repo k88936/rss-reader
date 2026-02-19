@@ -6,7 +6,6 @@
 <p>Arch Wiki 的 Installation Guide 在使用 <code>pacstrap</code> 装系统时只写了最基础的软件包 <code>base</code>, <code>linux</code> 和 <code>linux-firmware</code>，可以在这一步补充亿些常用的软件。</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="cl">pacstrap -K /mnt base linux linux-firmware <span class="se">\
 </span></span></span><span class="line"><span class="cl">    base-devel gcc grub amd-ucode intel-ucode <span class="se">\
-</span></span></span><span class="line"><span class="cl">    zsh zsh-syntax-highlighting zsh-autosuggestions <span class="se">\
 </span></span></span><span class="line"><span class="cl">    vim neovim git openbsd-netcat <span class="se">\
 </span></span></span><span class="line"><span class="cl">    sudo man-db htop wget <span class="se">\
 </span></span></span><span class="line"><span class="cl">    fastfetch
@@ -100,7 +99,10 @@
 </span></span></span><span class="line"><span class="cl">    <span class="nb">bind</span> <span class="se">\
 </span></span></span><span class="line"><span class="cl">    ethtool <span class="se">\
 </span></span></span><span class="line"><span class="cl">    bc <span class="se">\
-</span></span></span><span class="line"><span class="cl">    age
+</span></span></span><span class="line"><span class="cl">    age <span class="se">\
+</span></span></span><span class="line"><span class="cl">    zsh zsh-syntax-highlighting zsh-autosuggestions <span class="se">\
+</span></span></span><span class="line"><span class="cl">    starship fzf <span class="se">\
+</span></span></span><span class="line"><span class="cl">    xclip wl-clipboard
 </span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl"><span class="c1"># golangci-lint</span>
 </span></span><span class="line"><span class="cl">paru -S golangci-lint-bin <span class="se">\
