@@ -102,6 +102,7 @@
 </span></span></span><span class="line"><span class="cl">    age <span class="se">\
 </span></span></span><span class="line"><span class="cl">    zsh zsh-syntax-highlighting zsh-autosuggestions <span class="se">\
 </span></span></span><span class="line"><span class="cl">    starship fzf <span class="se">\
+</span></span></span><span class="line"><span class="cl">    lua-language-server <span class="se">\
 </span></span></span><span class="line"><span class="cl">    xclip wl-clipboard
 </span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl"><span class="c1"># golangci-lint</span>
