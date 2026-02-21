@@ -204,7 +204,7 @@
 </span></span></span><span class="line"><span class="cl">    virt-manager <span class="se">\
 </span></span></span><span class="line"><span class="cl">    ttf-monaco <span class="se">\
 </span></span></span><span class="line"><span class="cl">    noto-fonts noto-fonts-cjk noto-fonts-emoji ttf-dejavu <span class="se">\
-</span></span></span><span class="line"><span class="cl">    ttf-victor-mono-nerd <span class="se">\
+</span></span></span><span class="line"><span class="cl">    ttf-jetbrains-mono-nerd <span class="se">\
 </span></span></span><span class="line"><span class="cl">    ibus ibus-rime <span class="se">\
 </span></span></span><span class="line"><span class="cl">    firefox <span class="se">\
 </span></span></span><span class="line"><span class="cl">    emacs
