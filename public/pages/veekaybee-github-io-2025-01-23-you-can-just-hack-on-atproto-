@@ -9,3 +9,277 @@ I&rsquo;ve been wanting to make something using the <a href="https://atproto.com
 </figure>
 
 <p>You can <a href="http://www.gitfeed.me/">see GitFeed here</a>, but it might not actually be running since I didn&rsquo;t build it for scale, and it&rsquo;s running on a tiny <a href="https://www.digitalocean.com/products/droplets">DigitalOcean Droplet</a> that&rsquo;s specced out at <code>1 GB Memory / 1 Intel vCPU / 35 GB Disk</code> , is entirely unloadbalanced, un-load-tested and has zero observability or alerting when my very scientific process of <a href="https://github.com/veekaybee/gitfeed/blob/main/.github/workflows/restart.sh#L11">running nohup fails.</a></p>
+<p>The cool part of an open protocol is that you can also <a href="https://github.com/veekaybee/gitfeed">just clone the repo</a> and run a hosted version of it yourself.</p>
+<h2 id="atproto">ATProto</h2>
+<p>Bluesky is both a decentralized protocol, called AtProto and a social media company, called Bluesky plc that develops both the protocol and one of the Apps running on the protocol, Bluesky.</p>
+<p>There is a lot more in the <a href="https://arxiv.org/abs/2402.03239">AT Protocol Paper</a>, but the basics are this:</p>
+<ul>
+<li>
+<p>Data for each user is hosted individually in a <a href="https://github.com/bluesky-social/pds">PDS</a> - a personal data store - which is a database storing a collection of records that are cryptographically signed and encoded in <a href="https://ipld.io/specs/codecs/dag-cbor/spec/">DAG-CBOR</a> format. The record schema is defined by a <a href="https://atproto.com/guides/lexicon">&ldquo;lexicon&rdquo;</a>, which is dependent on the type of data being transferred. The records themselves are stored in a <a href="https://inria.hal.science/hal-02303490/document">merkle search tree</a> structure which makes it easy to rebalance records efficiently both on read and write. Its default storage engine <a href="https://bsky.app/profile/jacob.gold/post/3lbar43hgx22t">is SQLite.</a></p>
+</li>
+<li>
+<p>Each user has a PDS, exposed as a web service to network indexers. There is an indexer, the relay, which &ldquo;scrapes&rdquo; but really hits all the PDSes in the network for updates. Right now there is only one true relay, run by Bluesky the company, and there is a lot of debate around what that means for a decentralized network and <a href="https://alice.bsky.sh/post/3laega7icmi2q">efforts to diversify and decentralize</a>. To better get a sense for how the data model works, <a href="https://atproto-browser.vercel.app/">you can play around with this tool, </a> which is what I spent a lot of time doing during this project.</p>
+</li>
+</ul>
+<p>The TL; DR is that you can think of the At Proto Atmosphere as a collection of databases, or, really, websites, that the relay indexes and turns into the firehose. Data is then filtered on the firehose side for CSAM and other logic, before it&rsquo;s turned into an AppView. The AppView is what you see if you sign into <code>bsky.app. </code></p>
+<p>If this sounds familiar, it&rsquo;s because it&rsquo;s how web crawlers, including Google work, with the exception that their crawled results are not available to everyone for access.</p>
+<p>Steve has a very <a href="https://steveklabnik.com/writing/how-does-bluesky-work">nice write-up of all of this</a>, with a beautiful ascii diagram.</p>
+<p>Al(most) all of the data streaming through each person&rsquo;s PDS is public, and enables the creation of <a href="https://docs.bsky.app/showcase">projects like</a> the <a href="https://news.ycombinator.com/item?id=42159786">Bluesky firehose as a screensaver</a>, or goodfeeds, <a href="https://goodfeeds.co/">surfacing feeds across the network.</a>, or TikTok and <a href="https://bsky.app/profile/did:plc:24kqkpfy6z7avtgu3qg57vvl">Instagram-like apps.</a> As you can imagine, the protocol then lends itself to a lot of nice experimentation (make sure to <a href="https://bsky.social/about/support/community-guidelines">check the TOS/Developer guidelines</a> before you do so).</p>
+<h1 id="lets-find-all-the-gists">Let&rsquo;s find all the gists</h1>
+<p>Initially, I wanted to <a href="https://docs.bsky.app/docs/starter-templates/custom-feeds">create a custom feed</a> on Bluesky. Generally, people create these by filtering the network to include all feeds about cats, or feeds from only mutual follows, or one of my recent favorites, <a href="https://bsky.app/profile/did:plc:o4s55v3tsfph6whswxccpsia/feed/aaaixbb5liqbu">gift articles, </a> which includes links from gift articles that you can click through to read.</p>
+<p>My idea was: collect all the posts that have a link to github gists, because people put really cool stuff in gists, so I could find and expose to other users some really cool code snippets of what people are hacking on around the platform.</p>
+<p>Initially I thought I might be able to create a lightweight recommendation feed based on aggregate likes. Or, I could create a trending links feed. But, if you want to do any machine learning, you need to start consuming the firehose at scale, collecting the data, and setting up storage, and I wanted to learn Go, not implement distributed systems - <a href="https://www.youtube.com/watch?v=RqubKSF3wig">don&rsquo;t use N computers when you can use one</a>.</p>
+<p>Moreover, in order to implement a feed, <a href="https://www.reddit.com/r/RedditEng/comments/158f8o3/evolving_reddits_feed_architecture/">generally</a>, you need to also implement:</p>
+<ul>
+<li>pagination</li>
+<li>a cursor in case you lose your place in consuming the feed</li>
+<li>latency considerations</li>
+<li>Thinking about how you render feed objects (eventually they become large and need to be <a href="https://jrashford.com/2022/04/22/how-to-hydrate-tweets-using-hydrator/">hydrated</a>)</li>
+<li>potentially ranking that feed&rsquo;s content</li>
+<li>retries and handling for if you skip feed elements</li>
+</ul>
+<p>Additionally, specific to atproto, your feed is published at your own PDS - <a href="https://atproto.com/guides/glossary#pds-personal-data-server">Personal Data Server, a LOT more about this here</a>. You can see this at the link on the Gift Articles Feed:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sh" data-lang="sh"><span style="display:flex;"><span>https://bsky.app/profile/did:plc:o4s55v3tsfph6whswxccpsia/feed/aaaixbb5liqbu
+</span></span></code></pre></div><p>Given that the feed is published and linked to your own data store, it made me hesitant to experiment in case I messed something up and lost all of my data.</p>
+<p>There are lots of clients to create and publish feeds, but as a nerd, I didn&rsquo;t want to have a third party handle this out of principle. Moreover, for gists only, there was not enough data to be interesting. The Bluesky network is growing, having <a href="https://bsky-users.theo.io/">surpassed 29 million users</a>. But, at this scale, interesting content when you filter at this level of granularity is sparse.</p>
+<p>After messing around with the (excellent) <a href="https://github.com/MarshalX/atproto">Python client</a> a bit <a href="https://github.com/veekaybee/blusky">in this repo</a>, I narrowed down to the problem I actually wanted to solve:</p>
+<p><code>consuming all links with &quot;github.com&quot; in the link name, and consuming them via jetstream rather than the firehose.</code></p>
+<p>That&rsquo;s how GitFeed was born.</p>
+<h2 id="why-gitfeed-why-go">Why GitFeed? Why Go?</h2>
+<p>McFunley says you only have <a href="https://mcfunley.com/choose-boring-technology">so many innovation tokens</a>. This also applies to side projects. The other way I&rsquo;ve seen this explained, is that you can either pick a new language, a new stack, a new business problem to solve, or new people to work with, but not all four at the same time, otherwise you will never ship.</p>
+<p>I always want to <a href="https://mitchellh.com/writing/building-large-technical-projects">get to a demo</a> quickly. But, the goal of side projects is to do stuff you wouldn&rsquo;t get to explore otherwise, so I chose to spend my innovation tokens on:</p>
+<ul>
+<li>learning a new backend language, Go: this thing had to serve code fast as a binary and have a very simple deployment story. I have a background in Java/Scala and initially thought about Java, but unfortunately there is no small light-weight Java server that I&rsquo;m aware of (Spring doesn&rsquo;t count) and Go has steadily been growing in popularity since its inception and especially after the language added features like <a href="https://go.dev/blog/why-generics">generics</a> and I wanted to check it out. Just as importantly, the backend of Bluesky and the protocol were specced out and <a href="https://docs.bsky.app/docs/starter-templates/clients">written in Typescript and Go</a>, and I thought it might be easier to navigate the Atmosphere in those languages.</li>
+<li>getting slightly better at front-end dev: I&rsquo;d dabbled a bit with front-end design <a href="https://vickiboykis.com/2024/01/05/retro-on-viberary/">for Viberary</a> but used almost no Javascript, which I&rsquo;d need to render a feed.</li>
+<li>understanding the At Proto data model</li>
+</ul>
+<p>I didn&rsquo;t need to:</p>
+<ul>
+<li>Understand the problem of working with a feed of streamable content - I did a <a href="https://vickiboykis.com/2022/07/25/looking-back-at-two-years-at-automattic-and-tumblr/">lot of feeds work</a> when I worked on recommendations at Tumblr and I find it to be one of the most fun and satisfying problems in engineering to work on.</li>
+<li>Understand how to run/deploy on DigitalOcean using GitHub Actions - I already did this for Viberary and the path was pretty smooth</li>
+<li>Understand SQLite</li>
+<li>Finally, I wanted to track and catalogue my usage of LLMs for this project. I&rsquo;m <a href="https://vickiboykis.com/2023/02/26/what-should-you-use-chatgpt-for/">constantly evaluating</a> their <a href="https://vickiboykis.com/2025/01/03/everything-i-did-in-2024/">use-cases</a>.</li>
+</ul>
+<h2 id="the-jetstream">The Jetstream</h2>
+<p>I didn&rsquo;t want to spend time implementing pagination, hydration, latency mitigation, and a data storage strategy. I wanted to get going quickly, so I decided to use the Jetstream. <a href="https://docs.bsky.app/blog/jetstream">Jetstream</a> is a relatively new content source for Bluesky content (relatively because everything is brand-new and being built on the fly.)</p>
+<p>Working with the Bluesky firehose has a set of complications other than pagination: it also has its own data formats (CBOR and CAR for all the full merkle trees in the git repos) that take time in learning how to parse.</p>
+<p>Moreover, the sheer volume of firehose events has grown to the point where folks consuming it need to invest heavily in scaling strategies for downstream application consumers.</p>
+<p>Jetstream instead streams content in JSON, with <a href="https://jazco.dev/2024/09/24/jetstream/">reduced bandwidth and costs</a>.</p>
+<p>As a tradeoff, Jetstream is less stable, doesn&rsquo;t contain content that needs API verification, and don&rsquo;t offer pagination, activity offets, or uptime guarantees. As the docs say, it&rsquo;s good for low-stakes side projects that don&rsquo;t require heavy authentication or veracity, aka gitfeed.</p>
+<h2 id="serving-gitfeed">Serving GitFeed</h2>
+<figure><img src="https://raw.githubusercontent.com/veekaybee/gitfeed/main/architecture.png" width="400">
+</figure>
+
+<p>We&rsquo;re building a simple web app with <a href="https://github.com/veekaybee/gitfeed/tree/main/cmd">two components:</a> that are two separate go processes:</p>
+<ul>
+<li>An <code>ingest</code> <a href="https://github.com/veekaybee/gitfeed/tree/main/cmd/ingest">go module</a> that will ingest posts and writes them to a SQLite DB that we <a href="https://github.com/veekaybee/gitfeed/blob/main/cmd/ingest/ingest.go#L174">instantiate as part of the application</a></li>
+<li>A <code>serve</code> <a href="https://github.com/veekaybee/gitfeed/tree/main/cmd/serve">go module</a> that serves the app <a href="https://github.com/veekaybee/gitfeed/blob/main/routes/routes.go">via API.</a></li>
+</ul>
+<p>The serving module is just a few Javascript files with static HTML pages. I was very overwhelmed by all the choices in the front-end ecosystem (although the developer docs helped a ton!), so I just ended up going with plain old <a href="http://vanilla-js.com/">Vanilla JS.</a></p>
+<p>When we refresh the site, we make a call to the DB (via the <code>posts</code> <a href="https://github.com/veekaybee/gitfeed/blob/4e9248a83435e586a1c855d659baf103323678ec/static/feed.js#L187">API endpoint</a>) to surface the posts in reverse chronological order.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#66d9ef">export</span> <span style="color:#66d9ef">async</span> <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">fetchPosts</span>() {
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">container</span> <span style="color:#f92672">=</span> document.<span style="color:#a6e22e">getElementById</span>(<span style="color:#e6db74">&#39;postContainer&#39;</span>);
+</span></span><span style="display:flex;"><span> <span style="color:#a6e22e">container</span>.<span style="color:#a6e22e">innerHTML</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;&lt;div class=&#34;loading&#34;&gt;Loading posts...&lt;/div&gt;&#39;</span>;
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">try</span> {
+</span></span><span style="display:flex;"><span> <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#e6db74">&#39;Fetching new posts...&#39;</span>);
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">response</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">await</span> <span style="color:#a6e22e">fetch</span>(<span style="color:#e6db74">&#39;/api/v1/posts&#39;</span>);
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span><span style="color:#a6e22e">response</span>.<span style="color:#a6e22e">ok</span>) {
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> Error(<span style="color:#e6db74">`HTTP error! status: </span><span style="color:#e6db74">${</span><span style="color:#a6e22e">response</span>.<span style="color:#a6e22e">status</span><span style="color:#e6db74">}</span><span style="color:#e6db74">`</span>);
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">const</span> <span style="color:#a6e22e">posts</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">await</span> <span style="color:#a6e22e">response</span>.<span style="color:#a6e22e">json</span>();
+</span></span><span style="display:flex;"><span> <span style="color:#a6e22e">container</span>.<span style="color:#a6e22e">innerHTML</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;&#39;</span>;
+</span></span></code></pre></div><p>And here&rsquo;s the actual call site:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#66d9ef">import</span> {
+</span></span><span style="display:flex;"><span> <span style="color:#a6e22e">fetchPosts</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#a6e22e">updateTimestamp</span>
+</span></span><span style="display:flex;"><span>} <span style="color:#a6e22e">from</span> <span style="color:#e6db74">&#39;./feed.js&#39;</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#e6db74">&#39;Main.js loaded&#39;</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>document.<span style="color:#a6e22e">addEventListener</span>(<span style="color:#e6db74">&#39;DOMContentLoaded&#39;</span>, <span style="color:#66d9ef">async</span> () =&gt; {
+</span></span><span style="display:flex;"><span> <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#e6db74">&#39;DOM Content Loaded&#39;</span>);
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">try</span> {
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">await</span> <span style="color:#a6e22e">fetchPosts</span>();
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">await</span> <span style="color:#a6e22e">updateTimestamp</span>();
+</span></span><span style="display:flex;"><span> } <span style="color:#66d9ef">catch</span> (<span style="color:#a6e22e">error</span>) {
+</span></span><span style="display:flex;"><span> <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">error</span>(<span style="color:#e6db74">&#39;Error in main initialization:&#39;</span>, <span style="color:#a6e22e">error</span>);
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span>});
+</span></span></code></pre></div><p>I was surprised at how much about JS was already familiar to me from Python and PHP, but where I really got stuck was in understanding how the DOM and Javascript work together, what a Javascript app structure looks like, and the Javascript ecosystem.</p>
+<blockquote>
+<p><strong>Using LLMs to build GitFeed</strong>:</p>
+</blockquote>
+<p>I&rsquo;ve done a lot of work with <a href="https://github.com/Mozilla-Ocho/llamafile">llamafile</a>, and recently, I&rsquo;ve also been enjoying the local LLM stack of: <strong>Ollama</strong> for the model backend and <strong>OpenWebUI</strong> for the front-end. Ollama serves versioned <a href="https://vickiboykis.com/2024/02/28/gguf-the-long-way-around/">GGUF model weights</a> wrapped in a Docker-like paradigm that hits an API wrapping llama.cpp in an (of course) Go interface. For this project, I used <code>mistral:latest</code> and <code>qwen2.5-coder:latest</code> , the best code model at the time (in the ancient space of 3 months ago, Deepseek3 wasn&rsquo;t out). I did reasonably well between the two of them, with only 5% of requests that I had to bypass and send to Claude. I did find myself getting frustrated because I couldn&rsquo;t clearly articulate the unknown unknowns I had about Javascript, though, and eventually I just gave up and bought <code>Eloquent Javascript</code> which I&rsquo;m hoping to dig into this year to better understand what <code>Qwen</code> and I wrote together and how I can improve it.</p>
+<h2 id="ingest">Ingest</h2>
+<p>Consuming the Jetstream is easy. There are <a href="https://github.com/bluesky-social/jetstream?tab=readme-ov-file#public-instances">four public instances</a> of Jetstream, hosted by Bluesky the company, so we need to connect to one of these, consume the content, process and filter the data, and save it to our database for serving.</p>
+<p>You can check what&rsquo;s up in the Jetstream with this nifty command line tool:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sh" data-lang="sh"><span style="display:flex;"><span>websocat wss://jetstream2.us-west.bsky.network/subscribe<span style="color:#ae81ff">\?</span>wantedCollections<span style="color:#f92672">=</span>app.bsky.feed.post | jq .
+</span></span></code></pre></div><p>This is everything people are posting on Bluesky! (It sometimes gets very, very weird so be careful if you don&rsquo;t want to look at NSWF texts.)</p>
+<p>And now let&rsquo;s look at GitHub posts. There aren&rsquo;t a lot of them, so you might not get an even for at least a few minutes:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sh" data-lang="sh"><span style="display:flex;"><span>websocat wss://jetstream2.us-west.bsky.network/subscribe<span style="color:#ae81ff">\?</span>wantedCollections<span style="color:#f92672">=</span>app.bsky.feed.post | grep <span style="color:#e6db74">&#34;github&#34;</span> | jq .
+</span></span></code></pre></div><p>Jetstream is implemented as <a href="https://github.com/veekaybee/gitfeed/blob/main/cmd/ingest/ingest.go#L211">a websocket connection</a> to the source.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">wsManager</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">NewWebSocketManager</span>(
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#34;wss://jetstream2.us-west.bsky.network/subscribe?wantedCollections=app.bsky.feed.post&#34;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#a6e22e">pr</span>,
+</span></span><span style="display:flex;"><span>)
+</span></span></code></pre></div><p>A websocket is a protocol (like HTTP) that enables client-server communication over TCP but works best for streaming data without the need for continuous polling or webhooks (unlike HTTP).</p>
+<p>A connection is instantiated with a handshake between the client and the server <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_servers">in HTTP first</a>, and when the request is processed, both switch to websockets for communication.</p>
+<p>I used the <code>gorilla/websocket</code> implementation of the websocket procool. for handling the core websocket logic.</p>
+<p>We need to be able to <a href="https://brojonat.com/posts/websockets/">read and write to/from the websocket</a>:</p>
+<blockquote>
+<p>The main thing to internalize about working with WebSockets in Go is that each client connection should get at least two goroutines: one that continuously processes messages coming from the client (i.e., a “read pump”), and one that continuously processes message going out to the client (i.e., a “write pump”).</p>
+</blockquote>
+<p>However, this becomes easier since for GitFeed, we&rsquo;re only reading from and not writing to the websocket, we need to implement logic to readPump</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">w</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">WebSocketManager</span>) <span style="color:#a6e22e">readPump</span>(<span style="color:#a6e22e">ctx</span> <span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Context</span>) {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">w</span>.<span style="color:#a6e22e">Connect</span>(<span style="color:#a6e22e">ctx</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">counter</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">for</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">select</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">case</span> <span style="color:#f92672">&lt;-</span><span style="color:#a6e22e">ctx</span>.<span style="color:#a6e22e">Done</span>():
+</span></span><span style="display:flex;"><span>			<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;Exiting readPump: got kill signal\n&#34;</span>)
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">return</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">default</span>:
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">post</span> <span style="color:#a6e22e">db</span>.<span style="color:#a6e22e">ATPost</span>
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">w</span>.<span style="color:#a6e22e">conn</span>.<span style="color:#a6e22e">ReadJSON</span>(<span style="color:#f92672">&amp;</span><span style="color:#a6e22e">post</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>				<span style="color:#a6e22e">w</span>.<span style="color:#a6e22e">Connect</span>(<span style="color:#a6e22e">ctx</span>)
+</span></span><span style="display:flex;"><span>				<span style="color:#66d9ef">continue</span>
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>			<span style="color:#a6e22e">counter</span><span style="color:#f92672">++</span>
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">counter</span><span style="color:#f92672">%</span><span style="color:#ae81ff">100</span> <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span> {
+</span></span><span style="display:flex;"><span>				<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;Read %d posts\n&#34;</span>, <span style="color:#a6e22e">counter</span>)
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>			<span style="color:#75715e">// Process the post
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>			<span style="color:#a6e22e">dbPost</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">ProcessPost</span>(<span style="color:#a6e22e">post</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">w</span>.<span style="color:#a6e22e">postRepo</span>.<span style="color:#a6e22e">WritePost</span>(<span style="color:#a6e22e">dbPost</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>				<span style="color:#a6e22e">w</span>.<span style="color:#a6e22e">errorHandler</span>(<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Errorf</span>(<span style="color:#e6db74">&#34;failed to write post: %v&#34;</span>, <span style="color:#a6e22e">err</span>))
+</span></span><span style="display:flex;"><span>				<span style="color:#66d9ef">continue</span>
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>			<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;Wrote Post %v&#34;</span>, <span style="color:#a6e22e">dbPost</span>.<span style="color:#a6e22e">Did</span>)
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>However, unlike an HTTP call, websocksets are open persistently and don&rsquo;t offer any guarantees of retries, so we have to implement this logic ourselves. Fortunately, gorilla has a lot of <a href="https://github.com/gorilla/websocket/blob/main/examples/chat/client.go">good examples.</a></p>
+<p>You&rsquo;ll notice a couple key points here: first, we log and handle the case where the web socket disconnects. Then, we do some ultra-fancy print logging to keep track of how many posts we&rsquo;ve actually processed. And finally, we now get to the actual data, an <code>var post db.ATPost</code> that we process, parse, and write to the database, which we initialize as a post <a href="https://martinfowler.com/eaaCatalog/repository.html">repository</a>, a fancy word for &ldquo;database with dependency injection&rdquo;.</p>
+<blockquote>
+<p><strong>Golang tooling</strong>:</p>
+</blockquote>
+<p>Go just works out of the box. Unlike my beloved Python, it doesn&rsquo;t need uv, formatting, linting, or special build processes. At least, for a fairly small project, everything is batteries included. In fact, its boringness and rigidity allowed me to move really quickly. What surprised me is that I thought that VSCode would work really well with go, but actually didn&rsquo;t as code I imported wouldn&rsquo;t get loaded automatically, and there were a couple bugs that made me switch to Goland, which works extremely smoothly, without fail, and its local autocomplete at the line level is much better than PyCharm&rsquo;s equivalent, likely because Go is much smaller, and statically-typed.</p>
+<blockquote>
+<p><strong>Jetbrains LLMs</strong>:</p>
+</blockquote>
+<p>Jetbrains&rsquo; local LLMs are extremely well-done and I&rsquo;d encourage anyone interested <a href="https://arxiv.org/html/2405.08704v3">to check out the paper.</a></p>
+<h1 id="what-is-an-atproto-post">What is an AtProto Post</h1>
+<p>Now we get to the heart of the matter: once our websocket is open, we are ingesting a stream of JSON objects. AtProto has its own data model, defined using schemas called &ldquo;Lexicons&rdquo;. For posts and actions, they look like this.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;did&#34;</span>: <span style="color:#e6db74">&#34;did:plc:eabmaihciaxprqvxpfvl6flk&#34;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;time_us&#34;</span>: <span style="color:#ae81ff">1725911162329308</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;kind&#34;</span>: <span style="color:#e6db74">&#34;commit&#34;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;commit&#34;</span>: {
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;rev&#34;</span>: <span style="color:#e6db74">&#34;3l3qo2vutsw2b&#34;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;operation&#34;</span>: <span style="color:#e6db74">&#34;create&#34;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;collection&#34;</span>: <span style="color:#e6db74">&#34;app.bsky.feed.like&#34;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;rkey&#34;</span>: <span style="color:#e6db74">&#34;3l3qo2vuowo2b&#34;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;record&#34;</span>: {
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;$type&#34;</span>: <span style="color:#e6db74">&#34;app.bsky.feed.like&#34;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;createdAt&#34;</span>: <span style="color:#e6db74">&#34;2024-09-09T19:46:02.102Z&#34;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;subject&#34;</span>: {
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;cid&#34;</span>: <span style="color:#e6db74">&#34;bafyreidc6abdkkbchcyg62v77wbhzvb2mvytlmsychqgwf2xojjtirmzj4&#34;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;uri&#34;</span>: <span style="color:#e6db74">&#34;at://did:plc:ab7b35aakoll7hugkrjtf3xf/app.bsky.feed.post/3l3pte3p2e325&#34;</span>
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span> },
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;cid&#34;</span>: <span style="color:#e6db74">&#34;abfyreidwaivazkwu67xztlmuobx35hs2lnfh3kolmgfmucldvhd3sgzcqi&#34;</span>
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>The <code>DID</code> is the ID of the PDS (user repository) where the action happened, the record collection type of <code>app.bsky.feed.post</code> is what we care about, and each record has both a text entry, which truncates the text, and a facet, which has all the contained <a href="https://docs.bsky.app/docs/advanced-guides/post-richtext">links and rich text elements</a> in the post.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;did&#34;</span>: <span style="color:#e6db74">&#34;did:plc:&#34;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;time_us&#34;</span>: <span style="color:#ae81ff">1735494134541</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;com&#34;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;kind&#34;</span>: <span style="color:#e6db74">&#34;commit&#34;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;commit&#34;</span>: {
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;rev&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;c&#34;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;operation&#34;</span>: <span style="color:#e6db74">&#34;create&#34;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;collection&#34;</span>: <span style="color:#e6db74">&#34;app.bsky.feed.post&#34;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;rkey&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;record&#34;</span>: {
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;$type&#34;</span>: <span style="color:#e6db74">&#34;app.bsky.feed.post&#34;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;createdAt&#34;</span>: <span style="color:#e6db74">&#34;2024-12-29T17:42:14.541Z&#34;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;embed&#34;</span>: {
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;$type&#34;</span>: <span style="color:#e6db74">&#34;app.bsky.embed.external&#34;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;external&#34;</span>: {
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;description&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;thumb&#34;</span>: {
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;$type&#34;</span>: <span style="color:#e6db74">&#34;blob&#34;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;ref&#34;</span>: {
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;$link&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>
+</span></span><span style="display:flex;"><span> },
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;mimeType&#34;</span>: <span style="color:#e6db74">&#34;image/jpeg&#34;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;size&#34;</span>: 
+</span></span><span style="display:flex;"><span> },
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;title&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;uri&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span> },
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;facets&#34;</span>: [
+</span></span><span style="display:flex;"><span> {
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;features&#34;</span>: [
+</span></span><span style="display:flex;"><span> {
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;$type&#34;</span>: <span style="color:#e6db74">&#34;app.bsky.richtext.facet#link&#34;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;uri&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span> ],
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;index&#34;</span>: {
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;byteEnd&#34;</span>: <span style="color:#ae81ff">85</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;byteStart&#34;</span>: <span style="color:#ae81ff">54</span>
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span> ],
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;langs&#34;</span>: [
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#34;en&#34;</span>
+</span></span><span style="display:flex;"><span> ],
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;text&#34;</span>: <span style="color:#e6db74">&#34;...&#34;</span>
+</span></span><span style="display:flex;"><span> },
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;cid&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>So we parse these JSON objects and <a href="https://github.com/veekaybee/gitfeed/blob/4e9248a83435e586a1c855d659baf103323678ec/db/db.go#L17">store them as Go structs</a>. Go has a <a href="https://transform.tools/json-to-go">super handy tool</a> where you can paste a JSON object and get back the Go struct.</p>
+<p>And then we write that struct to a DB with a <code>posts</code> <a href="https://github.com/veekaybee/gitfeed/blob/4e9248a83435e586a1c855d659baf103323678ec/cmd/ingest/ingest.go#L185">table</a> that we&rsquo;ve already instantiated for this purpose.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">w</span>.<span style="color:#a6e22e">postRepo</span>.<span style="color:#a6e22e">WritePost</span>(<span style="color:#a6e22e">dbPost</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span> <span style="color:#a6e22e">w</span>.<span style="color:#a6e22e">errorHandler</span>(<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Errorf</span>(<span style="color:#e6db74">&#34;failed to write post: %v&#34;</span>, <span style="color:#a6e22e">err</span>))
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">continue</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h1 id="sqlite">SQLite</h1>
+<p>Enough has been written about why SQLite is awesome and amazing for smaller, and even larger projects so I&rsquo;ll skip that here and say that I didn&rsquo;t even consider using anything else for GitFeed.</p>
+<p>There are a <a href="https://www.powersync.com/blog/sqlite-optimizations-for-ultra-high-performance">ton of optimizations</a> you can perform on SQlite to really juice performance, and I <a href="https://github.com/veekaybee/gitfeed/blob/4e9248a83435e586a1c855d659baf103323678ec/db/db.go#L87">set a few of them</a> in anticipation of many users hitting the server, and also easing read-write contention on the db.</p>
+<h1 id="serving">Serving</h1>
+<p>After working extensively with <a href="https://vickiboykis.com/2025/01/14/how-fastapi-path-operations-work/">FastAPI</a> and <a href="https://vickiboykis.com/2024/01/05/retro-on-viberary/">Flask</a>, I was really excited to learn just how batteries-included <code>net/http</code> module was in Go. I didn&rsquo;t need to install anything extra - I was immediately writing routes and handlers.</p>
+<p>We set up <a href="https://github.com/veekaybee/gitfeed/blob/4e9248a83435e586a1c855d659baf103323678ec/cmd/serve/serve.go#L28">several routes</a> to deal with our saved posts here.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#75715e">// Start post service
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#e6db74">&#34;Connect to post service...&#34;</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">pr</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">db</span>.<span style="color:#a6e22e">NewPostRepository</span>(<span style="color:#a6e22e">database</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">postService</span> <span style="color:#f92672">:=</span> <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">handlers</span>.<span style="color:#a6e22e">PostService</span>{<span style="color:#a6e22e">PostRepository</span>: <span style="color:#a6e22e">pr</span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// Create web routes
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#a6e22e">routes</span>.<span style="color:#a6e22e">CreateRoutes</span>(<span style="color:#a6e22e">postService</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;Starting gitfeed server...&#34;</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Fatal</span>(<span style="color:#a6e22e">http</span>.<span style="color:#a6e22e">ListenAndServe</span>(<span style="color:#e6db74">&#34;:80&#34;</span>, <span style="color:#66d9ef">nil</span>))
+</span></span></code></pre></div><p>And then we&rsquo;re up and running as soon as we build and run our Go executable.</p>
+<h1 id="building-and-running-go-artifacts">Building and Running Go Artifacts</h1>
+<p>So easy. <a href="https://github.com/veekaybee/gitfeed/blob/main/Makefile">Just a small Makefile</a> and we&rsquo;re rebuilding and testing, and then serving the binaries.</p>
+<h1 id="data-considerations">Data Considerations</h1>
+<p>I don&rsquo;t want to keep any data or manage it, this is meant to be an ephemeral snapshot, so a <a href="https://github.com/veekaybee/gitfeed/blob/4e9248a83435e586a1c855d659baf103323678ec/cmd/ingest/ingest.go#L183">goroutine</a> deletes the oldest data once there are more than 10 posts in the database.</p>
+<h1 id="github">GitHub</h1>
+<p>One last piece we need, which early GitFeed testers suggested, was a way to, after you load the posts from the database, render the associated GitHub metadata with the repo, so we also, after we load the posts from the DB, hit the <a href="https://github.com/veekaybee/gitfeed/blob/main/handlers/github.go">GitHUB API to enrich the post.</a></p>
+<h1 id="ops-considerations">Ops Considerations</h1>
+<p>I run all of this on a small DigitalOcean droplet, and <a href="https://github.com/veekaybee/gitfeed/blob/main/.github/workflows/deploy.yaml">redeploy to the droplet</a> with new code code merged to <code>main</code> via GitHub actions. There&rsquo;s no monitoring or alerting, something I&rsquo;d like to add for the future.</p>
+<h1 id="final-reflections">Final Reflections</h1>
+<p>This app was so much fun to develop and I learned an enormous amount of stuff. Small, self-contained apps are a joy, and especially when there&rsquo;s a front-end component where you have a self-reinforcing feedback loop. Since us machine learning engineers work at what a friend called &ldquo;the back-end of the backend&rdquo;, we don&rsquo;t often get to experience UI changes, and seeing through something end-to-end was a joy.</p>
+<p>There were points of friction: It was definitely frustrating getting up and going with a whole new language and tech stack, but once I got back into the flow, it was great.</p>
+<p>As always, the hardest part of this project, as with any project, was understanding the data model and the business logic, and parsing out those objects correctly. The second-hardest was aligning elements in CSS.</p>
+<p>I&rsquo;d love to get to a point <a href="https://github.com/veekaybee/gitfeed/issues/9">where the app can surface Trending GitHub repos.</a>. And maybe <a href="https://github.com/veekaybee/gitfeed/issues/12">add some unit tests.</a></p>
+<p>Upon writing this, I realized I have like three other posts I want to write about this process, so I&rsquo;ll leave this as-is for now.</p>

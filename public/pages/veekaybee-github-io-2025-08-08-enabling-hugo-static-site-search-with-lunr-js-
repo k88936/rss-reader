@@ -7,3 +7,53 @@
 </figure>
 </p>
 <p>I&rsquo;m going to tweak the results because the boosting is not quite where I&rsquo;d like it to be yet, but try it out!</p>
+<p>Some implmenetation details:</p>
+<p>My blog runs on Hugo, so I looked for solutions that work with Jekyll/Hugo. I picked very fun and lightweight <a href="https://lunrjs.com/">lunr.js</a>, which is a single file that implements <a href="https://github.com/olivernn/lunr.js/blob/aa5a878f62a6bba1e8e5b95714899e17e8150b38/lunr.js#L319">BM-25 search</a> based on Solr primitives (it&rsquo;s called Lunr because it&rsquo;s smaller and &ldquo;less bright&rdquo; than Solr, which I love.)</p>
+<p>To create the index that Lunr uses for search, I had Claude write a quick Python script that traverses my post directories and outputs a single JSON file of all indexes posts.</p>
+<p>The entries look like this:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#e6db74">&#34;2018/07/23/good-small-datasets/&#34;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;title&#34;</span>: <span style="color:#e6db74">&#34;Good small datasets&#34;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;ref&#34;</span>: <span style="color:#e6db74">&#34;2018/07/23/good-small-datasets/&#34;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;content&#34;</span>: <span style="color:#e6db74">&#34;John Lavery, The Chess Players (1929) I&#39;ve been working on a project that, like most projects, requires testing with a dataset. My personal criteria are: + Relatively small size (Less than 100 KB, or 100ish rows) + At least 5-6 features (columns) + Should have both numerical and text-based features + Ideally a range of different kinds of numbers + Has good documentation + Is open and available to the public + Relatively available for both R and as individual CSV files or Python imports (APIs and&#34;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;summary&#34;</span>: <span style="color:#e6db74">&#34;John Lavery, The Chess Players (1929) I&#39;ve been working on a project that, like most projects, requires testing with a dataset. My personal criteria are: + Rela...&#34;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;date&#34;</span>: <span style="color:#e6db74">&#34;2018-07-23T00:00:00Z&#34;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;creator&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;site&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">&#34;url&#34;</span>: <span style="color:#e6db74">&#34;/blog/2018-07-23-small-datasets&#34;</span>
+</span></span><span style="display:flex;"><span> }
+</span></span></code></pre></div><p>following this logic:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">return</span> {
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#39;id&#39;</span>: slug,
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#39;title&#39;</span>: frontmatter<span style="color:#f92672">.</span>get(<span style="color:#e6db74">&#39;title&#39;</span>, <span style="color:#e6db74">&#39;Untitled&#39;</span>),
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#39;ref&#39;</span>: <span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;</span><span style="color:#e6db74">{</span>slug<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>, 
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#39;content&#39;</span>: text[:<span style="color:#ae81ff">500</span>], 
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#39;summary&#39;</span>: text[:<span style="color:#ae81ff">160</span>] <span style="color:#f92672">+</span> <span style="color:#e6db74">&#39;...&#39;</span> <span style="color:#66d9ef">if</span> len(text) <span style="color:#f92672">&gt;</span> <span style="color:#ae81ff">160</span> <span style="color:#66d9ef">else</span> text,
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#39;date&#39;</span>: frontmatter<span style="color:#f92672">.</span>get(<span style="color:#e6db74">&#39;date&#39;</span>, <span style="color:#e6db74">&#39;&#39;</span>),
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#39;creator&#39;</span>: frontmatter<span style="color:#f92672">.</span>get(<span style="color:#e6db74">&#39;creator&#39;</span>, <span style="color:#e6db74">&#39;&#39;</span>),
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#39;site&#39;</span>: frontmatter<span style="color:#f92672">.</span>get(<span style="color:#e6db74">&#39;site&#39;</span>, <span style="color:#e6db74">&#39;&#39;</span>)
+</span></span><span style="display:flex;"><span> }
+</span></span></code></pre></div><p>I keep that code separate from my Hugo site, in a <code>search</code> directory that&rsquo;s initialized as a uv project:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>├── README.md
+</span></span><span style="display:flex;"><span>├── create_index.py
+</span></span><span style="display:flex;"><span>├── pyproject.toml
+</span></span><span style="display:flex;"><span>└── uv.lock
+</span></span></code></pre></div><p>and generates the lunr.json index into my <code>static</code> repo.</p>
+<p>This code is run at build time in my GitHub Actions before the <code>hugo build</code> step:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>- name: Install uv
+</span></span><span style="display:flex;"><span> uses: astral-sh/setup-uv@v4
+</span></span><span style="display:flex;"><span>- name: Generate search index
+</span></span><span style="display:flex;"><span>run: |
+</span></span><span style="display:flex;"><span> echo <span style="color:#e6db74">&#34;Generating search index...&#34;</span>
+</span></span><span style="display:flex;"><span> uv run search/create_index.py lunr-index.json
+</span></span><span style="display:flex;"><span> echo <span style="color:#e6db74">&#34;Search index generated successfully&#34;</span>
+</span></span></code></pre></div><p>Generating the script correctly took several passes because Claude missed some data cleaning nuances (I don&rsquo;t want any HTML output, I wanted slightly longer summarization outputs, I didn&rsquo;t want to include base pages, etc.), but now it regenerates the index in &lt;5 sec every time.</p>
+<p>Then, all of that is rendered in my navbar via Hugo templates, namely by including the logic to serve the search bar in the <code>header</code> partial. I&rsquo;m abstracting away a ton of &ldquo;draw the owl&rdquo; features here, such as doing passes to make sure the CSS for the search bar matches my main blog theme, and rendering the dropdown results.</p>
+<p>LLMs helped move this feature along a fair bit here because:</p>
+<ol>
+<li>It&rsquo;s an extremely small feature where I can clearly test the output and see the generated code</li>
+<li>The context window for changes was fairly small</li>
+<li>The biggest lift was in automating index creation and getting the right syntax for the Python script and the data was easy to check.</li>
+<li>It has a tight local testing loop: <code>hugo build</code> and <code>hugo serve</code> are extremely fast locally and offer 95% parity to the served site in GH pages.</li>
+</ol>
+<p>This has been a fun addition and I&rsquo;m excited to do more such as potentially add typeahead suggestions and tune the query.</p>

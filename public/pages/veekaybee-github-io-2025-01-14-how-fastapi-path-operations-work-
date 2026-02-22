@@ -1,1 +1,191 @@
 <p>If you&rsquo;re building a new Python web app these days, there&rsquo;s a good chance you&rsquo;re using FastAPI. There are a lot of features that make FastAPI easy to get started with. There are also a lot of nuances that take a while to understand. One feature I&rsquo;ve been untangling is the way FastAPI manages calls to API routes <a href="https://fastapi.tiangolo.com/tutorial/path-params/">via decorated path parameters.</a> The new year is a perfect time to take a deeper dive.</p>
+<h1 id="what-happens-in-a-web-server">What happens in a web server</h1>
+<p>When we build a web app, one of the critical components is <a href="https://newsletter.vickiboykis.com/archive/when-you-write-a-web-server-but-you-get-served/">a web server</a>, a program that listens for incoming requests from the network. It then translates those requests into methods that are called in the backend.</p>
+<p>To better understand what&rsquo;s going on under the covers, we can first implement a simple web server using the <code>http.server</code> module <a href="https://github.com/python/cpython/blob/main/Lib/http/server.py">included in Python&rsquo;s standard library</a>.</p>
+<p>We need to write a program that listens on a port and accepts HTTP requests. It accepts the request, parses the path route, and parses any data attached to the HTTP call. Or, <a href="https://crawshaw.io/blog/programming-with-llms">&ldquo;All I want is to cURL and parse a JSON object&rdquo;</a>.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> json
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> http.server <span style="color:#f92672">import</span> BaseHTTPRequestHandler, HTTPServer
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> urllib.parse <span style="color:#f92672">import</span> urlparse, parse_qs
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">RequestHandler</span>(BaseHTTPRequestHandler):
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">parse_path</span>(self, request_path: str)<span style="color:#f92672">-&gt;</span> dict:
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"> Parse request path
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"> &#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span> parsed <span style="color:#f92672">=</span> urlparse(request_path)
+</span></span><span style="display:flex;"><span> params_dict <span style="color:#f92672">=</span> parse_qs(parsed<span style="color:#f92672">.</span>query)
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">return</span> params_dict
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">store_urls</span>(self, request_path: str)<span style="color:#f92672">-&gt;</span> <span style="color:#66d9ef">None</span>:
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"> Parse URLs and store them
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"> &#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span> params <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>parse_path(request_path)
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">for</span> key, val <span style="color:#f92672">in</span> params<span style="color:#f92672">.</span>items():
+</span></span><span style="display:flex;"><span> self<span style="color:#f92672">.</span>data_store<span style="color:#f92672">.</span>put_data(val[<span style="color:#ae81ff">0</span>])
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">return_k_json</span>(self, k:dict)<span style="color:#f92672">-&gt;</span> BinaryIO:
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"> Return json response
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"> &#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span> self<span style="color:#f92672">.</span>send_response(<span style="color:#ae81ff">200</span>)
+</span></span><span style="display:flex;"><span> self<span style="color:#f92672">.</span>send_header(<span style="color:#e6db74">&#34;Content-type&#34;</span>, <span style="color:#e6db74">&#34;application/json&#34;</span>)
+</span></span><span style="display:flex;"><span> self<span style="color:#f92672">.</span>end_headers()
+</span></span><span style="display:flex;"><span> <span style="color:#75715e"># Contains the output stream for writing a response back to the client. </span>
+</span></span><span style="display:flex;"><span> <span style="color:#75715e"># BufferedIOBase that writes to a stream</span>
+</span></span><span style="display:flex;"><span> <span style="color:#75715e"># See https://docs.python.org/3/library/io.html#io.BufferedIOBase.write</span>
+</span></span><span style="display:flex;"><span> self<span style="color:#f92672">.</span>wfile<span style="color:#f92672">.</span>write(json<span style="color:#f92672">.</span>dumps(k)<span style="color:#f92672">.</span>encode(<span style="color:#e6db74">&#39;utf-8&#39;</span>))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">bad_request</span>(self):
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"> Handle bad request
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"> &#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span> self<span style="color:#f92672">.</span>send_response(<span style="color:#ae81ff">400</span>)
+</span></span><span style="display:flex;"><span> self<span style="color:#f92672">.</span>send_header(<span style="color:#e6db74">&#34;Content-type&#34;</span>, <span style="color:#e6db74">&#34;application/json&#34;</span>)
+</span></span><span style="display:flex;"><span> self<span style="color:#f92672">.</span>end_headers()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">do_GET</span>(self):
+</span></span><span style="display:flex;"><span> 
+</span></span><span style="display:flex;"><span> request_path <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>path
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">if</span> self<span style="color:#f92672">.</span>path <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;/&#34;</span>:
+</span></span><span style="display:flex;"><span> self<span style="color:#f92672">.</span>return_k_json({<span style="color:#e6db74">&#34;ciao&#34;</span>: <span style="color:#e6db74">&#34;mondo&#34;</span>})
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">if</span> request_path<span style="color:#f92672">.</span>startswith(<span style="color:#e6db74">&#34;/get&#34;</span>):
+</span></span><span style="display:flex;"><span> key <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>parse_path(request_path)
+</span></span><span style="display:flex;"><span> self<span style="color:#f92672">.</span>return_k_json({<span style="color:#e6db74">&#34;jars&#34;</span>: key[<span style="color:#e6db74">&#34;key&#34;</span>]})
+</span></span><span style="display:flex;"><span> self<span style="color:#f92672">.</span>send_response(<span style="color:#ae81ff">200</span>)
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">else</span>:
+</span></span><span style="display:flex;"><span> self<span style="color:#f92672">.</span>bad_request()
+</span></span><span style="display:flex;"><span> self<span style="color:#f92672">.</span>end_headers()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">do_POST</span>(self):
+</span></span><span style="display:flex;"><span> request_path <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>path
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">if</span> request_path<span style="color:#f92672">.</span>startswith(<span style="color:#e6db74">&#34;/set&#34;</span>):
+</span></span><span style="display:flex;"><span> self<span style="color:#f92672">.</span>store_urls(request_path)
+</span></span><span style="display:flex;"><span> self<span style="color:#f92672">.</span>send_response(<span style="color:#ae81ff">200</span>)
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">else</span>:
+</span></span><span style="display:flex;"><span> self<span style="color:#f92672">.</span>bad_request()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> __name__ <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;__main__&#34;</span>:
+</span></span><span style="display:flex;"><span> host <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;localhost&#34;</span>
+</span></span><span style="display:flex;"><span> port <span style="color:#f92672">=</span> <span style="color:#ae81ff">8000</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> server <span style="color:#f92672">=</span> HTTPServer((host, port), RequestHandler)
+</span></span><span style="display:flex;"><span> print(<span style="color:#e6db74">&#34;Server started http://</span><span style="color:#e6db74">%s</span><span style="color:#e6db74">:</span><span style="color:#e6db74">%s</span><span style="color:#e6db74">&#34;</span> <span style="color:#f92672">%</span> (host, port))
+</span></span><span style="display:flex;"><span> server<span style="color:#f92672">.</span>serve_forever()
+</span></span></code></pre></div><p>What&rsquo;s going on here?</p>
+<p>Let’s say that we produce Nulltella, an artisinal hazlenut spread for statisticians, and are looking to build a web app that keeps track of <a href="https://vickiboykis.com/2024/02/28/gguf-the-long-way-around/">all of our Nulltella jars so we can later stand up a prediction service.</a></p>
+<figure><img src="https://veekaybee.github.io/images/308394339-66ca00e6-1baf-4eb0-9d3d-112966beb797.png" width="200">
+</figure>
+
+<p>We would start by designing a super simple API: As users,</p>
+<ul>
+<li>we want to test the server and get back a simple response</li>
+<li>we&rsquo;d like to add jars to our inventory, and</li>
+<li>to see the jars we added.</li>
+</ul>
+<p>We translate these actions to GET and PUT requests so we can write HTTP calls for them. For simplicity&rsquo;s sake, we won&rsquo;t actually store them server-side but we will write them so we can can very simply see how to send data to our app:</p>
+<p>We want to test the server:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>&gt; python serve.py
+</span></span><span style="display:flex;"><span>&gt; curl -X POST http://localhost:8000/
+</span></span><span style="display:flex;"><span>&gt; <span style="color:#f92672">{</span><span style="color:#e6db74">&#34;ciao&#34;</span>: <span style="color:#e6db74">&#34;mondo&#34;</span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>We want to store items:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>&gt; curl -X POST http://localhost:8000/set<span style="color:#ae81ff">\?</span>key<span style="color:#ae81ff">\=</span><span style="color:#ae81ff">8</span>
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">200</span> OK
+</span></span></code></pre></div><p>And get back the stored items:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>&gt; curl -X GET http://localhost:8000/get<span style="color:#ae81ff">\?</span>key<span style="color:#ae81ff">\=</span><span style="color:#ae81ff">8</span> 
+</span></span><span style="display:flex;"><span>&gt; <span style="color:#f92672">{</span><span style="color:#e6db74">&#34;jars&#34;</span>: <span style="color:#f92672">[</span><span style="color:#e6db74">&#34;8&#34;</span><span style="color:#f92672">]}</span>
+</span></span></code></pre></div><p>Our server needs a way to parse the key pieces of information it receives:</p>
+<ol>
+<li>They type of request. <code>do_GET</code> and <code>do_POST</code> <a href="https://stackoverflow.com/a/50944691">handle this implicitly</a> in the <a href="https://docs.python.org/3/library/http.server.html#http.server.SimpleHTTPRequestHandler.do_GET">HTTP implementation</a>.</li>
+<li>The parameters we pass to the path request so that we can do something with them</li>
+<li>A route to a method inside our application itself that processes the data</li>
+</ol>
+<p>In our simple server, the heart of the routing happens at the method level. If we send a base path, we return <code>{&quot;ciao&quot;: &quot;mondo&quot;}</code> . Otherwise, we return the amount of jars we&rsquo;ve passed in via the request path by parsing the parameters in the path.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">do_GET</span>(self) <span style="color:#f92672">-&gt;</span> <span style="color:#66d9ef">None</span>:
+</span></span><span style="display:flex;"><span> request_path <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>path
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">if</span> self<span style="color:#f92672">.</span>path <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;/&#34;</span>:
+</span></span><span style="display:flex;"><span> self<span style="color:#f92672">.</span>return_k_json({<span style="color:#e6db74">&#34;ciao&#34;</span>: <span style="color:#e6db74">&#34;mondo&#34;</span>})
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">if</span> request_path<span style="color:#f92672">.</span>startswith(<span style="color:#e6db74">&#34;/get&#34;</span>):
+</span></span><span style="display:flex;"><span> key <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>parse_path(request_path)
+</span></span><span style="display:flex;"><span> <span style="color:#75715e"># action performed within the web app here</span>
+</span></span><span style="display:flex;"><span> self<span style="color:#f92672">.</span>return_k_json({<span style="color:#e6db74">&#34;jars&#34;</span>: key[<span style="color:#e6db74">&#34;key&#34;</span>]})
+</span></span><span style="display:flex;"><span> self<span style="color:#f92672">.</span>send_response(<span style="color:#ae81ff">200</span>)
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">else</span>:
+</span></span><span style="display:flex;"><span> self<span style="color:#f92672">.</span>bad_request()
+</span></span><span style="display:flex;"><span> self<span style="color:#f92672">.</span>end_headers()
+</span></span></code></pre></div><p>We can see how this can become complicated quickly. For example, what if we have multiple operations we perform during a <code>GET</code> : what if we get data from a database, or a cache, or we retrieve assets? We&rsquo;ll have different methods that we process depending on how the path is parsed. What if we also have <code>PUT/DELETE</code> verbs? What if we need authentication? To write to a database? Static pages? Our code complexity relative to our starting point starts to grow, and we now need a framework.</p>
+<h2 id="starlette">Starlette</h2>
+<p>Early Python web dev frameworks include juggernauts <a href="https://www.david-dahan.com/blog/comparing-fastapi-and-django">Django</a> and Flask. More recently, since Python&rsquo;s async story has grown stronger, frameworks like <a href="https://www.starlette.io/">Starlette</a> have come onto the scene to include async functionality out of the box.</p>
+<p>Starlette was built by the creator of Django Rest Framework and includes lightweight operations for the core functionality of HTTP calls and additional operations like web sockets, with the added bonus of being async by default.</p>
+<p>To manage an HTTP call the same way we would with our simple server, we can do the following with Starlette:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> starlette.applications <span style="color:#f92672">import</span> Starlette
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> starlette.responses <span style="color:#f92672">import</span> JSONResponse
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> starlette.routing <span style="color:#f92672">import</span> Route
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">async</span> <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">homepage</span>(request):
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">return</span> JSONResponse({<span style="color:#e6db74">&#39;ciao&#39;</span>: <span style="color:#e6db74">&#39;mondo&#39;</span>})
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>app <span style="color:#f92672">=</span> Starlette(debug<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>, routes<span style="color:#f92672">=</span>[Route(<span style="color:#e6db74">&#39;/&#39;</span>, homepage),])
+</span></span></code></pre></div><p>We start an instance of a Starlette application, which has <a href="https://github.com/encode/starlette/blob/7c0d1e6d1a499e6eeb68d447321838be3927e83b/starlette/routing.py#L208">processes routes.</a> <a href="https://www.starlette.io/routing/">Each route is linked</a>, at the path level, to the actual method it calls. If Starlette sees that specific route, it calls the method, taking into account logic for parsing and reading HTTP request headers and bodies.</p>
+<p>What if we want to add a second method call based on a different route, getting our jar count again?</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> starlette.applications <span style="color:#f92672">import</span> Starlette
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> starlette.responses <span style="color:#f92672">import</span> JSONResponse
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> starlette.routing <span style="color:#f92672">import</span> Route
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">async</span> <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">homepage</span>(request):
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">return</span> JSONResponse({<span style="color:#e6db74">&#39;ciao&#39;</span>: <span style="color:#e6db74">&#39;mondo&#39;</span>})
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">async</span> <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">get_jars</span>(request):
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">return</span> JSONResponse({<span style="color:#e6db74">&#39;jars&#39;</span>: [<span style="color:#e6db74">&#39;8&#39;</span>]})
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>app <span style="color:#f92672">=</span> Starlette(debug<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>, routes<span style="color:#f92672">=</span>[
+</span></span><span style="display:flex;"><span> Route(<span style="color:#e6db74">&#39;/&#39;</span>, homepage),
+</span></span><span style="display:flex;"><span> Route(<span style="color:#e6db74">&#39;/get_jars&#39;</span>, get_jars)
+</span></span><span style="display:flex;"><span>])
+</span></span></code></pre></div><p>We see that we are also passing and processing params, and there is <a href="https://github.com/encode/starlette/blob/7c0d1e6d1a499e6eeb68d447321838be3927e83b/starlette/_utils.py#L85">logic that processes the path params</a> based on the method as <a href="https://github.com/encode/starlette/blob/7c0d1e6d1a499e6eeb68d447321838be3927e83b/docs/requests.md?plain=1#L5">they come in from the request</a>.</p>
+<h2 id="fastapis-implementation">FastAPI&rsquo;s implementation</h2>
+<p>FastAPI wraps Starlette - &ldquo;as it is basically Starlette on steroids&rdquo; per the docs - and <a href="https://fastapi.tiangolo.com/alternatives/#intro">includes Pydantic type validation</a> at the logical boundaries of the application.</p>
+<p>Under the covers, when we instantiate a FastAPI application, it&rsquo;s really &ldquo;just&rdquo; an instance of a Starlette application with properties that we override at the application level.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> fastapi <span style="color:#f92672">import</span> FastAPI
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>app <span style="color:#f92672">=</span> FastAPI()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">@app.get</span>(<span style="color:#e6db74">&#34;/&#34;</span>)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">async</span> <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">root</span>():
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">return</span> {<span style="color:#e6db74">&#34;ciao&#34;</span>: <span style="color:#e6db74">&#34;mondo&#34;</span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">@app.get</span>(<span style="color:#e6db74">&#34;/jars/</span><span style="color:#e6db74">{id}</span><span style="color:#e6db74">&#34;</span>)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">async</span> <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">get_jars</span>(id):
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">return</span> {<span style="color:#e6db74">&#34;message&#34;</span>: <span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;jars: </span><span style="color:#e6db74">{</span>id<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>}
+</span></span></code></pre></div><p>In development, FastAPI uses <a href="https://www.uvicorn.org/"> <code>uvicorn</code> </a>, an <a href="https://asgi.readthedocs.io/en/latest/">ASGI server</a> to listen for incoming requests and handle them according to the routes defined in your application.</p>
+<p>Uvicorn initializes the ASGI server, binds it to a <a href="https://github.com/encode/uvicorn/blob/ae8253f10b9f73f10e92be52a0d9f70696b77c62/uvicorn/server.py#L115">socket connections</a> on <a href="https://github.com/encode/uvicorn/blob/ae8253f10b9f73f10e92be52a0d9f70696b77c62/uvicorn/main.py#L73">port <code>8000</code> </a>, and starts listening for incoming connections. So, when we send a <code>GET</code> request to the main route hosted by default on port 8000, we expect to get back <code>ciao mondo</code> as a response.</p>
+<p>Like our previous applications, FastAPI is still delegating path operations and methods to a router that processes them and parses parameters, but it wraps these in a <a href="https://nedbatchelder.com/blog/202210/decorator_shortcuts.html">Python decorator</a>. This is easier to write, but adds a level of complexity at the layer of understanding how the path processing actually happens.</p>
+<p>When we perform a path operation in FastAPI, we&rsquo;re performing the equivalent work of routing that we do with our simple method, but with a lot more rigor and nested definitions.</p>
+<p>Within our simple server, we:</p>
+<ol>
+<li>Start the server</li>
+<li>Listen on port <code>8000</code> for incoming requests</li>
+<li>When we receive a request, we route it to the <code>do_GET </code>method</li>
+<li>Depending on the path of the request, we route it to <code>&quot;/&quot;</code></li>
+<li>We return the results to the client via a <code>200</code> status</li>
+</ol>
+<p>In FastAPI, we:</p>
+<ol>
+<li>Start the uvicorn web server (if in development mode, if production we have to choose gunicorn using the <a href="https://stackoverflow.com/a/71546833">compatible worker class</a>)</li>
+<li>Listen on port <code>8000</code> for incoming requests</li>
+<li>We instantiate an instance of the FastAPI application</li>
+<li>This in turn instantiates an instance of Starlette</li>
+<li>When we receive a <code>GET</code> request, it&rsquo;s routed to the application&rsquo;s <a href="https://github.com/fastapi/fastapi/blob/144f09ea146b2cc026bf317f730aa0e0dbc3de24/fastapi/applications.py#L1460"><code>self.get</code></a> method</li>
+<li>This in turn calls <code>self.router.get</code> with <a href="https://github.com/fastapi/fastapi/blob/144f09ea146b2cc026bf317f730aa0e0dbc3de24/fastapi/applications.py#L1807">the path operation</a></li>
+<li>The router is an instance of <a href="https://github.com/fastapi/fastapi/blob/144f09ea146b2cc026bf317f730aa0e0dbc3de24/fastapi/applications.py#L932"><code>routing.APIRouter</code></a></li>
+<li>The <code>.get</code> <a href="https://github.com/fastapi/fastapi/blob/144f09ea146b2cc026bf317f730aa0e0dbc3de24/fastapi/routing.py#L1366">method on <code>APIRouter</code> takes the path</a> and retunrs <code>return self.api_route</code>. This is the point where the decorater is actually called - <a href="https://github.com/fastapi/fastapi/blob/144f09ea146b2cc026bf317f730aa0e0dbc3de24/fastapi/routing.py#L963">we can see the decorator in that method</a> takes a <code>DecoratedCallable</code> function as input and returns a decorated <code>add_api_route</code>, which actually <a href="https://github.com/fastapi/fastapi/blob/144f09ea146b2cc026bf317f730aa0e0dbc3de24/fastapi/routing.py#L961">appends the route to the list of routes.</a></li>
+</ol>
+<p>This is purely the set of steps that happens for correct routing - and we didn&rsquo;t yet address how the path parameters in the path are processed.</p>
+<h1 id="path-parameter-routing">Path Parameter Routing</h1>
+<p>Path parameter routing happens in Starlette, where <a href="https://github.com/encode/starlette/blob/0109dce29b76c64e93c56c01fa5020860f935ed3/starlette/requests.py#L182">path parameters are parsed out</a> of the <a href="https://github.com/encode/starlette/blob/0109dce29b76c64e93c56c01fa5020860f935ed3/starlette/requests.py#L76">request</a> into a dictionary (just like we do in our simple web application), via the magic of <a href="https://github.com/encode/starlette/blob/0109dce29b76c64e93c56c01fa5020860f935ed3/starlette/templating.py#L123">Jinja Templating.</a></p>
+<h2 id="tl-dr">TL; DR</h2>
+<p>When we write a route in FastAPI that accepts path parameters, we are creating a lengthy callstack that goes through several levels of logic in FastAPI using decorators as input into an application that routes requests and appends methods using decorators to a group of route methods; those requests are then passed onto Starlette which does the work of parsing the path variables, using Jinja templates, into dictionaries which the application can then work with and return data to you!</p>
