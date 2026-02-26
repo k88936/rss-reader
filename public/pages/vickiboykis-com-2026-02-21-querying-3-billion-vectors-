@@ -1,0 +1,166 @@
+<p>Recently, I got nerd-sniped by this exchange between <a href="https://github.com/LRitzdorf/TheJeffDeanFacts">Jeff Dean</a> and someone trying to query 3 billion vectors.
+I was curious to see if I could implement the <a href="https://vickiboykis.com/2021/06/06/the-humble-hash-aggregate/">optimal map-reduce</a> solution he alludes to in his reply.</p>
+<img width="400" alt="image" src="https://gist.github.com/user-attachments/assets/ecca4afd-81bf-45a4-9043-ad7da174d93a" />
+<p>A vector is a list/array of floating point numbers of <code>n</code> dimensions, where <code>n</code> is the length of the list. The reason you might perform vector search is to find words or items that are semantically similar to each other, a common pattern in search, recommendations, and generative retrieval applications <a href="https://read.engineerscodex.com/p/how-cursor-indexes-codebases-fast">like Cursor</a> which heavily leverage <a href="https://vickiboykis.com/what_are_embeddings/">embeddings.</a></p>
+<p>I started by writing an extremely naive implementation which made the following assumptions:</p>
+<ul>
+<li>we have 3 billion searchable (document) vectors and ~1k query vectors (a number I made up)</li>
+<li>Both of the vector sets are stored on disk in <code>.npy</code> format (simple format for <a href="https://numpy.org/doc/stable/reference/generated/numpy.lib.format.html">storing numpy arrays</a></li>
+<li>We&rsquo;d like to compare each of the query vectors against the larger pool of document vectors and return the resulting similarity (dot product) for each of the vector combinations.</li>
+<li>3k total reference vectors (to see if we could intially run this amount before scaling)</li>
+<li>The vectors are of dimensionality (n) 768, a common dimensionality for many models that allow for
+similarity-based embedding queries</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> numpy <span style="color:#66d9ef">as</span> np
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> loguru <span style="color:#f92672">import</span> logger
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> time
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> os
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># start with 3_000 vectors to keep things small </span>
+</span></span><span style="display:flex;"><span>total_vectors_num <span style="color:#f92672">=</span> <span style="color:#ae81ff">3_000_000_000</span>
+</span></span><span style="display:flex;"><span>query_vectors_num <span style="color:#f92672">=</span> <span style="color:#ae81ff">1_000</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">generate_random_vectors</span>(num_vectors:int)<span style="color:#f92672">-&gt;</span> np<span style="color:#f92672">.</span>array:
+</span></span><span style="display:flex;"><span> logger<span style="color:#f92672">.</span>info(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;Generating </span><span style="color:#e6db74">{</span>num_vectors<span style="color:#e6db74">}</span><span style="color:#e6db74"> vectors...&#34;</span>)
+</span></span><span style="display:flex;"><span> rng <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>random<span style="color:#f92672">.</span>default_rng() 
+</span></span><span style="display:flex;"><span> vectors <span style="color:#f92672">=</span> rng<span style="color:#f92672">.</span>random((num_vectors, <span style="color:#ae81ff">768</span>)) 
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">return</span> vectors
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">get_dot_products</span>(vectors_file:np<span style="color:#f92672">.</span>array, query_vectors:np<span style="color:#f92672">.</span>array) <span style="color:#f92672">-&gt;</span> list[np<span style="color:#f92672">.</span>array]:
+</span></span><span style="display:flex;"><span> total_products_computed <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> dot_products <span style="color:#f92672">=</span> []
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">for</span> v <span style="color:#f92672">in</span> vectors_file:
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">for</span> qv <span style="color:#f92672">in</span> query_vectors:
+</span></span><span style="display:flex;"><span> dot_product <span style="color:#f92672">=</span> v <span style="color:#f92672">@</span> qv
+</span></span><span style="display:flex;"><span> dot_products<span style="color:#f92672">.</span>append(dot_product)
+</span></span><span style="display:flex;"><span> total_products_computed <span style="color:#f92672">+=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">if</span> total_products_computed <span style="color:#f92672">%</span> <span style="color:#ae81ff">100000</span> <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>:
+</span></span><span style="display:flex;"><span> logger<span style="color:#f92672">.</span>info(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;Total vectors processed:</span><span style="color:#e6db74">{</span>total_products_computed<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">return</span> dot_products
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Generate initial vectors and query vectors and write to disk</span>
+</span></span><span style="display:flex;"><span>doc_vectors <span style="color:#f92672">=</span> generate_random_vectors(total_vectors_num)
+</span></span><span style="display:flex;"><span>query_vectors <span style="color:#f92672">=</span> generate_random_vectors(query_vectors_num)
+</span></span><span style="display:flex;"><span>np<span style="color:#f92672">.</span>save(<span style="color:#e6db74">&#39;vectors.npy&#39;</span>, doc_vectors)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Load vectors from disk </span>
+</span></span><span style="display:flex;"><span>logger<span style="color:#f92672">.</span>info(<span style="color:#e6db74">&#34;Loading file from disk...&#34;</span>)
+</span></span><span style="display:flex;"><span>vectors_file <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>load(<span style="color:#e6db74">&#39;vectors.npy&#39;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>start_time <span style="color:#f92672">=</span> time<span style="color:#f92672">.</span>time()
+</span></span><span style="display:flex;"><span>logger<span style="color:#f92672">.</span>info(<span style="color:#e6db74">&#34;Getting dot products...&#34;</span>)
+</span></span><span style="display:flex;"><span>results <span style="color:#f92672">=</span> get_dot_products(vectors_file, query_vectors)
+</span></span><span style="display:flex;"><span>end_time <span style="color:#f92672">=</span> time<span style="color:#f92672">.</span>time()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>logger<span style="color:#f92672">.</span>info(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;Execution time: </span><span style="color:#e6db74">{</span>end_time <span style="color:#f92672">-</span> start_time<span style="color:#e6db74">:</span><span style="color:#e6db74">.4f</span><span style="color:#e6db74">}</span><span style="color:#e6db74"> seconds&#34;</span>)
+</span></span><span style="display:flex;"><span>logger<span style="color:#f92672">.</span>info(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;Number of dot products computed: </span><span style="color:#e6db74">{</span>len(results)<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>)
+</span></span></code></pre></div><p>This, predictably, didn&rsquo;t do so great, even on my M2 Macbook, even at 3,000 vectors, one million times less than 3 billion embeddings, taking 2 seconds.</p>
+<p>Results:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sh" data-lang="sh"><span style="display:flex;"><span>2025-12-13 17:53:25.675 | INFO | __main__:generate_random_vectors:9 - Generating <span style="color:#ae81ff">3000</span> vectors...
+</span></span><span style="display:flex;"><span>2025-12-13 17:53:25.691 | INFO | __main__:generate_random_vectors:9 - Generating <span style="color:#ae81ff">1000</span> vectors...
+</span></span><span style="display:flex;"><span>2025-12-13 17:53:25.698 | INFO | __main__:&lt;module&gt;:39 - Loading file from disk...
+</span></span><span style="display:flex;"><span>2025-12-13 17:53:25.700 | INFO | __main__:&lt;module&gt;:43 - Getting dot products...
+</span></span><span style="display:flex;"><span>2025-12-13 17:53:27.688 | INFO | __main__:get_dot_products:24 - Total vectors processed:3000000
+</span></span><span style="display:flex;"><span>2025-12-13 17:53:27.688 | INFO | __main__:&lt;module&gt;:47 - Execution time: 1.9877 seconds
+</span></span><span style="display:flex;"><span>2025-12-13 17:53:27.688 | INFO | __main__:&lt;module&gt;:48 - Number of dot products computed: <span style="color:#ae81ff">3000000</span>
+</span></span></code></pre></div><p>So I <a href="https://pythonspeed.com/articles/vectorization-python/">vectorized the numpy operation</a>, which made things much faster.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> numpy <span style="color:#66d9ef">as</span> np
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> loguru <span style="color:#f92672">import</span> logger
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> time
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>total_vectors_num <span style="color:#f92672">=</span> <span style="color:#ae81ff">3_000</span>
+</span></span><span style="display:flex;"><span>query_vectors_num <span style="color:#f92672">=</span> <span style="color:#ae81ff">1_000</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">generate_random_vectors</span>(num_vectors:int)<span style="color:#f92672">-&gt;</span> np<span style="color:#f92672">.</span>array:
+</span></span><span style="display:flex;"><span> logger<span style="color:#f92672">.</span>info(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;Generating </span><span style="color:#e6db74">{</span>num_vectors<span style="color:#e6db74">}</span><span style="color:#e6db74"> vectors...&#34;</span>)
+</span></span><span style="display:flex;"><span> rng <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>random<span style="color:#f92672">.</span>default_rng() 
+</span></span><span style="display:flex;"><span> vectors <span style="color:#f92672">=</span> rng<span style="color:#f92672">.</span>random((num_vectors, <span style="color:#ae81ff">768</span>))
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">return</span> vectors
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">get_dot_products_vectorized</span>(vectors_file:np<span style="color:#f92672">.</span>array, query_vectors:np<span style="color:#f92672">.</span>array):
+</span></span><span style="display:flex;"><span> dot_products <span style="color:#f92672">=</span> vectors_file <span style="color:#f92672">@</span> query_vectors<span style="color:#f92672">.</span>T
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">return</span> dot_products<span style="color:#f92672">.</span>flatten() <span style="color:#75715e"># collapse into single dim</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Generate initial vectors and query vectors and write to disk</span>
+</span></span><span style="display:flex;"><span>ram_vectors <span style="color:#f92672">=</span> generate_random_vectors(total_vectors_num)
+</span></span><span style="display:flex;"><span>query_vectors <span style="color:#f92672">=</span> generate_random_vectors(query_vectors_num)
+</span></span><span style="display:flex;"><span>np<span style="color:#f92672">.</span>save(<span style="color:#e6db74">&#39;vectors.npy&#39;</span>, ram_vectors)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Load vectors from disk </span>
+</span></span><span style="display:flex;"><span>logger<span style="color:#f92672">.</span>info(<span style="color:#e6db74">&#34;Loading file from disk...&#34;</span>)
+</span></span><span style="display:flex;"><span>vectors_file <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>load(<span style="color:#e6db74">&#39;vectors.npy&#39;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>start_time <span style="color:#f92672">=</span> time<span style="color:#f92672">.</span>time()
+</span></span><span style="display:flex;"><span>logger<span style="color:#f92672">.</span>info(<span style="color:#e6db74">&#34;Getting dot products...&#34;</span>)
+</span></span><span style="display:flex;"><span>results <span style="color:#f92672">=</span> get_dot_products_vectorized(vectors_file, query_vectors)
+</span></span><span style="display:flex;"><span>end_time <span style="color:#f92672">=</span> time<span style="color:#f92672">.</span>time()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>logger<span style="color:#f92672">.</span>info(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;Execution time: </span><span style="color:#e6db74">{</span>end_time <span style="color:#f92672">-</span> start_time<span style="color:#e6db74">:</span><span style="color:#e6db74">.4f</span><span style="color:#e6db74">}</span><span style="color:#e6db74"> seconds&#34;</span>)
+</span></span><span style="display:flex;"><span>logger<span style="color:#f92672">.</span>info(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;Number of dot products computed: </span><span style="color:#e6db74">{</span>len(results)<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>)
+</span></span></code></pre></div><p>At .017 seconds, this was a big improvement!</p>
+<p>Results:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sh" data-lang="sh"><span style="display:flex;"><span>2025-12-13 17:52:52.810 | INFO | __main__:generate_random_vectors:9 - Generating <span style="color:#ae81ff">3000</span> vectors...
+</span></span><span style="display:flex;"><span>2025-12-13 17:52:52.831 | INFO | __main__:generate_random_vectors:9 - Generating <span style="color:#ae81ff">1000</span> vectors...
+</span></span><span style="display:flex;"><span>2025-12-13 17:52:52.874 | INFO | __main__:&lt;module&gt;:39 - Loading file from disk...
+</span></span><span style="display:flex;"><span>2025-12-13 17:52:52.876 | INFO | __main__:&lt;module&gt;:43 - Getting dot products...
+</span></span><span style="display:flex;"><span>2025-12-13 17:52:52.887 | INFO | __main__:&lt;module&gt;:47 - Execution time: 0.0107 seconds
+</span></span><span style="display:flex;"><span>2025-12-13 17:52:52.887 | INFO | __main__:&lt;module&gt;:48 - Number of dot products computed: <span style="color:#ae81ff">3000000</span>
+</span></span></code></pre></div><p>I tried a 3 million sample size with this improvement. This took 12 seconds.</p>
+<pre tabindex="0"><code>2025-12-13 19:39:43.830 | INFO | __main__:generate_random_vectors:12 - Generating 3000000 vectors...
+2025-12-13 19:39:57.509 | INFO | __main__:generate_random_vectors:12 - Generating 1000 vectors...
+2025-12-13 19:39:58.978 | INFO | __main__:&lt;module&gt;:57 - Loading file from disk...
+2025-12-13 19:40:00.131 | INFO | __main__:&lt;module&gt;:61 - Getting dot products...
+2025-12-13 19:40:12.984 | INFO | __main__:&lt;module&gt;:65 - Execution time: 12.8491 seconds
+2025-12-13 19:40:12.992 | INFO | __main__:&lt;module&gt;:66 - Number of dot products computed: 3000000000
+</code></pre><p>We could also reduce even further by converting the data to float32:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>doc_vectors <span style="color:#f92672">=</span> generate_random_vectors(total_vectors_num)<span style="color:#f92672">.</span>astype(np<span style="color:#f92672">.</span>float32)
+</span></span><span style="display:flex;"><span>query_vectors <span style="color:#f92672">=</span> generate_random_vectors(query_vectors_num)<span style="color:#f92672">.</span>astype(np<span style="color:#f92672">.</span>float32)
+</span></span></code></pre></div><pre tabindex="0"><code>2025-12-13 18:13:52.152 | INFO | __main__:generate_random_vectors:10 - Generating 3000 vectors...
+2025-12-13 18:13:52.168 | INFO | __main__:generate_random_vectors:10 - Generating 1000 vectors...
+2025-12-13 18:13:52.176 | INFO | __main__:&lt;module&gt;:55 - Loading file from disk...
+2025-12-13 18:13:52.178 | INFO | __main__:&lt;module&gt;:59 - Getting dot products...
+2025-12-13 18:13:52.182 | INFO | __main__:&lt;module&gt;:63 - Execution time: 0.0045 seconds
+2025-12-13 18:13:52.182 | INFO | __main__:&lt;module&gt;:64 - Number of dot products computed: 3000000
+</code></pre><p>With these small improvements, we&rsquo;ve already sped up inference to ~13 seconds for 3 million vectors, which means for 3 billion, it would take 1000x longer, or ~3216 minutes.</p>
+<pre tabindex="0"><code>|approach | query_vectors | doc_vectors | time |
+|----------- |---------------|---------------|----------|
+| Naive | 1,000 | 3,000 | 1.9877s |
+| Vectorized | 1,000 | 3,000 | 0.0107s |
+| Vectorized | 1,000 | 3,000,000 | 12.8491s |
+| Np.Float32 | 1,000 | 3,0000 | 0.0045s |
+</code></pre><p>When we start to run it to test, however, we run into a different problem: OOM. Why? The amount of memory needed to process 3 billion objects, each as <code>float32</code> object that&rsquo;s 4 bytes in size, would be 8 million GB.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>vectors <span style="color:#f92672">=</span> rng<span style="color:#f92672">.</span>random((<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">768</span>))<span style="color:#f92672">.</span>astype(np<span style="color:#f92672">.</span>float32)
+</span></span><span style="display:flex;"><span>print(vectors<span style="color:#f92672">.</span>nbytes)
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">3072</span>
+</span></span><span style="display:flex;"><span>print(vectors<span style="color:#f92672">.</span>itemsize)
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">4</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>bytes_per_float32 <span style="color:#f92672">=</span> <span style="color:#ae81ff">4</span>
+</span></span><span style="display:flex;"><span>memory_gb <span style="color:#f92672">=</span> (<span style="color:#ae81ff">3000000000</span> <span style="color:#f92672">*</span> <span style="color:#ae81ff">1000</span> <span style="color:#f92672">*</span> <span style="color:#ae81ff">768</span> <span style="color:#f92672">*</span> bytes_per_float32) <span style="color:#f92672">/</span> (<span style="color:#ae81ff">1024</span><span style="color:#f92672">**</span><span style="color:#ae81ff">3</span>)
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">8583068.84765625</span> <span style="color:#f92672">=</span> <span style="color:#ae81ff">8.6</span> TB
+</span></span></code></pre></div><p>In order to improve this, we would need to do some heavy lifting of the kind Jeff Dean prescribed. First, we could to change the code to use generators and batch the comparison operations. We could write every n operations to disk, either directly or through memory mapping. Or, we could use system-level optimized code calls - we could rewrite the code in Rust or C, or use a library like <a href="https://github.com/ashvardanian/SimSIMD">SimSIMD</a> explicitly made for similarity comparisons between vectors at scale.</p>
+<p>Before I started on any further optimizations, upon further inspection, there were some things about the problem that I realized weren&rsquo;t clear to me: 3 billion vector embeddings queried a few thousand times could mean:</p>
+<ul>
+<li>I have a single query vector, and I query all 3 billion vectors once, get the dot product, and get all results</li>
+<li>I have a single query vector, I query all 3 billion vectors once, get the dot product, and return top-k results, which is easier because we can do ANN search
+<ul>
+<li>In this case, do I need to return the two initial vectors also? Or just the result?</li>
+<li>Do I need to re-rank the results by similarity in any way?</li>
+</ul>
+</li>
+<li>I have 1,000 query vectors, and I query all 3 billion vectors once, and get the dot product of all results</li>
+<li>Are these vectors already in-memory when we intially start working with them or will they always be on-disk? Are we reading them one at a time, or streaming them?</li>
+<li>What kind of machine are we assuming: Are we running this locally? What are the specs of the machine? Are we assuming the vectors come to us in a specific, optimized format?
+<ul>
+<li>Do we have GPUs and are we allowed to use them?</li>
+</ul>
+</li>
+<li>How <a href="https://vickiboykis.com/2025/09/01/how-big-are-our-embeddings-now-and-why/">big are our embeddings?</a> - this is extremely important and could significantly impact our representation, input vector size and output results</li>
+<li>Are we assuming we can compress their representation at all, i.e. is compressiong from float64 to float32 tolerable wrt to accuracy?</li>
+<li>How much time do we have to generate this one-off project? Are we sure it&rsquo;s really a one-off?</li>
+</ul>
+<p>All of these dictate the additional time and resources spent on the solution. What I realized is the same thing I&rsquo;ve seen so many of these problems over the years, that the technical solution is no longer the hardest one to achieve: the hardest one is nailing down the requirements.</p>
