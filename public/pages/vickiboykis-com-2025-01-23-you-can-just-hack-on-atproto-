@@ -1,7 +1,7 @@
 <figure><img src="https://raw.githubusercontent.com/veekaybee/gitfeed/refs/heads/main/static/android-chrome-512x512.png" width="200">
 </figure>
 
-<h5 id="icon-by-iconixarhttpswwwfreepikcomauthoruser8839173icons"><a href="https://www.freepik.com/author/user8839173/icons">Icon by iconixar</a></h5>
+<h5 id="icon-by-iconixar"><a href="https://www.freepik.com/author/user8839173/icons">Icon by iconixar</a></h5>
 <p>Since I signed up for Bluesky last year,
 I&rsquo;ve been wanting to make something using the <a href="https://atproto.com/">AT Protocol</a> that the platform is built on top of.</p>
 <p>I finally had a chance to do it over the holiday break and built <a href="https://github.com/veekaybee/gitfeed">GitFeed</a>, a small Go app that filters the Bluesky network firehose by posts that have GitHub links and renders them into a refreshable, ephemeral feed.</p>
@@ -107,8 +107,7 @@ I&rsquo;ve been wanting to make something using the <a href="https://atproto.com
 </span></span><span style="display:flex;"><span>});
 </span></span></code></pre></div><p>I was surprised at how much about JS was already familiar to me from Python and PHP, but where I really got stuck was in understanding how the DOM and Javascript work together, what a Javascript app structure looks like, and the Javascript ecosystem.</p>
 <blockquote>
-<p><strong>Using LLMs to build GitFeed</strong>:</p>
-</blockquote>
+<p><strong>Using LLMs to build GitFeed</strong>:</p></blockquote>
 <p>I&rsquo;ve done a lot of work with <a href="https://github.com/Mozilla-Ocho/llamafile">llamafile</a>, and recently, I&rsquo;ve also been enjoying the local LLM stack of: <strong>Ollama</strong> for the model backend and <strong>OpenWebUI</strong> for the front-end. Ollama serves versioned <a href="https://vickiboykis.com/2024/02/28/gguf-the-long-way-around/">GGUF model weights</a> wrapped in a Docker-like paradigm that hits an API wrapping llama.cpp in an (of course) Go interface. For this project, I used <code>mistral:latest</code> and <code>qwen2.5-coder:latest</code> , the best code model at the time (in the ancient space of 3 months ago, Deepseek3 wasn&rsquo;t out). I did reasonably well between the two of them, with only 5% of requests that I had to bypass and send to Claude. I did find myself getting frustrated because I couldn&rsquo;t clearly articulate the unknown unknowns I had about Javascript, though, and eventually I just gave up and bought <code>Eloquent Javascript</code> which I&rsquo;m hoping to dig into this year to better understand what <code>Qwen</code> and I wrote together and how I can improve it.</p>
 <h2 id="ingest">Ingest</h2>
 <p>Consuming the Jetstream is easy. There are <a href="https://github.com/bluesky-social/jetstream?tab=readme-ov-file#public-instances">four public instances</a> of Jetstream, hosted by Bluesky the company, so we need to connect to one of these, consume the content, process and filter the data, and save it to our database for serving.</p>
@@ -127,8 +126,7 @@ I&rsquo;ve been wanting to make something using the <a href="https://atproto.com
 <p>I used the <code>gorilla/websocket</code> implementation of the websocket procool. for handling the core websocket logic.</p>
 <p>We need to be able to <a href="https://brojonat.com/posts/websockets/">read and write to/from the websocket</a>:</p>
 <blockquote>
-<p>The main thing to internalize about working with WebSockets in Go is that each client connection should get at least two goroutines: one that continuously processes messages coming from the client (i.e., a “read pump”), and one that continuously processes message going out to the client (i.e., a “write pump”).</p>
-</blockquote>
+<p>The main thing to internalize about working with WebSockets in Go is that each client connection should get at least two goroutines: one that continuously processes messages coming from the client (i.e., a “read pump”), and one that continuously processes message going out to the client (i.e., a “write pump”).</p></blockquote>
 <p>However, this becomes easier since for GitFeed, we&rsquo;re only reading from and not writing to the websocket, we need to implement logic to readPump</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">w</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">WebSocketManager</span>) <span style="color:#a6e22e">readPump</span>(<span style="color:#a6e22e">ctx</span> <span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Context</span>) {
 </span></span><span style="display:flex;"><span>
@@ -150,8 +148,8 @@ I&rsquo;ve been wanting to make something using the <a href="https://atproto.com
 </span></span><span style="display:flex;"><span>				<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;Read %d posts\n&#34;</span>, <span style="color:#a6e22e">counter</span>)
 </span></span><span style="display:flex;"><span>			}
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>			<span style="color:#75715e">// Process the post
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>			<span style="color:#a6e22e">dbPost</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">ProcessPost</span>(<span style="color:#a6e22e">post</span>)
+</span></span><span style="display:flex;"><span>			<span style="color:#75715e">// Process the post</span>
+</span></span><span style="display:flex;"><span>			<span style="color:#a6e22e">dbPost</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">ProcessPost</span>(<span style="color:#a6e22e">post</span>)
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">w</span>.<span style="color:#a6e22e">postRepo</span>.<span style="color:#a6e22e">WritePost</span>(<span style="color:#a6e22e">dbPost</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
 </span></span><span style="display:flex;"><span>				<span style="color:#a6e22e">w</span>.<span style="color:#a6e22e">errorHandler</span>(<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Errorf</span>(<span style="color:#e6db74">&#34;failed to write post: %v&#34;</span>, <span style="color:#a6e22e">err</span>))
@@ -164,12 +162,10 @@ I&rsquo;ve been wanting to make something using the <a href="https://atproto.com
 </span></span></code></pre></div><p>However, unlike an HTTP call, websocksets are open persistently and don&rsquo;t offer any guarantees of retries, so we have to implement this logic ourselves. Fortunately, gorilla has a lot of <a href="https://github.com/gorilla/websocket/blob/main/examples/chat/client.go">good examples.</a></p>
 <p>You&rsquo;ll notice a couple key points here: first, we log and handle the case where the web socket disconnects. Then, we do some ultra-fancy print logging to keep track of how many posts we&rsquo;ve actually processed. And finally, we now get to the actual data, an <code>var post db.ATPost</code> that we process, parse, and write to the database, which we initialize as a post <a href="https://martinfowler.com/eaaCatalog/repository.html">repository</a>, a fancy word for &ldquo;database with dependency injection&rdquo;.</p>
 <blockquote>
-<p><strong>Golang tooling</strong>:</p>
-</blockquote>
+<p><strong>Golang tooling</strong>:</p></blockquote>
 <p>Go just works out of the box. Unlike my beloved Python, it doesn&rsquo;t need uv, formatting, linting, or special build processes. At least, for a fairly small project, everything is batteries included. In fact, its boringness and rigidity allowed me to move really quickly. What surprised me is that I thought that VSCode would work really well with go, but actually didn&rsquo;t as code I imported wouldn&rsquo;t get loaded automatically, and there were a couple bugs that made me switch to Goland, which works extremely smoothly, without fail, and its local autocomplete at the line level is much better than PyCharm&rsquo;s equivalent, likely because Go is much smaller, and statically-typed.</p>
 <blockquote>
-<p><strong>Jetbrains LLMs</strong>:</p>
-</blockquote>
+<p><strong>Jetbrains LLMs</strong>:</p></blockquote>
 <p>Jetbrains&rsquo; local LLMs are extremely well-done and I&rsquo;d encourage anyone interested <a href="https://arxiv.org/html/2405.08704v3">to check out the paper.</a></p>
 <h1 id="what-is-an-atproto-post">What is an AtProto Post</h1>
 <p>Now we get to the heart of the matter: once our websocket is open, we are ingesting a stream of JSON objects. AtProto has its own data model, defined using schemas called &ldquo;Lexicons&rdquo;. For posts and actions, they look like this.</p>
@@ -258,13 +254,13 @@ I&rsquo;ve been wanting to make something using the <a href="https://atproto.com
 <h1 id="serving">Serving</h1>
 <p>After working extensively with <a href="https://vickiboykis.com/2025/01/14/how-fastapi-path-operations-work/">FastAPI</a> and <a href="https://vickiboykis.com/2024/01/05/retro-on-viberary/">Flask</a>, I was really excited to learn just how batteries-included <code>net/http</code> module was in Go. I didn&rsquo;t need to install anything extra - I was immediately writing routes and handlers.</p>
 <p>We set up <a href="https://github.com/veekaybee/gitfeed/blob/4e9248a83435e586a1c855d659baf103323678ec/cmd/serve/serve.go#L28">several routes</a> to deal with our saved posts here.</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#75715e">// Start post service
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#e6db74">&#34;Connect to post service...&#34;</span>)
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#75715e">// Start post service</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#e6db74">&#34;Connect to post service...&#34;</span>)
 </span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">pr</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">db</span>.<span style="color:#a6e22e">NewPostRepository</span>(<span style="color:#a6e22e">database</span>)
 </span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">postService</span> <span style="color:#f92672">:=</span> <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">handlers</span>.<span style="color:#a6e22e">PostService</span>{<span style="color:#a6e22e">PostRepository</span>: <span style="color:#a6e22e">pr</span>}
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// Create web routes
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#a6e22e">routes</span>.<span style="color:#a6e22e">CreateRoutes</span>(<span style="color:#a6e22e">postService</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// Create web routes</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">routes</span>.<span style="color:#a6e22e">CreateRoutes</span>(<span style="color:#a6e22e">postService</span>)
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;Starting gitfeed server...&#34;</span>)
 </span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Fatal</span>(<span style="color:#a6e22e">http</span>.<span style="color:#a6e22e">ListenAndServe</span>(<span style="color:#e6db74">&#34;:80&#34;</span>, <span style="color:#66d9ef">nil</span>))

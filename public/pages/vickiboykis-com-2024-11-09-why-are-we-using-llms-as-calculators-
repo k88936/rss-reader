@@ -30,8 +30,7 @@
 <h1 id="making-computers-think">Making computers think</h1>
 <p>Second, we want to understand if LLMs can &ldquo;think.&rdquo; There is no one definition of what &ldquo;thinking&rdquo; means, but for these models in particular, <a href="https://arxiv.org/abs/2212.10403">we are interested to see</a> if they can work through a chain of steps to come to an answer about logical things that are easy for humans, as an example:</p>
 <blockquote>
-<p>all whales are mammals, all mammals have kidneys; therefore, all whales have kidneys</p>
-</blockquote>
+<p>all whales are mammals, all mammals have kidneys; therefore, all whales have kidneys</p></blockquote>
 <p>One way humans reason is through performing different kinds of math: arithmetic, solving proofs, and reasoning through symbolic logic. The underlying question in artificial intelligence is whether machines can reason outside of the original task we gave them. For large language models, the ask is whether they can move from summarizing first a book if they were trained for books, to a movie script plot, to finally, summarizing what you did all day if you pass it a bunch of documents about your activity. So, it stands to reason that if LLMs can &ldquo;solve&rdquo; math problems, they can achieve AGI.</p>
 <p>There are approximately seven hundred million benchmarks to see if LLMs can reason. <a href="https://www.llm-reasoning-benchmark.com/">Here&rsquo;s an example</a>, and <a href="https://arxiv.org/abs/2307.13692">here&rsquo;s another one</a>. Even since I started this draft yesterday, <a href="https://epochai.org/frontiermath/the-benchmark">a new one came out.</a></p>
 <p>Since it&rsquo;s hard to define what &ldquo;reasoning&rdquo; or &ldquo;thinking&rdquo; means, the benchmarks try to proxy to see if models can answer the same questions we give to humans in settings such as university tests and compare the answers between human annotators generating ground truth and inference run on the model.</p>
@@ -48,7 +47,7 @@
 <p>The hardest part of the calculator is writing the logic for representing numbers correctly and creating manual classes of operations that cover all of math&rsquo;s weird corner cases.</p>
 <p>However, to get an LLM to add &ldquo;2+2&rdquo;, we have a much more complex level of operations. Instead of a binary calculation machine that uses small, simple math business logic to derive an answer based on addition, we create an enormous model of the entire universe of human public thought and try to reason our way into the correct mathematical answer based on how many times the model has &ldquo;seen&rdquo; or been exposed to the text &ldquo;2+2&rdquo; in written form.</p>
 <p>We first train a large language model to answer questions.</p>
-<p><img src="https://vickiboykis.com/images/87e4ee63-7270-4fcf-89da-45769b7aba53.jpg" alt="d8e7f5ec-c333-4890-8430-7f73fe9e89fa_1588x386"></p>
+<p><img alt="d8e7f5ec-c333-4890-8430-7f73fe9e89fa_1588x386" height="386" id="h-rh-i-0" src="https://vickiboykis.com/images/87e4ee63-7270-4fcf-89da-45769b7aba53.jpg" width="1588"></p>
 <p><a href="https://magazine.sebastianraschka.com/p/new-llm-pre-training-and-post-training">Source</a></p>
 <p>This includes:</p>
 <ol>

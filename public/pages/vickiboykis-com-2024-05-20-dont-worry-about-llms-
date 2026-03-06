@@ -1,10 +1,6 @@
 <p>This is a near-transcript of <a href="https://2024.pycon.it/en/keynotes/stay-close-to-the-metal">the talk I gave</a> at <a href="https://www.youtube.com/watch?v=Ik0voaZmf5A">PyCon Italia 2024</a> in May in Florence.</p>
-
-
- 
- <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden;">
- <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen="allowfullscreen" loading="eager" referrerpolicy="strict-origin-when-cross-origin" src="https://www.youtube.com/embed/Ik0voaZmf5A?si=h2Yfx5v_LIfWd6xz&amp; start=30316?autoplay=0&controls=1&end=0&loop=0&mute=0&start=0" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border:0;" title="YouTube video"
- ></iframe>
+<div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden;">
+ <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen" loading="eager" referrerpolicy="strict-origin-when-cross-origin" src="https://www.youtube.com/embed/Ik0voaZmf5A?si=h2Yfx5v_LIfWd6xz&amp;amp;%20start=30316?autoplay=0&amp;controls=1&amp;end=0&amp;loop=0&amp;mute=0&amp;start=0" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border:0;" title="YouTube video"></iframe>
  </div>
 
 <h1 id="introduction">Introduction</h1>
@@ -295,8 +291,7 @@
 <p>In order to serve a deployment, you can use the pattern of specifying a <a href="https://docs.ray.io/en/latest/serve/configure-serve-deployment.html">YAML-base config.</a></p>
 <p>One critical piece here is the working dir, which specifies the where code to download to the cluster at runtime: This is part of how ray specifies the <a href="https://docs.ray.io/en/latest/ray-core/handling-dependencies.html#runtime-environments">RuntimeEnv.</a></p>
 <blockquote>
-<p>A copy of the working_dir will be downloaded to the cluster at runtime, and the current working directory of each remote Ray worker will be changed to that <code>working_dir</code> copy</p>
-</blockquote>
+<p>A copy of the working_dir will be downloaded to the cluster at runtime, and the current working directory of each remote Ray worker will be changed to that <code>working_dir</code> copy</p></blockquote>
 <figure><img src="https://vickiboykis.com/images/dontworryllms_68_resized.png" width="400">
 </figure>
 
