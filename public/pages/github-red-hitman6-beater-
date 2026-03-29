@@ -1,0 +1,81 @@
+<p>《HITMAN》杀手三部曲，一直是我很喜欢的游戏。</p>
+<p>特别是新杀手第一部（HITMAN 6），是少数支持 macOS 端的游戏。当年捧着 MacBook Pro 刚上大学的我，除了日常写代码外，电脑上能玩的游戏也就 HITMAN 和 Minecraft。后来又蹭室友的 Windows 台式机玩了 HITMAN 2，2021 年那会在宿舍熬夜玩新出的 HITMAN 3（现在应该叫做 HITMAN WoA）。疫情期间在家更是高强度追每个月的 ET（行踪不定的目标），对着 B 站上的攻略视频一步步打。我记得最走火入魔的时候，我在宿舍看到室友，都有种想绕后拿纤维绳按下 Q 的冲动。🤣</p>
+<p>三部作品加起来，我的总游戏时长应该已经超过了 200 小时。但 HITMAN 的地图就那么几张，完成主线目标的暗杀后，就会开始想探索地图里的机遇与成就，甚至想去卡 Bug 突破空气墙，看看图外面的景色。之前在室友的 Windows 电脑上，我从网上随便找个 HITMAN 修改器，就能实现无限子弹、无限生命的功能，然后开始无双屠城。</p>
+<p>回到游戏生态贫瘠的 Mac 上，我发现全网居然没人做 HITMAN macOS 版外挂！我在自己的 Mac 上只能老老实实地打任务，时间久了挺没意思的。</p>
+<p>然而自己又是逆向苦手，IDA 启动后只会按 F5，一旦遇到反编译失败或者没符号表，我就不知所措了。</p>
+<p>好在时代变了，现在我们有 AI 了！不需要再古法看汇编了！本文我将介绍自己是怎样用 Claude Code + Claude Opus 4.6 硬生生将 macOS 上的 HITMAN 外挂给 Vibe 出来的。也算是全网首发了吧，嘻嘻。</p>
+<h2 id="顺风开局">顺风开局（？</h2>
+<p>先从最简单的功能开始，我想先实现“无限子弹”的功能。在正式开始 Vibe 之前，我脑补了下大概有两种做法：Patch 游戏源文件或者进程注入。</p>
+<p>macOS 上安装的 App 都是预先带有签名的，任何对 Binary 的 Patch 修改都需要重新签名才能运行。我觉得这种修改游戏本体的做法，让我的游戏程序“变脏”了，我本能地觉得抵触。况且如果我想玩纯净的原版，我还得将 Patch 还原并再次签名。那可太麻烦了。</p>
+<p>第二种做法就是进程注入，注入游戏的运行时，修改内存。原理类似以前手机上的八门神器。但 macOS 下默认会开启系统完整性保护（SIP），限制了不能对任意进程进行注入。我也不想为了玩个游戏还专门重启电脑关 SIP。跟大模型讨论了下，提到可以使用 <code>codesign</code> 看下应用的签名信息，说不定应用本身就放开了口子。</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>codesign -dv --entitlements :- HITMAN
+</span></span></code></pre></div><p>结果还真有意外的惊喜！HITMAN 几乎向我们完全敞开，大模型给的结论是：<strong>可以注入，而且非常容易 (Very Easy)。</strong></p>
+<ul>
+<li>允许环境变量注入 <code>allow-dyld-environment-variables</code></li>
+<li>禁用库验证 (允许第三方代码) <code>allow-unsigned-executable-memory</code></li>
+<li>允许无签名内存执行 (便于 Hook/Patch) <code>disable-library-validation</code></li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-xml" data-lang="xml"><span style="display:flex;"><span><span style="color:#7ee787">&lt;key&gt;</span>com.apple.security.cs.allow-dyld-environment-variables<span style="color:#7ee787">&lt;/key&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#7ee787">&lt;true/&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#7ee787">&lt;key&gt;</span>com.apple.security.cs.allow-unsigned-executable-memory<span style="color:#7ee787">&lt;/key&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#7ee787">&lt;true/&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#7ee787">&lt;key&gt;</span>com.apple.security.cs.disable-library-validation<span style="color:#7ee787">&lt;/key&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#7ee787">&lt;true/&gt;</span>
+</span></span></code></pre></div><p>讲道理我到现在都没搞明白为什么 HITMAN 的应用签名是这样的，可能是为了开发过程中方便调试？</p>
+<p>我让大模型 Vibe 了一个输出 Hello World + 基址的 dylib，然后用 <code>DYLD_INSERT_LIBRARIES</code> 环境变量带上 dylib 启动游戏，在游戏终端能看到输出了我们的注入信息！</p>
+<p><img src="https://github.red/images/2026/03/hitman-dylib-demo.jpg" alt="hitman-dylib-demo"></p>
+<div class="box-warning box"><i class="box-icon-warning"></i> <p>有坑注意！</p>
+<p>由于我使用是 M1 Pro 芯片的 Mac，但是 HITMAN 游戏是 Rosetta 转译后跑得 x86 架构程序。因此需要交叉编译 dylib 为 x86 架构。</p>
+</div>
+<h2 id="改了却又没改">改了，却又没改</h2>
+<p>这顺风开局让我信心满满。我决定先自己用 Cheat Engine 手动找到子弹数量的内存地址，然后发给大模型让它帮我 Vibe 一个锁定内存数值的东西就行了。</p>
+<p>macOS 上的 Cheat Engine 并不好用，我换成了 Bit Slicer，但操作和原理都是一样的。先在内存中搜索游戏当前的子弹数值，然后开一枪，再搜索变动后的子弹数值，两次搜索结果 Diff 一下，就得出了存储子弹数量的内存地址。再将这块内存冻结住，不让数值变化，就实现了开枪但子弹不减少的无限子弹功能！</p>
+<p>想法很美好，但当我真在游戏中实践时，我确实找到了那个内存地址，并设置冻结了，但我发现那只是展示子弹数量的游戏 UI 文本组件。我开枪后，UI 上显示的子弹数量确实不变，但武器的实际子弹是减少了的，多开几枪后还是会没弹药。那个存储武器实际子弹数的内存我死活搜不到，最后一顿瞎改，游戏画面甚至开始鬼畜了！</p>
+<div align="center">
+<img alt="hitman-anti-cheating-glitch" src="https://github.red/images/2026/03/hitman-anti-cheating-glitch.gif"/>
+</div>
+<p>后来让大模型接手分析才知道，游戏的人物血量、子弹数等会使用 FNV-1 哈希做完整性校验，一旦校验不通过，就会设置 <code>g_iCheatingDetected</code> 这个变量，进而触发游戏的反作弊机制。当 <code>g_iCheatingDetected</code> 变量被破坏后，主循环每帧会用破坏后的值算出一个<strong>垃圾指针</strong>，对随机内存进行读写。随机读写到了相机的内存数据，就会导致画面开始缩放抖动。</p>
+<p>狡猾，实在是太狡猾了！</p>
+<h2 id="克劳德启动">克劳德，启动！</h2>
+<p>这下我不知道怎么办了，只能大模型启动。</p>
+<p>首先安装 <a href="https://github.com/mrexodia/ida-pro-mcp">ida-pro-mcp</a> ，然后将 HITMAN 的 Binary 拖到 IDA 打开，IDA 中点击 「Edit」- 「Plugins」- 「MCP」，下方终端输出 <code>Streamable HTTP: http://127.0.0.1:13337/mcp</code> 即说明 MCP 服务已启动。</p>
+<p>再在 Claude Code 里使用 <code>/mcp</code> 命令配置好 IDA MCP，能正确获取到 MCP 服务提供的 Tools 即可。可以先提问：</p>
+<blockquote>
+<p>我正在用 IDA Pro 打开了什么项目？</p></blockquote>
+<p>让大模型主动调 MCP 看下是否配置正常。</p>
+<p>后续直接：</p>
+<blockquote>
+<p>我想做一个无限子弹的外挂，但是不知道怎样修改内存，请分析 HITMAN 游戏的子弹判定逻辑，并设计应该怎么做。</p></blockquote>
+<h3 id="无限子弹">无限子弹</h3>
+<p>一开始大模型想着去处理那个 FNV-1 哈希的校验，然后又想去 NOP 掉扣弹的逻辑，但都走不通。最后是将 vtable 里的<code>SetBulletsInMagazine</code>（设置弹药数）和 <code>GetBulletsInMagazine</code>（获取弹药数）两个函数指针进行替换，把 Set 替换为 Get，这样每次游戏调用 Set 减少弹药时，实际执行的是 Get 读取弹药，从而使得弹药数不会改变。</p>
+<p>第一版在游戏启动时就会注入，进入游戏就自动有无限子弹的功能了，我想 Claude 再帮忙改成按下 F1 热键才启动这个功能，同时要像 Windows 上的修改器一样，开启了功能要有提示。（F1 键其实是与游戏按键冲突的，不过问题不大，都可以 Vibe 都可以改）</p>
+<p>我寻思这应该要用 osascript 推个系统通知的弹窗吧？没想到 Claude 实际也是这么做的，哈哈！</p>
+<p>还有个小插曲：当时由于是深夜，我的设备自动开启了睡眠模式，导致弹窗没显示出来，我一开始还没反应过来是为啥。🤣</p>
+<h3 id="ai-隐身">AI 隐身</h3>
+<p>无限子弹完成后，我还想实现“隐身”功能，即在游戏中执行非法动作或进入非法区域时，NPC 不会产生警觉。Claude 直接逆出来了 <code>ZActorManager::UpdateSensors</code> 函数里的 12 个传感器（视觉、听觉、尸体发现、伪装检测等），对应着游戏内 NPC 的反应动作。<code>UpdateSensors</code> 函数会有一个条件分支，判断是否更新传感器，这里直接将 <code>jnz</code>（条件跳转）改为 <code>jmp</code>（无条件跳转），一次性跳过所有传感器的更新，就不会触发 NPC 的动作了。</p>
+<p>但实际调试时，我发现击杀目标完成任务后，撤离出口并不会显示。原因是 <code>LockdownManager::UpdateEvacuationZones</code> 更新撤离出口的逻辑也在这里面，这里的逻辑要单独处理。</p>
+<p>需要注意的是，如果游戏中的 NPC 已经锁定你，并进入了对你开枪的状态，这时 AI 隐身就没有用了。之前在 Windows 上用的修改器也会这样。</p>
+<h3 id="无敌模式">无敌模式</h3>
+<p>游戏里自带了一个 <code>g_GodMode</code> 上帝模式的全局变量，我猜测是用在实时渲染的过场动画中，角色会暂时处于无敌状态。当这个变量被设置为非零时，所有扣血逻辑都会被跳过并恢复满血。因此无敌模式其实是最好做的了，直接将这个变量改为 <code>1</code> 即可。</p>
+<h3 id="强制解除悬挂">强制解除悬挂</h3>
+<p>这应该是我最想要的特色功能。☺️</p>
+<p>游戏中有很多墙边、柱子可以攀爬悬挂，有些悬挂点是在地图边缘或者高楼边，正常的操作是只能按 G 解除悬挂翻回室内。但我想在这个时候能强制切换到正常行走模式，这样就可以走到地图外进行探索。（例如北海道下山、萨比恩撒上房下海等）</p>
+<p>游戏的移动系统有优先级机制，<code>ZHM5MovementLocomotion</code>（行走）优先级最高。其 <code>WantControl</code> 方法决定是否要接管控制权。将函数前 3 字节替换为 <code>mov al, 1; ret</code>，使其无条件返回 <code>true</code>，强制从任何移动状态（悬挂/攀爬/翻越）回到正常行走即可。</p>
+<p>附上一张北海道下山的图，这是我在整个 HITMAN 游戏中最喜欢的地图！风景很美，我很喜欢。</p>
+<p><img src="https://github.red/images/2026/03/hitman-hokkaido.png" alt="hitman-hokkaido"></p>
+<h3 id="拾取所有物品">拾取所有物品</h3>
+<p>我一开始是想要一键在背包里刷出游戏中所有物品的功能。然而 Claude 拒绝了这个需求，它说这个的难度比之前的高好几个数量级，我还得去找出游戏中所有物品的 GUID。</p>
+<p>那好，退一步，我让 Claude 直接扫描当前整张地图里已存在物品的 GUID，再将其全部放到我的背包里。这样也能拾取到一些有意思的道具。Claude 的实现方式如下：</p>
+<ol>
+<li>调用 <code>ZHitman5::Instance()</code> 获取玩家实例指针。</li>
+<li>读取 <code>g_pWorldInventorySingleton</code> 的获取整个地图的实体列表。</li>
+<li>遍历每个实体，用 <code>QueryInterfacePtr()</code> 查询 IItem 接口。（过滤非物品实体）</li>
+<li>对每个有效物品调用 <code>ZHitman5::PickupItemDirect()</code> 拾取。</li>
+</ol>
+<p>相当于是隔空拾取了地图中所有存在的物品，因此只能执行一次，东西被捡到背包里，原位置的物品就没了。但在实际使用中，我发现地图中会有少量 1-2 个物品可以无限次刷新，重复执行后还可以捡这俩东西。</p>
+<h2 id="总结">总结</h2>
+<p>这个项目我在两个月前就已经有了想法。最初是用 Gemini 3 Pro + Roo Code 来指导我用 Bit Slicer 实现无限子弹的 Demo，但效果并不理想，模型幻觉比较严重。Gemini 费了好大劲才发现 FNV-1 哈希校验机制，然后就开始胡言乱语了。</p>
+<p>Claude Opus 4.6 发布后，我切换了模型又重新跑了遍，Claude Opus 4.6 能根据我发给它的 Bit Slicer 软件截图，结合 IDA MCP 直接算出当下地址空间随机化后的基址，进而算出我需要修改的 vtable 里的 <code>SetBulletsInMagazine</code> 函数的位置，帮我在 Bit Slicer 里完成了最初的 PoC。当时我还自己验算了一遍，发现完全一致！属实是被震惊到了。</p>
+<p>关于这个项目的源码，我想了下还是不公开放出来，不然又要被发律师函了。（为什么是又呢？😝</p>
+<p>如果你想获得源码的话，可以成为<a href="https://github.com/sponsors/wuhan005">我的 GitHub Sponsor</a> 解锁。🤗 不过我想上文都已经说得这么细致了，你把文章复制给 Claude Code，它也能给你 Vibe 出来。</p>
+<p>收工。我们下一个目标见。</p>
