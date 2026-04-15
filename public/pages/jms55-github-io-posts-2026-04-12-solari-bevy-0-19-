@@ -354,7 +354,7 @@
 <p>Finally, a simple optimization: smooth metallic surfaces have zero diffuse contribution, so there's no point running ReSTIR GI for those pixels. We now skip these pixels entirely during the ReSTIR GI pass, saving performance on scenes with lots of metallic materials.</p>
 <h2 id="light-sampling-research">Light Sampling Research<a class="zola-anchor" href="#light-sampling-research" aria-label="Anchor link for: light-sampling-research" style="visibility: hidden;"></a>
 </h2>
-<p>Besides the BRDF work, the other major time sink this cycle was researching better light sampling. Currently, Solari's light sampling is brute force — we take completely random samples from the scene's lightsm and use RIS to pick one that is likely to contribute the most (not counting visibility). This works, but it's very inefficient, especially for large scenes with many lights, where most of them don't contribute to a given pixel.</p>
+<p>Besides the BRDF work, the other major time sink this cycle was researching better light sampling. Currently, Solari's light sampling is brute force — we take completely random samples from the scene's lights and use RIS to pick one that is likely to contribute the most (not counting visibility). This works, but it's very inefficient, especially for large scenes with many lights, where most of them don't contribute to a given pixel.</p>
 <figure>
     <img
         src="32_sample_ris.png"
