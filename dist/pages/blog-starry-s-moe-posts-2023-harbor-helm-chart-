@@ -13,15 +13,15 @@
 </span></span></span><span class="line"><span class="cl"><span class="go">...
 </span></span></span><span class="line"><span class="cl"><span class="go">-----END CERTIFICATE-----
 </span></span></span><span class="line"><span class="cl"><span class="go">EOF
-</span></span></span><span class="line"><span class="cl"><span class="go"></span><span class="err">
-</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="gp">$</span> cat &gt; cert.key &lt;&lt; EOF
+</span></span></span><span class="line"><span class="cl"><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="gp">$</span> cat &gt; cert.key &lt;&lt; EOF
 </span></span><span class="line"><span class="cl"><span class="go">-----BEGIN PRIVATE KEY-----
 </span></span></span><span class="line"><span class="cl"><span class="go">...
 </span></span></span><span class="line"><span class="cl"><span class="go">-----END PRIVATE KEY-----
 </span></span></span><span class="line"><span class="cl"><span class="go">EOF
-</span></span></span><span class="line"><span class="cl"><span class="go"></span><span class="err">
-</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="gp">$</span> kubectl -n harbor create secret tls harbor-tls <span class="se">\
-</span></span></span><span class="line"><span class="cl"><span class="se"></span><span class="go">    --cert=cert.pem \
+</span></span></span><span class="line"><span class="cl"><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="gp">$</span> kubectl -n harbor create secret tls harbor-tls <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="go">    --cert=cert.pem \
 </span></span></span><span class="line"><span class="cl"><span class="go">    --key=cert.key
 </span></span></span></code></pre></div></li>
 <li>
@@ -75,15 +75,15 @@
 </span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">core</span><span class="p">:</span><span class="w"> </span><span class="l">harbor.example.com</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">notary</span><span class="p">:</span><span class="w"> </span><span class="l">notary.example.com</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">
-</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="c"># Harbor external URL</span><span class="w">
-</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="c"># 与 Ingress Host 相对应，如果启用了 TLS，那就是 https://&lt;domain&gt;</span><span class="w">
-</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="c"># 如果没启用 TLS，那就是 http://&lt;domain&gt;</span><span class="w">
-</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="c"># 如果 expose type 为 nodePort，则填写 http(s)://&lt;IP_ADDRESS&gt;:3000X (端口号不能丢)</span><span class="w">
-</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">externalURL</span><span class="p">:</span><span class="w"> </span><span class="l">https://harbor.example.com</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c"># Harbor external URL</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c"># 与 Ingress Host 相对应，如果启用了 TLS，那就是 https://&lt;domain&gt;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c"># 如果没启用 TLS，那就是 http://&lt;domain&gt;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c"># 如果 expose type 为 nodePort，则填写 http(s)://&lt;IP_ADDRESS&gt;:3000X (端口号不能丢)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">externalURL</span><span class="p">:</span><span class="w"> </span><span class="l">https://harbor.example.com</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">
-</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="c"># 持久卷配置，默认为 true，如果是测试环境可以设置为 enabled: false (重新安装 Chart 时仓库里所有的数据都会丢失，不建议！)</span><span class="w">
-</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="c"># 如果需要启用持久卷，可以在安装 Chart 之前提前创建好 PVC，并配置 subPath</span><span class="w">
-</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">persistence</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c"># 持久卷配置，默认为 true，如果是测试环境可以设置为 enabled: false (重新安装 Chart 时仓库里所有的数据都会丢失，不建议！)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c"># 如果需要启用持久卷，可以在安装 Chart 之前提前创建好 PVC，并配置 subPath</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">persistence</span><span class="p">:</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">resourcePolicy</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;keep&#34;</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">persistentVolumeClaim</span><span class="p">:</span><span class="w">
@@ -126,8 +126,8 @@
 </span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="l">5Gi</span><span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">annotations</span><span class="p">:</span><span class="w"> </span>{}<span class="w">
 </span></span></span><span class="line"><span class="cl"><span class="w">
-</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="c"># Admin 初始密码</span><span class="w">
-</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">harborAdminPassword</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;Harbor12345&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c"># Admin 初始密码</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">harborAdminPassword</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;Harbor12345&#34;</span><span class="w">
 </span></span></span></code></pre></div><h3 id="安装-helm-chart">安装 Helm Chart</h3>
 <p>确保 Values 编辑无误后，就可以安装 Chart 了：</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-console" data-lang="console"><span class="line"><span class="cl"><span class="gp">$</span> helm --namespace harbor install harbor .
@@ -153,8 +153,8 @@
 </span></span></span><span class="line"><span class="cl"><span class="go">WARNING! Your password will be stored unencrypted in /home/user/.docker/config.json.
 </span></span></span><span class="line"><span class="cl"><span class="go">Configure a credential helper to remove this warning. See
 </span></span></span><span class="line"><span class="cl"><span class="go">https://docs.docker.com/engine/reference/commandline/login/#credentials-store
-</span></span></span><span class="line"><span class="cl"><span class="go"></span><span class="err">
-</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="go">Login Succeeded
+</span></span></span><span class="line"><span class="cl"><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="go">Login Succeeded
 </span></span></span></code></pre></div><p>从 DockerHub 中 Mirror 一些镜像到 Harbor 中：</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-console" data-lang="console"><span class="line"><span class="cl"><span class="gp">$</span> skopeo copy --all docker://archlinux:latest docker://harbor.example.com/library/archlinux:latest
 </span></span><span class="line"><span class="cl"><span class="go">Getting image list signatures
