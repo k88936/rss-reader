@@ -260,19 +260,21 @@
 </span></span><span style="display:flex;"><span>}
 </span></span></code></pre></div><p>编译运行该 Go 程序，程序蓝牙找到共享电单车然后就开锁了~</p>
 <div class="container">
-<div id="player-wrapper" class=""></div>
+<div id="player-wrapper-0" class=""></div>
 </div>
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@clappr/player@latest/dist/clappr.min.js">
 </script>
 <script>
-var playerElement = document.getElementById("player-wrapper");
-var player = new Clappr.Player({
+(() => {
+const playerElement = document.getElementById("player-wrapper-0");
+const player = new Clappr.Player({
 source: "/images/2023/08/hack-electric-bicycle.mp4",
 mute: true,
 height: 360,
 width: 640
 });
 player.attachTo(playerElement);
+})();
 </script>
 <p>效果还是相当帅的。</p>
 <h2 id="最后说几句">最后说几句</h2>
