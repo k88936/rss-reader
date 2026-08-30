@@ -13,26 +13,26 @@
 </li>
 </ul>
 <table>
- <thead>
- <tr>
- <th style="text-align: center">Nifi安装目录</th>
- <th style="text-align: center">WEB端口</th>
- </tr>
- </thead>
- <tbody>
- <tr>
- <td style="text-align: center">xxx\nifi-ncm</td>
- <td style="text-align: center">9443</td>
- </tr>
- <tr>
- <td style="text-align: center">xxx\nifi-cluster01</td>
- <td style="text-align: center">9444</td>
- </tr>
- <tr>
- <td style="text-align: center">xxx\nifi-cluster02</td>
- <td style="text-align: center">9445</td>
- </tr>
- </tbody>
+	<thead>
+			<tr>
+					<th style="text-align: center">Nifi安装目录</th>
+					<th style="text-align: center">WEB端口</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td style="text-align: center">xxx\nifi-ncm</td>
+					<td style="text-align: center">9443</td>
+			</tr>
+			<tr>
+					<td style="text-align: center">xxx\nifi-cluster01</td>
+					<td style="text-align: center">9444</td>
+			</tr>
+			<tr>
+					<td style="text-align: center">xxx\nifi-cluster02</td>
+					<td style="text-align: center">9445</td>
+			</tr>
+	</tbody>
 </table>
 
  <blockquote>
