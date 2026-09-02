@@ -1,0 +1,33 @@
+<figure><img src="https://vickiboykis.com/images/cultivation-of-the-vines.jpg"
+ alt="Cultivation of the Vines, Henri Martin" width="600"><figcaption>
+ <p>Cultivation of the Vines, Henri Martin</p>
+ </figcaption>
+</figure>
+
+<p>Kudzu is a plant that was once introduced from East Asia to the eastern United States as a way to combat soil erosion.</p>
+<p>But, <a href="https://www.nature.org/en-us/about-us/where-we-work/united-states/indiana/stories-in-indiana/kudzu-invasive-species/">kudzu, once introduced,</a> grows aggressively and can overtake sidewalks, houses, foundations, and even trees.</p>
+<p>The only way to kill kudzu is to prune it aggressively, as a concentrated strategy enacted together by all the people who live near where the kudzu grows.</p>
+<p>You know where I&rsquo;m going with this. An app feature, once added to a codebase, can be extremely hard to remove.</p>
+<p>Even simple features become very sticky because not only do you have to remove the code, but what&rsquo;s worse is that people start writing code on top of your code, and before you know it, you are two years deep into an implemented feature no one wants.</p>
+<p>Deleting code is hard, particularly because it&rsquo;s a thankless task that usually doesn&rsquo;t go on promo packets, which is why we end up shipping hundreds of thousands of lines of sparkle emoji magic wand AI features, but deleting code is silent.</p>
+<p>But in this new era, we must delete code even harder, because if we don&rsquo;t constantly remove complexity, we are going to drown in generated kudzu slop that overtakes codebases.</p>
+<p>In the era where it&rsquo;s easy to add stuff, leave yourself a plan to remove the features you added, particularly since it&rsquo;s much easier than before, too.</p>
+<p>For example, in May, I added a feature to add hashtag bubbles to my blog. I&rsquo;m a millennial, social hashtags are my love language. I thought I would use them all the time, I thought my site visitors would use them all the time to beautifully navigate my sage writings. <a href="https://vickiboykis.com/2026/05/18/tagging-my-blog-posts-with-bertopic-and-llms/">I used a combination of elegant machine learning techniques.</a></p>
+<p>I left it alone for a few months to see if users actually used it in production, and the answer was a resounding no.</p>
+<p>In my Plausible analytics, they didn&rsquo;t make the top 30 visited pages for the past 3 months.</p>
+<figure><img src="https://vickiboykis.com/images/tags1.png" width="600">
+</figure>
+
+<p>It&rsquo;s possible a few folks got something out of them, but it&rsquo;s not worth maintaining, especially when it&rsquo;s so easy to put them back in. (This data is since May 1.)</p>
+<figure><img src="https://vickiboykis.com/images/tags2.png" width="600">
+</figure>
+
+<p>So, it&rsquo;s time to prune the kudzu, in much the same way it was so easy to create.</p>
+<figure><img src="https://vickiboykis.com/images/tags3.png" width="600">
+</figure>
+
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sh" data-lang="sh"><span style="display:flex;"><span> Commit history <span style="color:#66d9ef">for</span> this feature is now: 
+</span></span><span style="display:flex;"><span> - 77e2c5a — Changelog entry 
+</span></span><span style="display:flex;"><span> - 85000e2 — Move search bar back to the header 
+</span></span><span style="display:flex;"><span> - 91b6fde — Remove tag sidebar and tag bubbles 
+</span></span></code></pre></div><p>💆‍♀️</p>
