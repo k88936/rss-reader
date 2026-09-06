@@ -21,7 +21,8 @@
 <p>只需打开飞书网页版的聊天页面，将飞书聊天表情的精灵图与 CSS 扒下来即可。</p>
 <div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>https://sf3-cn.feishucdn.com/obj/goofy/ee/web-client-next/p/contents/messenger-modals/assets/img/50b081cab9.png
 </span></span></code></pre></div><p>同时你会发现处理这张精灵图的 CSS 样式，居然在不同文件里重复定义了 8 次！一份样式大概 10 kb，这波流量费直接翻了 8 倍。我寻思要是处理下，估计也能拿个降本增效奖了。😂</p>
-<p><img src="https://github.red/images/2024/10/lark_emojis_css.png" alt=""></p>
+<p><img src="https://github.red/images/2024/10/lark_emojis_css_hu_98bf88270df8c22a.webp" srcset="https://github.red/images/2024/10/lark_emojis_css_hu_9819f84fa01b6fb0.webp 400w, https://github.red/images/2024/10/lark_emojis_css_hu_3ff43e19701959a5.webp 800w, https://github.red/images/2024/10/lark_emojis_css_hu_98bf88270df8c22a.webp 1200w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="1200" height="618" alt="" decoding="async">
+</p>
 <h2 id="静态网站的搜索">静态网站的搜索</h2>
 <p>除了评论系统以外，静态网站还有让人头痛的一点是文章搜索。这块的 SaaS 基本上是被 <a href="https://www.algolia.com/">algolia</a> 一家给垄断了，就连微信开放平台的文档搜索，也是接的这家。</p>
 <p>如果是自己做的话，基本上是先将所有的文章内容导出为 JSON 格式，再使用类似 <a href="https://www.fusejs.io/">Fuse.js</a> 的模糊搜索库进行分词检索。我一开始也是使用的 Fuse.js，在博客构建时多构建一份包含所有文件的 JSON，再写个云函数去调 Fuse.js 根据关键词搜索 JSON，但貌似中文分词的效果不是很理想。</p>

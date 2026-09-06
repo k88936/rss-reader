@@ -4,7 +4,8 @@
 <p>经常能看到一些企业内部的 Web 站，做的前后端分离的架构。第一次访问时加载前端页面，前端逻辑判断用户未登录，跳转到第三方 SSO 做统一登录。登录成功后 callback 一个 SSO Token 回原站点。然后后端 API 签一个自己业务的 Token 发给前端，前端把业务 Token 放 Local Storage 里存着。由于网站是前后端分离的，攻击者在未登录的时候就可以访问前端，他就可以从前端打包后的 JavaScript 里把后端接口全提取出来去 Fuzz。（更别说还有些不关 Sourcemap 的）后端在实现上万一漏了个路由，鉴权中间件没包到（往往还是些上传下载文件的接口），然后就接口越权一把梭了。</p>
 <p>因此我觉得供内部使用的服务，不管是基于第三方的还是自建的，都应该在网关层面做一套统一的鉴权。</p>
 <p>那么说干就干！在查阅了相关资料后，站在前人的肩膀上，我造了个小轮子 —— ikD。</p>
-<p><img src="https://github.red/images/2024/09/ikd_web_screenshot.png" alt="ikd_web_screenshot"></p>
+<p><img src="https://github.red/images/2024/09/ikd_web_screenshot_hu_647308a7e0d08030.webp" srcset="https://github.red/images/2024/09/ikd_web_screenshot_hu_455986288f7b35a0.webp 400w, https://github.red/images/2024/09/ikd_web_screenshot_hu_d743b05fece31ddc.webp 800w, https://github.red/images/2024/09/ikd_web_screenshot_hu_647308a7e0d08030.webp 1200w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="1200" height="782" alt="ikd_web_screenshot" decoding="async">
+</p>
 <h2 id="比-traefik-forward-auth-简洁">比 traefik-forward-auth 简洁</h2>
 <p>由于使用 k3s 搭建的集群会内置一个 Traefik 做为默认的 Ingress Class，我也就围绕 Traefik 来展开了。ikD 这个名字，其实也就是取自 Traef<strong>ik</strong> I<strong>D</strong> 中的三个字母。一开始想叫 <code>ikID</code> 的，但是仔细一读像是什么儿童品牌&hellip;&hellip;？遂改名。</p>
 <p>我的想法是先找找看 Traefik 有没有类似 K8s Mutating Webhook 的特性，当准备代理一个集群内的 Service 时，先去调用一下我写得“WebHook”，由我来指挥它后续的行为。找了一圈发现 Traefik 里还真有这样一个中间件：<a href="https://doc.traefik.io/traefik/middlewares/http/forwardauth/">ForwardAuth</a>，同时还找到了前人开发的 <a href="https://github.com/thomseddon/traefik-forward-auth/">traefik-forward-auth</a> 项目。该项目利用 ForwardAuth 中间件让 Traefik 反代支持前置使用 Google 账号或 OpenID 服务进行身份认证。然而我很少用 Google 账号登录，OAuth、OpenID、SAML 那些玩意更是傻傻分不清，总不能为了用这玩意我再去注册个 Auth0 吧？！</p>
@@ -12,7 +13,8 @@
 <h2 id="forwardauth">ForwardAuth</h2>
 <p>Traefik 本身不支持用户编写自定义逻辑的中间件，只能将官方文档中给的内置中间件简单配置后使用。比如官方给你提供了个 <code>Errors</code> 错误中间件，那你可以自己配置哪些状态码要报错，以及报错页面的地址是啥。</p>
 <p>ForwardAuth 就是官方提供的用于转发请求到外部服务进行验证的中间件。这里直接贴文档里的图，方便后文介绍。</p>
-<p><img src="https://github.red/images/2024/09/authforward.png" alt="authforward"></p>
+<p><img src="https://github.red/images/2024/09/authforward_hu_2ac0131b82b9f62a.webp" srcset="https://github.red/images/2024/09/authforward_hu_e5f4f30fb46607cd.webp 400w, https://github.red/images/2024/09/authforward_hu_3663db68b58a0654.webp 800w, https://github.red/images/2024/09/authforward_hu_2ac0131b82b9f62a.webp 1200w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="1200" height="317" alt="authforward" decoding="async">
+</p>
 <p>对于使用了 ForwardAuth 中间件的路由，Traefik 会先请求 <code>address</code> 中配置的第三方服务地址，并使用 <code>X-Forwarded-*</code> 请求头传递上游请求的请求方式、协议、主机名、URL、源 IP 地址给第三方服务。第三方服务就可以根据这些信息来执行自定义的验证逻辑了，若第三方服务返回 2XX 响应码，则代表验证通过；否则验证不通过，Traefik 将把第三方服务的响应传给上游。</p>
 <p>这个设计十分简洁。验证不通过时返回第三方服务的响应，可以方便我们将未验证用户 302 跳转到登录页面。</p>
 <p>值得一提的是，我十分好奇 Traefik 源码中关于 2XX 响应码的判断方式，我以为会是 <code>statusCode / 100 == 2</code> 这样的写法，但实际是：</p>
@@ -23,7 +25,8 @@
 </span></span><span style="display:flex;"><span><span style="color:#ff7b72">if</span> forwardResponse.StatusCode &lt; http.StatusOK <span style="color:#ff7b72;font-weight:bold">||</span> forwardResponse.StatusCode <span style="color:#ff7b72;font-weight:bold">&gt;=</span> http.StatusMultipleChoices {
 </span></span></code></pre></div><p>它是判断状态码的数字是否落在 <code>[200, 300)</code> 这个区间内，我感觉这样的写法可以规避掉 <code>statusCode / 100 == 2</code> 中出现的 <code>2</code> 这个 Magic Number。在 Lint 上会更好一些。</p>
 <h2 id="完整的登录流程">完整的登录流程</h2>
-<p><img src="https://github.red/images/2024/09/ikd_user_signin.png" alt="ikd_user_signin"></p>
+<p><img src="https://github.red/images/2024/09/ikd_user_signin_hu_8ff51ae17aafdfb3.webp" srcset="https://github.red/images/2024/09/ikd_user_signin_hu_495eeccfd84b0a9f.webp 400w, https://github.red/images/2024/09/ikd_user_signin_hu_aa7a3f8bdaa4b3e3.webp 800w, https://github.red/images/2024/09/ikd_user_signin_hu_8ff51ae17aafdfb3.webp 1200w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="1200" height="726" alt="ikd_user_signin" decoding="async">
+</p>
 <p>画了张图来梳理 ikD 是怎样处理用户登录的。</p>
 <ol>
 <li>用户请求了 <code>https://hello.example.com/index.php</code> 网站，集群内 Traefik 请求 ikD 服务，ikD 发现用户未登录，返回 302 跳转到 <code>https://ikd.example.com/?redirect=https://hello.example.com/index.php</code>。</li>
@@ -46,7 +49,8 @@
 <p>你会发现 ikD 的登录页并没有要求输入用户名和密码，而是一个 <code>发送登录凭证</code> 的按钮。这里的登录方式和 Notion 类似 —— 随机发送由三个英文单词组成的字符串到我的手机上，我输入字符串登录。</p>
 <p>在 macOS 环境下可以读取 <code>/usr/share/dict/words</code> 文件来获得英文单词，这个 <code>words</code> 文件是软链接到同目录下的 <code>web2</code> 文件。线上基于 Alpine 打包的 Docker 镜像，可以从苹果开源 <a href="https://opensource.apple.com/source/files/files-473/usr/share/dict/web2">https://opensource.apple.com/source/files/files-473/usr/share/dict/web2</a> 下载到这份单词表。GitHub Actions 打镜像的时候丢进去就行。</p>
 <p>发送字符串是后端请求我手机 Bark App 的 WebHook URL 发送推送消息。收到推送后手机上复制，iCloud 剪贴板同步粘贴到电脑浏览器即可登录。由于是直接复制的内容，几乎不可能出错。所以每次发送的字符串凭证的验证仅有一次机会，输入错误了就得再重新下发一个新的。嗯，感觉十分的安全呢。后续其实可以做个 App 来弹出个框让我点确认的。</p>
-<p><img src="https://github.red/images/2024/09/ikd_bark_notification.jpg" alt="ikd_bark_notification"></p>
+<p><img src="https://github.red/images/2024/09/ikd_bark_notification_hu_6ff84fc8c92ba521.webp" srcset="https://github.red/images/2024/09/ikd_bark_notification_hu_b708aefe370c6092.webp 400w, https://github.red/images/2024/09/ikd_bark_notification_hu_d7ff659e545c165b.webp 800w, https://github.red/images/2024/09/ikd_bark_notification_hu_6ff84fc8c92ba521.webp 1179w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="1179" height="366" alt="ikd_bark_notification" decoding="async">
+</p>
 <h2 id="接下来呢">接下来呢？</h2>
 <p>现在我已将集群内的 Metabase、Grafana、Uptrace、以及自己开发的自用服务接上了 ikD 做统一认证。<span class="heimu" onclick="()=>{}">好好好，这下 ikD 被打穿了就全部完蛋！</span></p>
 <p>但目前还只是个刚好能用的状态，对于各种操作还需要记录行为日志，后续可以考虑下把集群里搭的 Loki 用起来。</p>

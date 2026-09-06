@@ -115,13 +115,15 @@
 </tbody>
 </table>
 <p>然后神奇的事情就来了~ 我们按照 Hooopo 上述文章里所介绍的，为每一个 Schemaless 表当创建一张视图。以下是一个视图的 SQL 定义示例：</p>
-<p><img src="https://github.red/images/2024/07/schemaless_view_sql.png" alt=""></p>
+<p><img src="https://github.red/images/2024/07/schemaless_view_sql_hu_38f59e401551c52b.webp" srcset="https://github.red/images/2024/07/schemaless_view_sql_hu_9197daa75838f6f5.webp 400w, https://github.red/images/2024/07/schemaless_view_sql_hu_77853ea43ae23ef3.webp 800w, https://github.red/images/2024/07/schemaless_view_sql_hu_38f59e401551c52b.webp 1200w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="1200" height="382" alt="" decoding="async">
+</p>
 <p>得益于 Postgres 对 JSON 类型的强大支持，我们可以从 <code>sl_records</code> 表中提取 JSON 字段的值作为内容，构建出一张“表”，效果如下：</p>
-<p><img src="https://github.red/images/2024/07/schemaless_view_data.png" alt=""></p>
+<p><img src="https://github.red/images/2024/07/schemaless_view_data_hu_e9e9f8395146aa97.webp" srcset="https://github.red/images/2024/07/schemaless_view_data_hu_3a5d27c479abc194.webp 400w, https://github.red/images/2024/07/schemaless_view_data_hu_ee25a38a16a35bab.webp 800w, https://github.red/images/2024/07/schemaless_view_data_hu_e9e9f8395146aa97.webp 1200w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="1200" height="224" alt="" decoding="async">
+</p>
 <p>当用户需要查询 Schemaless 表中的数据时，我们直接查询这张视图就行。对于 GORM 而言，这就跟查询一张普通的表一样！它都不会意识到这是由三张表拼凑提取出来的数据。更神奇的是，当你对着这张视图删除一条记录时，对应的 <code>sl_records</code> 原始表中的记录行也会被删除！Postgres 居然能把这俩关联起来。</p>
 <p>具体到代码实现上，我们需要动态构造创建视图的 SQL 语句。而像字段、表名这类关键字在 SQL 语句中是不支持 SQL 预编译传入的，为了避免潜在的 SQL 注入风险，我使用了 <a href="https://github.com/tj/go-pg-escape">github.com/tj/go-pg-escape</a> 库来对字段名和表名进行转义。</p>
 <p>正如 Hooopo 文章中所提到的，我将这个视图创建在了另一个 Postgres Schema 下，与默认的 <code>public</code> 进行区分，这也是一种简易的多租户实现了。</p>
-<div class="box-warning box"><i class="box-icon-warning"></i> <p>有坑注意！</p>
+<div class="box-warning box"><svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M10.3 3.6 1.8 18.3A1.8 1.8 0 0 0 3.4 21h17.2a1.8 1.8 0 0 0 1.6-2.7L13.7 3.6a2 2 0 0 0-3.4 0ZM11 8h2v6h-2V8Zm0 8h2v2h-2v-2Z"/></svg><p>有坑注意！</p>
 <p>之前看到过这篇文章： <a href="https://mp.weixin.qq.com/s/8T4Lgis9q30jHaSAfT3jgQ">《我们使用 Postgres 构建多租户 SaaS 服务时踩的坑》</a>，文中提到使用 Postgres Schema 构建多租户时，如果每个 Postgres Schema 下都是同样的表结构，同时对所有 Postgres Schema 中的表结构变更会有性能问题。但上述场景在我们这里不存在，可以忽略该问题。</p>
 </div>
 <h2 id="引用列生成列字段约束的实现">引用列、生成列、字段约束的实现</h2>
@@ -130,7 +132,8 @@
 <img style="box-shadow: none;" src="https://github.red/images/2024/07/reference_table.png" />
 <p>在生成视图时，使用 Postgres <code>json_build_object</code> 来构造 <code>reference</code> 类型字段展示的 JSON。（再次感叹 Postgres 真是太强大了！）JSON 中的字段 <code>u</code> 为关联记录的唯一 UID，方便前端处理时找到这一条记录。<code>v</code> 为关联记录的展示字段，用于在前端 Table 表格上展示给用户看。</p>
 <p>在实际的博客评论记录中，一条评论是不能将自己作为自己的父级评论的。即我们要对 <code>reference</code> 字段的引用值进行约束。我给 <code>reference</code> 字段加了一个 <code>constraint</code> 属性，用户可以输入 JavaScript 表达式来自定义约束行为。JavaScript 表达式返回 <code>true</code> / <code>false</code> ，来表示数据校验是否通过。背后的实现是接了 <a href="https://github.com/dop251/goja">goja</a> 这个 Go 的 JavaScript Engine 库。我将当前记录传入 JavaScript 运行时的 <code>$this</code> 变量中，将被关联的记录传入 <code>$that</code> 变量中，对于上述需求，我们只需要写 <code>$this.uid !== $that.uid</code> 就可以约束一条评论的父评论不能是它自身。</p>
-<p><img src="https://github.red/images/2024/07/reference_field_constraint.png" alt=""></p>
+<p><img src="https://github.red/images/2024/07/reference_field_constraint_hu_45d03d2d9e459f8a.webp" srcset="https://github.red/images/2024/07/reference_field_constraint_hu_7abc4a13be8c9fdf.webp 400w, https://github.red/images/2024/07/reference_field_constraint_hu_ba04c96c26c691b8.webp 800w, https://github.red/images/2024/07/reference_field_constraint_hu_45d03d2d9e459f8a.webp 1200w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="1200" height="691" alt="" decoding="async">
+</p>
 <p>除了能引用他人的评论，在博客评论中还需要展示评论者的头像，通常的做法是使用评论者的电子邮箱去获取其 Gravatar 头像进行展示。即将评论者的电子邮箱地址全部转换为小写后，再做 MD5 哈希，拼接到 <code>https://gravatar.com/avatar/</code> 或者其他镜像站地址之后。在 Postgres 里我们可以使用<a href="https://www.postgresql.org/docs/current/ddl-generated-columns.html">生成列（Generated Columns）</a>来很轻松的做到这一点：</p>
 <div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sql" data-lang="sql"><span style="display:flex;"><span><span style="color:#ff7b72">CREATE</span><span style="color:#6e7681"> </span><span style="color:#ff7b72">TABLE</span><span style="color:#6e7681"> </span>comments<span style="color:#6e7681"> </span>(<span style="color:#6e7681">
 </span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>email<span style="color:#6e7681"> </span>TEXT,<span style="color:#6e7681">
@@ -173,7 +176,8 @@
 </span></span><span style="display:flex;"><span>}
 </span></span></code></pre></div><h2 id="api-接口设计">API 接口设计</h2>
 <p>聊完了 Schemaless 特性的实现，我们再来看下自定义 API 接口的实现。这里直接上前端的操作页面，方便我来逐一介绍。</p>
-<p><img src="https://github.red/images/2024/07/update_api_example.png" alt=""></p>
+<p><img src="https://github.red/images/2024/07/update_api_example_hu_4e93adba4a8bb1f5.webp" srcset="https://github.red/images/2024/07/update_api_example_hu_bd4735c745eb647d.webp 400w, https://github.red/images/2024/07/update_api_example_hu_78bf98406db09825.webp 800w, https://github.red/images/2024/07/update_api_example_hu_4e93adba4a8bb1f5.webp 1200w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="1200" height="659" alt="" decoding="async">
+</p>
 <p>参考之前用过的 Pocketbase，我将接口分为 <code>LIST</code> <code>VIEW</code> <code>CREATE</code> <code>UPDATE</code> <code>DELETE</code> 五种类型。注意这与 HTTP 请求动词或数据库 DDL 操作并无关系，是偏业务上的定义。<code>LIST</code> 返回多条数据、<code>VIEW</code> 查询单条数据、<code>CREATE</code> 添加数据、<code>UPDATE</code> 修改数据、<code>DELETE</code> 删除数据。</p>
 <p>就像我们写后端需要定义路由一样，每个 API 接口会有它请求方法和路径。以及会定义每个接口它从 GET Query 和 POST Body 处接收的字段。这些字段除了要有英文的参数名外，还需要有给人看的标签名，用于展示在数据校验的报错信息里。</p>
 <p>然后我们会选择一张 Schemaless 数据表作为数据源（记得在 Dreamweaver 里叫“记录集”），把传入参数与数据表中的字段做映射，这样就完成了对数据的操作流程。而就整个请求而言，在请求开始前我们可能会想做一层限流或者验证码，请求结束后需要发送通知邮件或触发 WebHook，因此还需要支持配置路由中间件。</p>
@@ -227,7 +231,8 @@
 <p>路由的中间件，我一开始就想把常用的功能封装成模块，然后前端直接拖拽着使用。其中对数据操作的主逻辑为 <code>main</code> 中间件，这个不可删除，其它的可以自由编排。</p>
 <p>后端的实现很简单，相信看过任意 Go Web 框架源码的小伙伴都知道，又是些被说烂了的“洋葱模型”之类的东西。说穿了就是对整个中间件的 Slice <code>for</code> 遍历一下，判断发现其中的某个中间件返回响应（<code>ctx.ResponseWriter().Written()</code> 为 <code>true</code> ），就直接整个返回了，这里就不贴代码水字数了。</p>
 <p>前端我使用了 <a href="https://github.com/gilnd/vue3-smooth-dnd">vue3-smooth-dnd</a> 这个库，我对比了 Vue 多个拖拽库，貌似只有这一家的动画最为丝滑，并且还带自动吸附。最后实现的效果我也是十分满意：</p>
-<p><img src="https://github.red/images/2024/07/drag-middlewares.gif" alt=""></p>
+<p><img src="https://github.red/images/2024/07/drag-middlewares.gif" alt="" decoding="async">
+</p>
 <p>这个中间件模块的节点是我自己画的，背景设置为灰色， 然后后面放一个细长的 <code>div</code> 作为流程的直线。鼠标放在中间件节点上时会有一个 popup 配置中间件的具体参数。这里是直接用的 TDesign 的 Popup 弹出层组件，里面再放一个 Card 卡片组件把弹出层空间撑开即可。</p>
 <h2 id="最后说几句">最后说几句</h2>
 <p>目前 Sayrud 已经初步开发完并部署到了线上，它已经完美支持了我想要一个静态博客评论后端的需求，后面只需要接上我写得前端就可以用了！（目前我开发的博客评论组件还没上，你现在看到的还是又丑又难用的 Waline）</p>

@@ -259,16 +259,16 @@
 </span></span><span style="display:flex;"><span> <span style="color:#ff7b72;font-weight:bold">&lt;-</span>client.<span style="color:#d2a8ff;font-weight:bold">Disconnected</span>()
 </span></span><span style="display:flex;"><span>}
 </span></span></code></pre></div><p>编译运行该 Go 程序，程序蓝牙找到共享电单车然后就开锁了~</p>
-<div class="container">
+<div class="w-full overflow-hidden">
 <div id="player-wrapper-0" class=""></div>
 </div>
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@clappr/player@latest/dist/clappr.min.js">
 </script>
 <script>
 (() => {
-const playerElement = document.getElementById("player-wrapper-0");
+const playerElement = document.getElementById('player-wrapper-0');
 const player = new Clappr.Player({
-source: "/images/2023/08/hack-electric-bicycle.mp4",
+source: '\/images\/2023\/08\/hack-electric-bicycle.mp4',
 mute: true,
 height: 360,
 width: 640

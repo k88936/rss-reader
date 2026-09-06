@@ -44,7 +44,8 @@
 <h2 id="名词辨析">名词辨析</h2>
 <p>前方预警！在后文中你可能会遇见 <code>containerd</code>、<code>runc</code>、<code>OCI</code>、<code>CRI</code>、<code>Docker</code> 等等这些名词，在正式开始前我们不妨先梳理下这些名词，至少先弄清楚它们之间的关系。</p>
 <p>这里先放一张图，各位可以简单瞄一眼后继续往下看。</p>
-<p><img src="https://github.red/images/2022/11/container-family.png" alt=""></p>
+<p><img src="https://github.red/images/2022/11/container-family_hu_25e48128b66c8bd4.webp" srcset="https://github.red/images/2022/11/container-family_hu_77362bd65f3de6ad.webp 400w, https://github.red/images/2022/11/container-family_hu_3c01dc6347003e00.webp 800w, https://github.red/images/2022/11/container-family_hu_25e48128b66c8bd4.webp 881w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="881" height="1481" alt="" decoding="async">
+</p>
 <h3 id="是造物者之无尽藏也">是造物者之无尽藏也</h3>
 <p>还记得最开始我在大一上学期的时候接触了 Docker，当时给我印象很深的一句话是：“Docker 这玩意就是新瓶装旧酒。” 所谓容器，只不过是封装了 Linux 系统内核提供的功能去实现资源的隔离。本质还是 Linux Container 的 <code>cgroups</code>、<code>namespaces</code>。</p>
 <ul>
@@ -85,7 +86,8 @@
 其实不然，在 issue <a href="https://github.com/kubernetes/kubernetes/issues/30656">#30656</a> 里有人提出了一种很蠢的办法：
 安装一个 <code>kubectl</code> 插件，使用 <code>kubectl ssh</code> 连上对应的节点宿主机，然后找到容器直接执行命令。这真的真的是太蠢了。</p>
 <p>我在这个 issue 下找到了这么一个项目 <a href="https://github.com/ssup2/kpexec">ssup2/kpexec</a>，借鉴其中用到的方法相对优雅的解决了这个问题！这里放一下 kpexec 项目的架构图用于方便说明：</p>
-<p><img src="https://github.red/images/2022/11/kpexec_Operation.png" alt=""></p>
+<p><img src="https://github.red/images/2022/11/kpexec_Operation_hu_c47334ff81f68751.webp" srcset="https://github.red/images/2022/11/kpexec_Operation_hu_9894d38e9982d9ca.webp 400w, https://github.red/images/2022/11/kpexec_Operation_hu_72f7851d30842883.webp 800w, https://github.red/images/2022/11/kpexec_Operation_hu_c47334ff81f68751.webp 1200w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="1200" height="410" alt="" decoding="async">
+</p>
 <p>我的做法其实比它更简单。我们上面提到了，容器系统资源隔离本质上还是使用了内核中的 <code>namespaces</code>，所有的虚拟化都是在操作系统层面完成的。 而系统中有 <code>nsenter</code> 这个命令，可以帮助我们进入到对应容器的 <code>namespace</code> 命名空间中，在该命名空间中执行命令，默认的用户权限就是 root！
 假如我们要在部署于 A 节点的 Pod 的容器 B 下以 root 权限执行命令，步骤如下：</p>
 <ol>

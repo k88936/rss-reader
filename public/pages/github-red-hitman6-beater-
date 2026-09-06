@@ -23,8 +23,9 @@
 </span></span><span style="display:flex;"><span><span style="color:#7ee787">&lt;true/&gt;</span>
 </span></span></code></pre></div><p>讲道理我到现在都没搞明白为什么 HITMAN 的应用签名是这样的，可能是为了开发过程中方便调试？</p>
 <p>我让大模型 Vibe 了一个输出 Hello World + 基址的 dylib，然后用 <code>DYLD_INSERT_LIBRARIES</code> 环境变量带上 dylib 启动游戏，在游戏终端能看到输出了我们的注入信息！</p>
-<p><img src="https://github.red/images/2026/03/hitman-dylib-demo.jpg" alt="hitman-dylib-demo"></p>
-<div class="box-warning box"><i class="box-icon-warning"></i> <p>有坑注意！</p>
+<p><img src="https://github.red/images/2026/03/hitman-dylib-demo_hu_43ff82e32550d202.webp" srcset="https://github.red/images/2026/03/hitman-dylib-demo_hu_adbbab1a9bfbd674.webp 400w, https://github.red/images/2026/03/hitman-dylib-demo_hu_c673fccae228e195.webp 800w, https://github.red/images/2026/03/hitman-dylib-demo_hu_43ff82e32550d202.webp 1200w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="1200" height="168" alt="hitman-dylib-demo" decoding="async">
+</p>
+<div class="box-warning box"><svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M10.3 3.6 1.8 18.3A1.8 1.8 0 0 0 3.4 21h17.2a1.8 1.8 0 0 0 1.6-2.7L13.7 3.6a2 2 0 0 0-3.4 0ZM11 8h2v6h-2V8Zm0 8h2v2h-2v-2Z"/></svg><p>有坑注意！</p>
 <p>由于我使用是 M1 Pro 芯片的 Mac，但是 HITMAN 游戏是 Rosetta 转译后跑得 x86 架构程序。因此需要交叉编译 dylib 为 x86 架构。</p>
 </div>
 <h2 id="改了却又没改">改了，却又没改</h2>
@@ -62,7 +63,8 @@
 <p>游戏中有很多墙边、柱子可以攀爬悬挂，有些悬挂点是在地图边缘或者高楼边，正常的操作是只能按 G 解除悬挂翻回室内。但我想在这个时候能强制切换到正常行走模式，这样就可以走到地图外进行探索。（例如北海道下山、萨比恩撒上房下海等）</p>
 <p>游戏的移动系统有优先级机制，<code>ZHM5MovementLocomotion</code>（行走）优先级最高。其 <code>WantControl</code> 方法决定是否要接管控制权。将函数前 3 字节替换为 <code>mov al, 1; ret</code>，使其无条件返回 <code>true</code>，强制从任何移动状态（悬挂/攀爬/翻越）回到正常行走即可。</p>
 <p>附上一张北海道下山的图，这是我在整个 HITMAN 游戏中最喜欢的地图！风景很美，我很喜欢。</p>
-<p><img src="https://github.red/images/2026/03/hitman-hokkaido.png" alt="hitman-hokkaido"></p>
+<p><img src="https://github.red/images/2026/03/hitman-hokkaido_hu_19d9f17b4326ac7c.webp" srcset="https://github.red/images/2026/03/hitman-hokkaido_hu_50096f035a68122e.webp 400w, https://github.red/images/2026/03/hitman-hokkaido_hu_fe094d82aa3316e9.webp 800w, https://github.red/images/2026/03/hitman-hokkaido_hu_19d9f17b4326ac7c.webp 1000w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="1000" height="641" alt="hitman-hokkaido" decoding="async">
+</p>
 <h3 id="拾取所有物品">拾取所有物品</h3>
 <p>我一开始是想要一键在背包里刷出游戏中所有物品的功能。然而 Claude 拒绝了这个需求，它说这个的难度比之前的高好几个数量级，我还得去找出游戏中所有物品的 GUID。</p>
 <p>那好，退一步，我让 Claude 直接扫描当前整张地图里已存在物品的 GUID，再将其全部放到我的背包里。这样也能拾取到一些有意思的道具。Claude 的实现方式如下：</p>

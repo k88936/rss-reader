@@ -12,7 +12,8 @@
 <h2 id="如何实现的">如何实现的？</h2>
 <p>像素画的前端开发难度远大于后端。我们先从相对简单的后端讲起。</p>
 <p>通过直接生啃 B站夏日绘板的前端（具体文件在 <code>pixel-drawing.d41b770e4052375671dc.js</code>），我们可以知道这是一个 1280 x 720 的图片。通过魔改的 Vue DevTools，可以直接看到其 Vue data 部分的内容：</p>
-<p><img src="https://github.red/images/2024/02/bilibili-painting-vue-tools.png" alt="bilibili-painting-vue-tools"></p>
+<p><img src="https://github.red/images/2024/02/bilibili-painting-vue-tools_hu_8db9e61b56c40a47.webp" srcset="https://github.red/images/2024/02/bilibili-painting-vue-tools_hu_f892ad5d0ad82348.webp 400w, https://github.red/images/2024/02/bilibili-painting-vue-tools_hu_dea8b1f68e0fb303.webp 800w, https://github.red/images/2024/02/bilibili-painting-vue-tools_hu_8db9e61b56c40a47.webp 1200w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="1200" height="877" alt="bilibili-painting-vue-tools" decoding="async">
+</p>
 <p>在 <code>colorMaps</code> 对象存储的就是页面上调色盘的颜色。<code>colorMaps</code> 的 Value 是对应颜色的十六进制，Key 则是从 <code>0</code> 开始一直递增到 <code>A</code> <code>B</code> <code>C</code>&hellip; 的索引。那么考虑使用一位的字母或数字作为 Key，我们可以表达 36 种颜色（<code>0</code>-<code>9</code>，<code>A</code>-<code>Z</code>），要是加上特殊符号全角半角，则可以表示更多。</p>
 <p>在页面的 <code>1.0b2b4b3ccd53641b013c.js</code> 文件中，我们可以看到其返回了很长一串字符串：</p>
 <div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span>webpackJsonp([<span style="color:#a5d6ff">1</span>],{<span style="color:#a5d6ff">1697</span><span style="color:#ff7b72;font-weight:bold">:</span><span style="color:#ff7b72">function</span>(Q,O,E){
@@ -187,7 +188,8 @@
 </span></span></code></pre></div><p>通过修改原本的 <code>baseURL</code>，将 NekoPixel 画板的所有请求指向 NekoBox 的 <code>/pixel</code> 下，<code>/pixel</code> 路由转发用户请求到服务器上的 NekoPixel。相当于 NekoBox 在中间做了层反代 <a href="https://github.com/NekoWheel/NekoBox/blob/master/route/pixel/pixel.go#L23-L62">pixel.go</a>，为的是能将绘制像素点的用户 ID 带上，放到最终请求入库保存。</p>
 <h2 id="最后说几句">最后说几句</h2>
 <p>NekoPixel 是我今年在老家过年的时候开发的，发布上线后，我简单的用像素点写了个 <code>NKBOX</code>。后续真的有大触在上面画了像素画！我的 NekoBox 账号也收到了用户匿名反馈说很喜欢这个新功能。</p>
-<p><img src="https://github.red/images/2024/02/neko-pixel-0224.png" alt="neko-pixel-0224"></p>
+<p><img src="https://github.red/images/2024/02/neko-pixel-0224_hu_a4e5eed842f494e.webp" srcset="https://github.red/images/2024/02/neko-pixel-0224_hu_2dc839acae77ffe5.webp 400w, https://github.red/images/2024/02/neko-pixel-0224_hu_ffd4e0e73da7737e.webp 800w, https://github.red/images/2024/02/neko-pixel-0224_hu_a4e5eed842f494e.webp 1200w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="1200" height="768" alt="neko-pixel-0224" decoding="async">
+</p>
 <p>但其实还有很多需要完善的地方，比如画板不会向鼠标所在的位置缩放（还是 Y7 提的呜呜呜）、加载画板的时候没有提示、用户绘制时的验证与限流等，都是要努力去实现的。</p>
 <p>自从过年那阵子，就有人一直在 DDoS NekoBox 及其子域。刚开始的时候毫无防御被刷了一波阿里云账单，后续由于阿里云产品的各种离谱设定，加上工单客服给的防御方案根本不起作用，我将 NekoBox 以及自己的其他服务由阿里云迁移到了 Cloudflare 上，这才有所缓解。特别是前些日子一晚上打出了 <strong>10T</strong> 的流量！这要是还放阿里云上，我直接就 5000 块没了。</p>
 <p>互联网上还是坏人多呀，一开始是疯狂刷我 NekoBox 上挂的支付宝收款码图片。Y7 也劝我不要再将 NekoBox 的打赏记录公开出来，省得有人眼红搞事，但我想着这是需要对社区公开的信息，且打赏的人可能也是抱着能被展示出来的心情才打赏的。</p>

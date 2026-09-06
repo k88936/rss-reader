@@ -18,7 +18,8 @@
 <p>我想将 NekoBox 接入现有的 K3s 集群，使用 GitOps 实现更好的版本管理和平滑更新。我的 K3s Master 节点位于腾讯云上海区域，经测试发现腾讯云东京区域的线路比中国香港区域好些，因此买了台 2C4G 的境外东京区域的机器，作为 NekoBox 新的部署机器。</p>
 <p>关于如何跨地域甚至是跨云组件 K3s 集群，这篇文章介绍的很详细：<a href="https://wiki.zjq.im/docs/ops/k8s/install-k8s-with-zerotier-planet-and-k3s/">《基于K3S和zerotier-planet实现跨云搭建K8S集群》</a></p>
 <p>首先使用 ZeroTier 将不同可用区的机器加入到同一 ZeroTier 网络中，这样在 K3s 看来它们就在同一内网里了。</p>
-<p><img src="https://github.red/images/2025/09/zerotier-node-list.png" alt="zerotier-node-list"></p>
+<p><img src="https://github.red/images/2025/09/zerotier-node-list_hu_305de2c2054bc8b.webp" srcset="https://github.red/images/2025/09/zerotier-node-list_hu_93b90a13756d38f6.webp 400w, https://github.red/images/2025/09/zerotier-node-list_hu_db8fcc162bca85da.webp 800w, https://github.red/images/2025/09/zerotier-node-list_hu_305de2c2054bc8b.webp 1200w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="1200" height="710" alt="zerotier-node-list" decoding="async">
+</p>
 <p>节点均开启 IPv4 Forwarding 后，修改 Master 节点 <code>/etc/systemd/system/k3s.service</code> 中的 K3s 参数，显示指定 <code>node-ip</code> 为节点在 ZeroTier 中的 IP，并设置使用 ZeroTier 的网卡：</p>
 <div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#79c0ff">ExecStart</span><span style="color:#ff7b72;font-weight:bold">=</span>/usr/local/bin/k3s <span style="color:#79c0ff">\
 </span></span></span><span style="display:flex;"><span><span style="color:#79c0ff"></span> server --node-ip 10.243.xxx.xxx --flannel-iface ztcxxxxxxx --flannel-backend<span style="color:#ff7b72;font-weight:bold">=</span>host-gw <span style="color:#79c0ff">\
@@ -29,9 +30,11 @@
 <p>我们再给 NekoBox 的节点加个 <code>region=jp</code> 的污点，防止集群里的其它服务被调度过来。</p>
 <h3 id="goldpinger">goldpinger</h3>
 <p>后续还推荐装上 <a href="https://github.com/bloomberg/goldpinger">goldpinger</a>，它会建一个 Daemon Sets，在每个节点上放一个 Pod 来监测节点间的连接状态。</p>
-<p><img src="https://github.red/images/2025/09/goldpinger-web.png" alt="goldpinger-web"></p>
+<p><img src="https://github.red/images/2025/09/goldpinger-web_hu_517360a1e884fc80.webp" srcset="https://github.red/images/2025/09/goldpinger-web_hu_31295224baf297dc.webp 400w, https://github.red/images/2025/09/goldpinger-web_hu_10db00509c0942e3.webp 800w, https://github.red/images/2025/09/goldpinger-web_hu_517360a1e884fc80.webp 1200w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="1200" height="711" alt="goldpinger-web" decoding="async">
+</p>
 <p>官方仓库里虽然提供了 Helm Charts，但比较敷衍，可扩展性差，建议是自己把有用的部分扒出来直接 GitOps 写 YAML 创建资源。官方仓库里还提供了 Grafana Dashboard 定义，导入 Grafana 后可以很直观的看到节点之间的连接延迟：</p>
-<p><img src="https://github.red/images/2025/09/goldpinger-grafana-dashboard.png" alt="goldpinger-grafana-dashboard"></p>
+<p><img src="https://github.red/images/2025/09/goldpinger-grafana-dashboard_hu_a4058affb8d667fa.webp" srcset="https://github.red/images/2025/09/goldpinger-grafana-dashboard_hu_4c24e63acbcb0a43.webp 400w, https://github.red/images/2025/09/goldpinger-grafana-dashboard_hu_5b46992d3a9b5642.webp 800w, https://github.red/images/2025/09/goldpinger-grafana-dashboard_hu_a4058affb8d667fa.webp 1200w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="1200" height="733" alt="goldpinger-grafana-dashboard" decoding="async">
+</p>
 <h2 id="数据库-mysql---postgres">数据库 MySQL -&gt; Postgres</h2>
 <p>2020 年写 NekoBox 那会，我还很菜（虽然现在也很菜），数据库只会用 MySQL。</p>
 <p>尝试过 Postgres 后发现真香，就想着把 NekoBox 从 MySQL 迁移到 Postgres。但 NekoBox 在线上跑着，随时会有用户访问，发布新的提问和回答往数据库插入新的数据，此举无疑是在边开飞机边换引擎。</p>
@@ -39,7 +42,8 @@
 <h3 id="阿里云-dts">阿里云 DTS</h3>
 <p>如果要实现不停机迁移，则需要在完成全量迁移后，再将全量迁移这段时间内的增量数据，也同步到新库中。在调研了市面上几个数据库同步产品后，最后我选择使用阿里云 DTS 来完成。（这里不得不吐槽下我司，腾讯云的 DTS 产品只支持 MySQL 系之间的数据同步，不支持异构数据库，还得加强呀！）</p>
 <p>将服务器添加为阿里云数据库网关 DG 节点后，即可在 DTS 控制台选择使用数据库网关接入非阿里云的源库与目标库，配置完后启动任务即可。</p>
-<p><img src="https://github.red/images/2025/09/aliyun-dts.png" alt="aliyun-dts"></p>
+<p><img src="https://github.red/images/2025/09/aliyun-dts_hu_a7d23690ae712e6b.webp" srcset="https://github.red/images/2025/09/aliyun-dts_hu_42c2d9beeb35096f.webp 400w, https://github.red/images/2025/09/aliyun-dts_hu_e82eafc90c9c6b6f.webp 800w, https://github.red/images/2025/09/aliyun-dts_hu_a7d23690ae712e6b.webp 1200w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="1200" height="672" alt="aliyun-dts" decoding="async">
+</p>
 <p>等全量迁移完了就会开始一直跑增量写入任务了，此时可以在线上写一些数据，来检查数据同步的情况。</p>
 <h3 id="阿里云-dts-的坑">阿里云 DTS 的坑</h3>
 <p>但是阿里云在让我失望这件事上从来没有让我失望过。</p>

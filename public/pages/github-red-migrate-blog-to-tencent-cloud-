@@ -12,12 +12,14 @@
 <p>但问题就出在——腾讯云没有将 Webify 作为的一个单独的产品进行研发，它是属于腾讯云 Cloudbase 云开发产品下的一个子功能！这个 Cloudbase 是啥？是一个类似于 LeanCloud 或者 Heroku 一样的东西，用户在上面托管 Serverless 应用，同时使用 Cloudbase 提供的存储、数据库、云函数等功能。</p>
 <p>Webify 作为 Cloudbase 产品的一个子功能，复用了 Cloudbase 部署应用时的 CI/CD 工作流。对于 Cloudbase 而言这个 Webify 实例是一个按量计费的 <code>WebifyPackage</code> ”环境“，在控制台上就莫名其妙地将 Cloudbase 的“环境“这个概念集成进了 Webify 产品中，但是这个“环境”是系统创建的，你控制台点进去还会报错说无权限！</p>
 <p>在产品计费上，Webify 有自己的一套按月付费的包，包含 CDN 流量、静态存储容量等内容。但这些用量又和底层的 Cloudbase 的用量藕断丝连。以至于我发工单问客服 CDN 流量用完了是怎么计费，他先是说流量用完后直接回原，跟 CDN 服务无关，一会又给我发 CDN 的计费文档，我指出他说得前后矛盾之后，过了一会直接电话打过来跟我解释才讲明白。（我发现现在阿里云和腾讯云的客服水平都变差了，动不动就一个电话过来解释，为啥不能线上消息或者文档说明白？）</p>
-<p><img src="https://github.red/images/2024/04/tencent-cloud-workorder-01.png" alt="tencent-cloud-workorder"></p>
+<p><img src="https://github.red/images/2024/04/tencent-cloud-workorder-01_hu_4c701d835ca83a8c.webp" srcset="https://github.red/images/2024/04/tencent-cloud-workorder-01_hu_5bf9e30653dfe51f.webp 400w, https://github.red/images/2024/04/tencent-cloud-workorder-01_hu_4844342510085265.webp 800w, https://github.red/images/2024/04/tencent-cloud-workorder-01_hu_4c701d835ca83a8c.webp 1200w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="1200" height="413" alt="tencent-cloud-workorder" decoding="async">
+</p>
 <p>但以上种种也都只是控制台操作上有些不合理，让我来试下实际产品怎么样。</p>
 <p>首先是 Weblify 不支持 Hugo 站点的自动构建，不像 Cloudflare Pages 或者 Vercel 那样，选择好仓库后能自动推断出技术栈，并补全构建命令。Weblify 只支持常见的 JavaScript 框架编写的项目。</p>
 <p>解决的办法也不难，我稍微拐个弯，在 GitHub 上建一个仓库，存放构建好的 Hugo 站点文件即可。只需在原 Hugo 项目的 GitHub Actions 流水线中加条 Hugo 构建并推送到仓库即可。</p>
 <p>在 Weblify 上配置 GitHub OAuth 授权后，选择存放构建后静态资源的仓库，直接静态托管该仓库的内容。然后 Webify 构建又报错了&hellip;&hellip;</p>
-<p><img src="https://github.red/images/2024/04/cloudbase-ci-error.png" alt="cloudbase-ci-error"></p>
+<p><img src="https://github.red/images/2024/04/cloudbase-ci-error_hu_ba8f6eb2fd630e5d.webp" srcset="https://github.red/images/2024/04/cloudbase-ci-error_hu_c0eb4148808323ee.webp 400w, https://github.red/images/2024/04/cloudbase-ci-error_hu_298a78665621cc9e.webp 800w, https://github.red/images/2024/04/cloudbase-ci-error_hu_ba8f6eb2fd630e5d.webp 1200w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="1200" height="120" alt="cloudbase-ci-error" decoding="async">
+</p>
 <p>根据构建日志，我发现这垃圾玩意是把 <code>git pull</code> 下来的仓库内容，打成 ZIP 压缩包，再用 Cloudbase CLI 推送上去，然后这 Cloudbase CLI 不支持推送超过 100MB 的文件！发工单问客服，答曰：</p>
 <blockquote>
 <p>Webify目前限制构建产物的体积在100MB内，建议客户减少部署包的体积。
@@ -76,13 +78,15 @@
 </span></span><span style="display:flex;"><span> }
 </span></span><span style="display:flex;"><span>}
 </span></span></code></pre></div><p>我在 Hugo 仓库中加了个刷新腾讯云 CDN 缓存的 Python 脚本，上传成功后再执行这个脚本刷新 CDN 缓存。现在完整构建并部署一次的时间大约在 3-4 分钟。</p>
-<p><img src="https://github.red/images/2024/04/coding-ci.png" alt="coding-ci"></p>
+<p><img src="https://github.red/images/2024/04/coding-ci_hu_1d58d3a1d8bf0dc8.webp" srcset="https://github.red/images/2024/04/coding-ci_hu_f0ac012f290e9108.webp 400w, https://github.red/images/2024/04/coding-ci_hu_b487b71ba4f9150c.webp 800w, https://github.red/images/2024/04/coding-ci_hu_1d58d3a1d8bf0dc8.webp 1200w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="1200" height="697" alt="coding-ci" decoding="async">
+</p>
 <p>勉强能接受吧，要知道在 Cloudflare Pages 上可是 1-2 分钟就能完成，并且还不需要我自己做这个多的配置！！</p>
 <h2 id="说回-cdn-防盗刷">说回 CDN 防盗刷</h2>
 <p>费劲周折，我总算是成功的将博客部署到了腾讯云上。</p>
 <p>之前迁移至 Cloudflare 的原因是我七牛云和阿里云都因为 CDN 被盗刷，导致一夜之间账单欠了 ￥600+。我也不知道互联网上为什么会有这么多干着这些损人不利己的蠢事的人。</p>
 <p>因此在迁移之前，我十分谨慎地调研过腾讯云的 CDN 防盗刷功能，最后的结论是发现他们做得居然还不错，可以说是已经相当尽力了。在 COS 对象存储的「安全管理」菜单下，居然有一个「盗刷风险监测」功能！从各个维度评估了是否有盗刷风险，真的让人眼前一亮！建议阿里云赶紧跟进下。</p>
-<p><img src="https://github.red/images/2024/04/tencent-cos-security-detection.png" alt="tencent-cos-security-detection"></p>
+<p><img src="https://github.red/images/2024/04/tencent-cos-security-detection_hu_42b0286074528125.webp" srcset="https://github.red/images/2024/04/tencent-cos-security-detection_hu_615ea684c2786bfc.webp 400w, https://github.red/images/2024/04/tencent-cos-security-detection_hu_78496f5d06ae0fa6.webp 800w, https://github.red/images/2024/04/tencent-cos-security-detection_hu_42b0286074528125.webp 1200w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="1200" height="653" alt="tencent-cos-security-detection" decoding="async">
+</p>
 <p>我总结了下，具体是这几个方面的配置，以及我自己的配置值。</p>
 <table>
 <thead>
@@ -125,4 +129,5 @@
 <p>后续我可能会把阿里云集群上的业务也迁到腾讯云上来。</p>
 <p>最近一个多月以来自己得睡眠质量不是很好，总是忧心忡忡。好在现在都已尘埃落定，我如愿拿到了腾讯的 Offer，自己这波“金三银四”还算顺利。这过程中的怀疑、悔恨、不甘，现在回想起来也都不重要了。</p>
 <p>站在人生的又一个起点，我还依旧觉得没什么实感。对于后面匆匆收拾东西，搬去上海，我也不确定自己是否准备好了。但我可以肯定的是，自己已经跳出了原来的舒适圈，面前的是另一个更舒适的舒适圈还是更艰难的挑战，这还尚不可知。</p>
-<p><img src="https://github.red/images/2024/04/tencent-offer-accepted.png" alt="tencent-offer-accepted"></p>
+<p><img src="https://github.red/images/2024/04/tencent-offer-accepted_hu_7abdeb8262765b96.webp" srcset="https://github.red/images/2024/04/tencent-offer-accepted_hu_f070ad9cbda4692.webp 400w, https://github.red/images/2024/04/tencent-offer-accepted_hu_bd16c826c7fe4558.webp 800w, https://github.red/images/2024/04/tencent-offer-accepted_hu_7abdeb8262765b96.webp 1200w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="1200" height="772" alt="tencent-offer-accepted" decoding="async">
+</p>

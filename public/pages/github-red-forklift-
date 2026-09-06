@@ -23,7 +23,8 @@
 <h2 id="集装箱叉车启动">集装箱叉车启动！</h2>
 <p>综上，我想要的仅仅只是一个简单轻量，能在集群节点间同步指定命名空间内 Pod 镜像的组件。所以就有了 forklift 这么一个项目：<a href="https://github.com/wuhan005/forklift">https://github.com/wuhan005/forklift</a> ，forklift 的中文翻译是叉车，也就是港口码头用来搬运集装箱的那玩意，用在这里还挺贴切的。</p>
 <p>先放一张我粗略画得架构图，然后我再来详细分享下它的一些实现细节：</p>
-<p><img src="https://github.red/images/2023/03/forklift-architecture.png" alt=""></p>
+<p><img src="https://github.red/images/2023/03/forklift-architecture_hu_b706a42024f4a461.webp" srcset="https://github.red/images/2023/03/forklift-architecture_hu_ac53bef628d94a8e.webp 400w, https://github.red/images/2023/03/forklift-architecture_hu_65bed477ae1ac58e.webp 800w, https://github.red/images/2023/03/forklift-architecture_hu_b706a42024f4a461.webp 1200w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="1200" height="682" alt="" decoding="async">
+</p>
 <p>同 Openkruise 一样，我会在集群里的一台节点上部署一个 <code>forklift-controller</code> 作为主的控制器，这台节点也就担任起了从外部拉取镜像并分发的工作。实际在生产中我们可以用 Node Selector 来指定一台网络好磁盘大的节点作为 Controller。
 所有的节点上都会部署一个 <code>forklift-daemonset</code> 用于定时轮询 controller，与自己本地已有的镜像做对比，看是否有缺失的镜像需要拉取。如果需要拉取则去请求 controller。</p>
 <p>不论是 <code>forklift-controller</code> 还是 <code>forklift-daemonset</code>，它们为了能操作自身节点宿主机上的容器运行时，因此都是部署为特权容器，并且能访问到宿主机的进程。具体的宿主机命令执行方式可以阅读我之前的文章：<a href="https://github.red/kubectl-exec-as-root/#%E4%BB%A3%E7%A0%81%E8%BF%98%E6%98%AF%E5%BE%97%E5%86%99%E7%9A%84%EF%BC%8C%E8%AF%A5%E5%A6%82%E4%BD%95%E8%A7%A3%E5%86%B3%E5%91%A2%EF%BC%9F">《呜哇！你这 kubectl exec 怎么不能指定用户呀？》</a>
@@ -56,11 +57,14 @@
 并且它还会给贴心地给你展示一些“高级用法”，比如有个 <code>_helpers.tpl</code> 文件可以定义共用的模块，有个 <code>tests</code> 文件夹给你写个类似于测试一样的东西。但我只是想封个简简单单的 Helm Chart，自己再指定几个参数允许用户自定义而已啊！！！</p>
 <p>突然，我想到自己在线上集群测试的时候，曾写了几个 YAML 来部署需要用到的各种资源。再加上这段时间写代码没少麻烦 ChatGPT，我就在想能不能让 ChatGPT 帮我基于现有的 YAML，给我生成出 Helm Chat 来。试了下效果还真不错。我们只需要将之前的几个 YAML 全部合并到一个文件中，然后一起喂给 ChatGPT 让它帮忙生成就行。</p>
 <p>一开始它会比较笼统地告诉你创建 <code>Chart.yaml</code> 和 <code>values.yaml</code> 这两个文件：</p>
-<p><img src="https://github.red/images/2023/03/forklift-chatgpt-01.png" alt=""></p>
+<p><img src="https://github.red/images/2023/03/forklift-chatgpt-01_hu_4b2b0911968c3659.webp" srcset="https://github.red/images/2023/03/forklift-chatgpt-01_hu_a663d4400ac983d6.webp 400w, https://github.red/images/2023/03/forklift-chatgpt-01_hu_5c6660b977f7d0c7.webp 800w, https://github.red/images/2023/03/forklift-chatgpt-01_hu_4b2b0911968c3659.webp 1200w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="1200" height="1248" alt="" decoding="async">
+</p>
 <p>但是我们可以继续追问它，让它提供完整的 <code>values.yaml</code> 文件的内容，它会根据前面各种资源的 YAML 定义，比较聪明地判断出哪些是应该暴露到 <code>values.yaml</code> 里提供给用户自定义的。</p>
-<p><img src="https://github.red/images/2023/03/forklift-chatgpt-02.png" alt=""></p>
+<p><img src="https://github.red/images/2023/03/forklift-chatgpt-02_hu_7cd2f2a498ba743d.webp" srcset="https://github.red/images/2023/03/forklift-chatgpt-02_hu_8860ce2afb307cd6.webp 400w, https://github.red/images/2023/03/forklift-chatgpt-02_hu_18206de32ba8f7f0.webp 800w, https://github.red/images/2023/03/forklift-chatgpt-02_hu_7cd2f2a498ba743d.webp 1200w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="1200" height="1215" alt="" decoding="async">
+</p>
 <p>对于稍微不符合预期的结果，我们可以在自己改了一点之后，再让 ChatGPT 帮我们处理复杂的 Go 模板语言书写：</p>
-<p><img src="https://github.red/images/2023/03/forklift-chatgpt-03.png" alt=""></p>
+<p><img src="https://github.red/images/2023/03/forklift-chatgpt-03_hu_8deb9ca10b1c6873.webp" srcset="https://github.red/images/2023/03/forklift-chatgpt-03_hu_cd9de774f0e4dd0d.webp 400w, https://github.red/images/2023/03/forklift-chatgpt-03_hu_cbdc06d84e97f496.webp 800w, https://github.red/images/2023/03/forklift-chatgpt-03_hu_8deb9ca10b1c6873.webp 1200w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="1200" height="1255" alt="" decoding="async">
+</p>
 <p>甚至最后部署到 ArgoCD 的 Application YAML，也可以让它帮你完成！真的很棒！</p>
 <h3 id="打包">打包</h3>
 <p>完成了 Helm Chart 的编写后，我们可以运行下 Lint 看看是否有问题：</p>
