@@ -1,0 +1,85 @@
+<p>很长一段时间没有写博客了，难得工作上不忙了，周末也不用加班了，终于有时间来整点活写点东西了。</p>
+<p>上周我去洛阳看了许嵩的演唱会，时隔 15 年终于在线下见到真人了，也算是圆梦了。这次掐点在大麦刷了十多分钟，成功抢到了内场 ￥1618 的 VIP 票。</p>
+<img style="width: 300px; height: auto; max-height: none; object-fit: contain" src="https://github.red/images/2026/09/damai-ticket_hu_d99eba29088750d1.webp" srcset="https://github.red/images/2026/09/damai-ticket_hu_9afa83bc6bbd235c.webp 400w, https://github.red/images/2026/09/damai-ticket_hu_503fd248951dbe1e.webp 800w, https://github.red/images/2026/09/damai-ticket_hu_d99eba29088750d1.webp 1200w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="1200" height="1200" alt="大麦门票" loading="lazy" decoding="async">
+<p>演唱会现场我一开始还是比较拘谨地坐着的，直到演出开始灯一关，第一首新歌《皮下》直接爆了，我都没想到自己会这么激动，全程大声跟唱+挥荧光棒，不知道有没有影响到两边坐着的小姐姐，至少我觉得自己是完全赚回票价了。😄</p>
+<p>现场演出的舞台和灯光都很棒，许嵩现场的唱功也很好。但由于花车巡游是在舞台两侧的，反而看台的座位更有性价比些。</p>
+<p>跟前几年在上海看邓紫棋演唱会，荧光棒拴在椅子上不同的是，这次许嵩演唱会的荧光棒是可以带走的。后来还发现有人在闲鱼上批量卖现场的荧光棒，一根就卖 20 来块。</p>
+<img style="width: 300px; height: auto; max-height: none; object-fit: contain" src="https://github.red/images/2026/09/lightstick_hu_42629daf58b12f1e.webp" srcset="https://github.red/images/2026/09/lightstick_hu_9603842c1d48080f.webp 400w, https://github.red/images/2026/09/lightstick_hu_850c6611aed21494.webp 800w, https://github.red/images/2026/09/lightstick_hu_42629daf58b12f1e.webp 1000w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="1000" height="1333" alt="荧光棒" loading="lazy" decoding="async">
+<h2 id="忒修斯之荧光棒">忒修斯之荧光棒</h2>
+<p>我在演唱会结束回到酒店时，手里的荧光棒就已经不亮了。在小红书上看到有很多教人重新点亮荧光棒的笔记，大致思路都是拆开后给里面焊上一个开关或者其他的板子。我寻思这不就是个“忒修斯之船”嘛，把荧光棒里面的东西都换了，就保留个灯泡和外面的演唱会贴纸，实际上已经不是原来的荧光棒了。</p>
+<p>我并不喜欢这种拆解改造的办法（实际是因为我没有电烙铁这些工具），想着有没有更优雅的办法来解决，一顿搜索后找到了 「✨ 荧光棒复活计划」 <a href="https://github.com/HansZ8/EncoreLightSticks">https://github.com/HansZ8/EncoreLightSticks</a> 这个项目，该项目通过控制射频发射模块，发射出与演唱会现场相同的信号，直接点亮荧光棒。</p>
+<p>作者还十分贴心地<strong>亲自</strong>写了<a href="https://github.com/HansZ8/EncoreLightSticks/blob/main/docs/protocols/basic.md">介绍文档</a>，提到演唱会荧光棒场控使用 433MHz 射频 (RF) 控制，编码方式为曼彻斯特编码 <code>Manchester Encoding</code>，我上次看到这个编码还是在 HGAME 2018 的 Misc 题里。数据包的控制数据里带有 R、G、B 三种颜色通道的值，每个通道支持 4 档亮度调节，通过调节 RGB 的档位数值来控制荧光棒的颜色。</p>
+<p>作者举例的数据包编码是采样自陶喆 Soul Power II 2024 演唱会，当时的硬件版本是 <code>LED17_V5.6.3 2024.05.17</code>，而我拆开许嵩演唱会的荧光棒，里面板子印着的版本号是 <code>LED17_V5.6.31 2025.04.02</code>。我还挺担心版本不一致导致数据包格式不同。</p>
+<img style="width: 400px; height: auto; max-height: none; object-fit: contain" src="https://github.red/images/2026/09/LED17_V5.6.31_hu_c8fa95638a5c8c1b.webp" srcset="https://github.red/images/2026/09/LED17_V5.6.31_hu_9dd59f2907323a38.webp 400w, https://github.red/images/2026/09/LED17_V5.6.31_hu_c768595689072458.webp 800w, https://github.red/images/2026/09/LED17_V5.6.31_hu_c8fa95638a5c8c1b.webp 1200w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="1200" height="900" alt="LED17_V5.6.31" loading="lazy" decoding="async">
+<h2 id="华强北的力量">华强北的力量</h2>
+<p>我想着要不买来硬件试试复用下陶喆演唱会的荧光棒信号，要是成功了就是血赚，不成功的话我准备后面以此为理由买个 Flipper Zero 去现场录信号哈哈哈。</p>
+<p>作者仓库里是使用 Arduino 来实现的，问了下 Grok，说是也可以用树莓派的 GPIO 接口来做，刚好可以把我家里吃灰的树莓派给用上。Grok 提到需要额外准备的硬件如下：</p>
+<ol>
+<li>母对母杜邦线若干根</li>
+<li>433 MHz 发射模块</li>
+<li>433 MHz 弹簧天线</li>
+</ol>
+<p>上淘宝搜了下，不得不佩服华强北这么多年的努力，把这些电子元器件的价格给搞得这么低。</p>
+<p>40 根杜邦线只要 2 块钱，还包邮！我都不知道商家怎么赚钱。实际上我们只需要用到 3 根就够了。</p>
+<img style="width: 400px; height: auto; max-height: none; object-fit: contain" src="https://github.red/images/2026/09/taobao-dupont-line_hu_95b222d03d8efeb9.webp" srcset="https://github.red/images/2026/09/taobao-dupont-line_hu_1e71b5d9f1d0795d.webp 400w, https://github.red/images/2026/09/taobao-dupont-line_hu_95b222d03d8efeb9.webp 493w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="493" height="220" alt="杜邦线" loading="lazy" decoding="async">
+<p>433 MHz 发射模块如下图所示，分为单发射、单接收、发射和接收三种，我们买单发射的即可。买 2 个只需要 ￥3.8，也是跟不要钱一样。</p>
+<img style="width: 400px; height: auto; max-height: none; object-fit: contain" src="https://github.red/images/2026/09/taobao-433M_hu_e7db3eb8d100ae32.webp" srcset="https://github.red/images/2026/09/taobao-433M_hu_14e7d4923b5e13c4.webp 400w, https://github.red/images/2026/09/taobao-433M_hu_e7db3eb8d100ae32.webp 488w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="488" height="220" alt="433 MHz 发射模块" loading="lazy" decoding="async">
+<p>然后我们需要给发射模块插上天线，Grok 说拆一根杜邦线剥去外皮就能当天线，但我寻思反正天线也不值钱，豪掷 ￥1.6 包邮买了 10 个弹簧天线。🤣</p>
+<img style="width: 400px; height: auto; max-height: none; object-fit: contain" src="https://github.red/images/2026/09/taobao-433M-antenna_hu_10246f8b84765409.webp" srcset="https://github.red/images/2026/09/taobao-433M-antenna_hu_da4d95cdcc3451dc.webp 400w, https://github.red/images/2026/09/taobao-433M-antenna_hu_10246f8b84765409.webp 569w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="569" height="220" alt="433 MHz 天线" loading="lazy" decoding="async">
+<p>综上，我们最终的成本不到 8 块钱。（树莓派除外哈，本来就是家里有的东西</p>
+<h2 id="动手试试">动手试试</h2>
+<p>荧光棒拿回家后，电量基本都耗尽了。电量不足的荧光棒无法正常响应接收到的发光信号，我们需要先换电池。</p>
+<p>拆开荧光棒发现里面自带的电池是不知道什么杂牌的“旭牛电池”，尺寸像是 7 号电池。<strong>但这里有个坑，你会发现市面上正常的 7 号电池都尺寸偏大，放不进去，强行硬塞的话会被两侧的弹簧弹出来。</strong> 最后我是保留了一个原装的电池，两边各塞了一个自己新买的 7 号电池，勉强将盖子盖上了，荧光棒也有电了。</p>
+<img style="width: 400px; height: auto; max-height: none; object-fit: contain" src="https://github.red/images/2026/09/lightstick-battery_hu_994371aee6088000.webp" srcset="https://github.red/images/2026/09/lightstick-battery_hu_b2f49d660423e93f.webp 400w, https://github.red/images/2026/09/lightstick-battery_hu_24f31ab708158ad7.webp 800w, https://github.red/images/2026/09/lightstick-battery_hu_994371aee6088000.webp 1200w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="1200" height="900" alt="荧光棒电池" loading="lazy" decoding="async">
+<p>如果你在后续测试过程中，发现荧光棒在指定颜色与蓝色之间闪烁，那可能就是快没电了，得尽快换电池。</p>
+<p>然后开始准备硬件。</p>
+<p>首先将树莓派关机并断电。<strong>（这一步很重要！我的上一个树莓派就是我带电接线然后给烧坏了）</strong></p>
+<p>拆出三根杜邦线，将发射模块与树莓派 GPIO 相连，我这里使用的是树莓派 3B+：</p>
+<table>
+<thead>
+<tr>
+<th>模块</th>
+<th>树莓派</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>DATA</strong></td>
+<td>物理针脚 <strong>11</strong>（GPIO17）</td>
+</tr>
+<tr>
+<td><strong>VCC</strong></td>
+<td>物理针脚 <strong>2</strong> 或 <strong>4</strong>（5V）</td>
+</tr>
+<tr>
+<td><strong>GND</strong></td>
+<td>物理针脚 <strong>6</strong>（GND）</td>
+</tr>
+</tbody>
+</table>
+<img src="https://github.red/images/2026/09/pi-to-443m_hu_b0328bc7b84287f4.webp" srcset="https://github.red/images/2026/09/pi-to-443m_hu_87e16063e9bb535d.webp 400w, https://github.red/images/2026/09/pi-to-443m_hu_8f7464a6d88cdd10.webp 800w, https://github.red/images/2026/09/pi-to-443m_hu_b0328bc7b84287f4.webp 1200w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="1200" height="615" alt="接线图" loading="lazy" decoding="async">
+<p>然后将我们的弹簧天线拿出来，插入发射模块左边中间的孔中，稍微弯折一下固定住即可。如果有条件的话，最好用电烙铁焊上去。</p>
+<p>万事俱备，树莓派接电开机！</p>
+<img style="width: 400px; height: auto; max-height: none; object-fit: contain" src="https://github.red/images/2026/09/pi_hu_b6774ddcb668dcea.webp" srcset="https://github.red/images/2026/09/pi_hu_c5d53aedca894ff8.webp 400w, https://github.red/images/2026/09/pi_hu_6d24a7151c24c8e5.webp 800w, https://github.red/images/2026/09/pi_hu_b6774ddcb668dcea.webp 1200w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="1200" height="900" alt="实际接线图" loading="lazy" decoding="async">
+<p>SSH 登录后，执行如下命令：</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>sudo apt update
+</span></span><span style="display:flex;"><span>sudo apt install -y python3-pigpio pigpio
+</span></span><span style="display:flex;"><span>sudo pigpiod
+</span></span></code></pre></div><p>然后将荧光棒放到发射模块旁边，就可以在树莓派上跑 GPT 写的神秘小 Python 脚本了。</p>
+<p>脚本链接：https://github.com/wuhan005/LightStick/blob/master/lightstick.py</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>python3 lightstick.py --r <span style="color:#a5d6ff">255</span> --g <span style="color:#a5d6ff">0</span> --b <span style="color:#a5d6ff">0</span> <span style="color:#8b949e;font-style:italic"># 红色</span>
+</span></span><span style="display:flex;"><span>python3 lightstick.py --r <span style="color:#a5d6ff">0</span> --g <span style="color:#a5d6ff">255</span> --b <span style="color:#a5d6ff">0</span> <span style="color:#8b949e;font-style:italic"># 绿色</span>
+</span></span><span style="display:flex;"><span>python3 lightstick.py --r <span style="color:#a5d6ff">0</span> --g <span style="color:#a5d6ff">0</span> --b <span style="color:#a5d6ff">255</span> <span style="color:#8b949e;font-style:italic"># 蓝色</span>
+</span></span><span style="display:flex;"><span>python3 lightstick.py --r <span style="color:#a5d6ff">255</span> --g <span style="color:#a5d6ff">255</span> --b <span style="color:#a5d6ff">0</span> <span style="color:#8b949e;font-style:italic"># 黄色</span>
+</span></span><span style="display:flex;"><span>python3 lightstick.py --r <span style="color:#a5d6ff">0</span> --g <span style="color:#a5d6ff">0</span> --b <span style="color:#a5d6ff">0</span> <span style="color:#8b949e;font-style:italic"># 关灯</span>
+</span></span></code></pre></div><p>如果步骤都正确的话，你会发现荧光棒真的亮起来了！</p>
+<img style="width: 400px; height: auto; max-height: none; object-fit: contain" src="https://github.red/images/2026/09/lightstick-light_hu_d191b5be5adef41f.webp" srcset="https://github.red/images/2026/09/lightstick-light_hu_747c40b5a5078d93.webp 400w, https://github.red/images/2026/09/lightstick-light_hu_8e3ea893e4b2446b.webp 800w, https://github.red/images/2026/09/lightstick-light_hu_d191b5be5adef41f.webp 1200w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="1200" height="900" alt="点亮荧光棒" loading="lazy" decoding="async">
+<p>我后面又 Vibe 了一个网页，可以更加方便的控制调节颜色，真是太帅了！</p>
+<p><img src="https://github.red/images/2026/09/lightstick-web_hu_3daba74fd5220d41.webp" srcset="https://github.red/images/2026/09/lightstick-web_hu_e1c6fb567b8f5e91.webp 400w, https://github.red/images/2026/09/lightstick-web_hu_39f390792c3149.webp 800w, https://github.red/images/2026/09/lightstick-web_hu_3daba74fd5220d41.webp 1200w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="1200" height="771" alt="荧光棒网页" decoding="async">
+</p>
+<p>以上所有微小的工作，均已开源至 <a href="https://github.com/wuhan005/LightStick">wuhan005/LightStick</a></p>
+<h2 id="最后说几句">最后说几句</h2>
+<p>说实话，一开始我是没抱希望能点亮的，没想到最后居然成功了。我也给上面的荧光棒复活计划仓库提了 <a href="https://github.com/HansZ8/EncoreLightSticks/pull/3">PR</a>，贡献了本次许嵩安泊猜想演唱会的荧光棒信息。（注意上传图片要去除 EXIF 信息哦，GitHub 默认显示原图，另外一个 issue 里的老哥定位信息就这样在上传图片的 EXIF 中泄露了）</p>
+<p>现如今 AI 越来越强大，我已经很难找到可以拿来写博客的题材了。基本上都是一句话，AI 就实现完了，没有跌宕起伏，没有了以前自己踩坑的过程与心得，也就没办法沉淀出一篇文章了。虽然本文的所有代码都是由 AI 编写，但硬件都是我自己下单购买，自己组装的，这些涉及到与物理世界交互的流程，AI 目前还无法干预。我也就能从中有所感悟或体会。</p>
+<p>最近在工作中有不少 AI-Friendly 或者 AI Native 相关的建设，我个人倒是偏向于 AI 躺平派 —— 现阶段啥额外的优化都不用做，反正过几个月模型能力提上来了，问题自然就解决了。那些所谓的 Skills、MCP、Harness，反倒成为了更强大的模型的累赘。</p>
+<p>说回演唱会，洛阳当地的消费确实比上海低多了！每天在市区里到处打车，一次只要 3-4 块钱。不过洛阳的很多景点建筑其实都是十多年前重建的，并不是啥历史文物，仅适合拍照出片。但洛阳好吃的确实太多了，小街天府的担担面，牛肉汤，大盘鸡，还有我最喜欢的洛阳烤鲶鱼。我至今还怀念洛阳烤鲶鱼的味道，回来发现上海这边的烤鲶鱼都是重庆风味的，并不是洛阳那种烤完会撒上糖粉提鲜，口感微甜的风味。真的真的太好吃了。下次如果还有机会，一定得再去一趟洛阳吃一次烤鲶鱼。</p>
