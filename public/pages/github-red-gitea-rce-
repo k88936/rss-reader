@@ -86,26 +86,26 @@
 <li><code>services/migrations/gitea_uploader.go:L602#g.updateGitForPullRequest</code></li>
 </ul>
 <p>出现漏洞的代码块在 <code>services/migrations/gitea_uploader.go:L531-L567</code> 处，精简后的代码如下：</p>
-<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">if</span> pr.<span style="color:#d2a8ff;font-weight:bold">IsForkPullRequest</span>() <span style="color:#ff7b72;font-weight:bold">&amp;&amp;</span> pr.State <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#a5d6ff">&#34;closed&#34;</span> {
-</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">if</span> pr.Head.OwnerName <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#a5d6ff">&#34;&#34;</span> {
-</span></span><span style="display:flex;"><span> remote <span style="color:#ff7b72;font-weight:bold">:=</span> pr.Head.OwnerName
-</span></span><span style="display:flex;"><span> _, ok <span style="color:#ff7b72;font-weight:bold">:=</span> g.prHeadCache[remote]
-</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">if</span> !ok {
-</span></span><span style="display:flex;"><span> err <span style="color:#ff7b72;font-weight:bold">:=</span> g.gitRepo.<span style="color:#d2a8ff;font-weight:bold">AddRemote</span>(remote, pr.Head.CloneURL, <span style="color:#79c0ff">true</span>)
-</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">if</span> err <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#79c0ff">nil</span> {
-</span></span><span style="display:flex;"><span> <span style="color:#ff7b72;font-weight:bold">...</span>
-</span></span><span style="display:flex;"><span> } <span style="color:#ff7b72">else</span> {
-</span></span><span style="display:flex;"><span> ok = <span style="color:#79c0ff">true</span>
-</span></span><span style="display:flex;"><span> }
-</span></span><span style="display:flex;"><span> }
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">if</span> ok {
-</span></span><span style="display:flex;"><span> _, err = git.<span style="color:#d2a8ff;font-weight:bold">NewCommand</span>(g.ctx, <span style="color:#a5d6ff">&#34;fetch&#34;</span>, remote, pr.Head.Ref).<span style="color:#d2a8ff;font-weight:bold">RunInDir</span>(g.repo.<span style="color:#d2a8ff;font-weight:bold">RepoPath</span>())
-</span></span><span style="display:flex;"><span> <span style="color:#ff7b72;font-weight:bold">...</span>
-</span></span><span style="display:flex;"><span> }
-</span></span><span style="display:flex;"><span> }
-</span></span><span style="display:flex;"><span>}
-</span></span></code></pre></div><p>当远端存在来自 Fork 仓库提交的 Pull Request 请求，且该 PR 状态不为 Close 时，会进入该分支。
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff7b72">if</span><span style="color:#6e7681"> </span>pr.<span style="color:#d2a8ff;font-weight:bold">IsForkPullRequest</span>()<span style="color:#6e7681"> </span><span style="color:#ff7b72;font-weight:bold">&amp;&amp;</span><span style="color:#6e7681"> </span>pr.State<span style="color:#6e7681"> </span><span style="color:#ff7b72;font-weight:bold">!=</span><span style="color:#6e7681"> </span><span style="color:#a5d6ff">&#34;closed&#34;</span><span style="color:#6e7681"> </span>{<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span><span style="color:#ff7b72">if</span><span style="color:#6e7681"> </span>pr.Head.OwnerName<span style="color:#6e7681"> </span><span style="color:#ff7b72;font-weight:bold">!=</span><span style="color:#6e7681"> </span><span style="color:#a5d6ff">&#34;&#34;</span><span style="color:#6e7681"> </span>{<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>remote<span style="color:#6e7681"> </span><span style="color:#ff7b72;font-weight:bold">:=</span><span style="color:#6e7681"> </span>pr.Head.OwnerName<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>_,<span style="color:#6e7681"> </span>ok<span style="color:#6e7681"> </span><span style="color:#ff7b72;font-weight:bold">:=</span><span style="color:#6e7681"> </span>g.prHeadCache[remote]<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span><span style="color:#ff7b72">if</span><span style="color:#6e7681"> </span>!ok<span style="color:#6e7681"> </span>{<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>err<span style="color:#6e7681"> </span><span style="color:#ff7b72;font-weight:bold">:=</span><span style="color:#6e7681"> </span>g.gitRepo.<span style="color:#d2a8ff;font-weight:bold">AddRemote</span>(remote,<span style="color:#6e7681"> </span>pr.Head.CloneURL,<span style="color:#6e7681"> </span><span style="color:#79c0ff">true</span>)<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span><span style="color:#ff7b72">if</span><span style="color:#6e7681"> </span>err<span style="color:#6e7681"> </span><span style="color:#ff7b72;font-weight:bold">!=</span><span style="color:#6e7681"> </span><span style="color:#79c0ff">nil</span><span style="color:#6e7681"> </span>{<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span><span style="color:#ff7b72;font-weight:bold">...</span><span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>}<span style="color:#6e7681"> </span><span style="color:#ff7b72">else</span><span style="color:#6e7681"> </span>{<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>ok<span style="color:#6e7681"> </span>=<span style="color:#6e7681"> </span><span style="color:#79c0ff">true</span><span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>}<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>}<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span><span style="color:#ff7b72">if</span><span style="color:#6e7681"> </span>ok<span style="color:#6e7681"> </span>{<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>_,<span style="color:#6e7681"> </span>err<span style="color:#6e7681"> </span>=<span style="color:#6e7681"> </span>git.<span style="color:#d2a8ff;font-weight:bold">NewCommand</span>(g.ctx,<span style="color:#6e7681"> </span><span style="color:#a5d6ff">&#34;fetch&#34;</span>,<span style="color:#6e7681"> </span>remote,<span style="color:#6e7681"> </span>pr.Head.Ref).<span style="color:#d2a8ff;font-weight:bold">RunInDir</span>(g.repo.<span style="color:#d2a8ff;font-weight:bold">RepoPath</span>())<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span><span style="color:#ff7b72;font-weight:bold">...</span><span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>}<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>}<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"></span>}<span style="color:#6e7681">
+</span></span></span></code></pre></div><p>当远端存在来自 Fork 仓库提交的 Pull Request 请求，且该 PR 状态不为 Close 时，会进入该分支。
 这里有一个 Map <code>g.prHeadCache</code> 作为临时缓存。第一次进入时该缓存为空，检测到 <code>remote</code> 的值不在 <code>g.prHeadCache</code> 中，调用 <code>g.gitRepo.AddRemote</code> 方法，该方法执行命令：</p>
 <div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>git remote add -f &lt;remote&gt; &lt;pr.Head.CloneURL&gt;
 </span></span></code></pre></div><p>该命令正常执行，无错误抛出后，便将<code>ok</code> 设置成 <code>true</code>。到下方执行命令：</p>
