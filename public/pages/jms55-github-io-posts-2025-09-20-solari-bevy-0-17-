@@ -23,13 +23,13 @@
 <p>In this post, I'll be doing a frame breakdown of how Solari works in Bevy 0.17, why I made certain choices, some of the challenges I faced, and some of the issues I've yet to solve.</p>
 <h2 id="why-raytracing-for-bevy">Why Raytracing for Bevy?<a class="zola-anchor" href="#why-raytracing-for-bevy" aria-label="Anchor link for: why-raytracing-for-bevy" style="visibility: hidden;"></a>
 </h2>
-<p>Before we start, I think it's fair to ask why an "indie" game engine needs high-end raytracing features that requires an expensive graphics card. The answer comes from my own experience learning 3D graphics.</p>
+<p>Before we start, I think it's fair to ask why an "indie" game engine needs high-end raytracing features that require an expensive graphics card. The answer comes from my own experience learning 3D graphics.</p>
 <p>Back when I was a teenager experimenting with small 3D games in Godot, I had a really hard time figuring out why my lighting looked so bad. Metallic objects didn't look reflective, scenes felt flat, and everything just looked wrong compared to the games I was playing.</p>
 <p>I didn't understand that I was missing indirect light, proper reflections, and accurate shadows - I had no idea I was supposed to bake lighting.</p>
 <p>This is the core problem that raytracing solves for indie developers. Even if not all players have hardware capable of running ray-traced effects, having a reference implementation of what lighting is <em>supposed</em> to look like is incredibly valuable.</p>
 <p>With fully dynamic global illumination, reflections, shadows, and direct lighting, developers can see how their scenes should be lit. Then they can work backwards to replicate those results with baked lighting, screen-space techniques, and other less performance-intensive approximations.</p>
 <p>Without that reference, it's really hard to know what you're missing or how to improve your lighting setup. Raytracing provides the ground truth that other techniques are trying to approximate.</p>
-<p>Additionally, hardware is advancing all the time. Five years ago, raytracing was much less widespread than today. If you start developing a new game today with a 3-4 year lead time, raytracing is probably going to be even more common by the time you're ready to release it. Solari was in large part designed as a foward-looking rendering system.</p>
+<p>Additionally, hardware is advancing all the time. Five years ago, raytracing was much less widespread than today. If you start developing a new game today with a 3-4 year lead time, raytracing is probably going to be even more common by the time you're ready to release it. Solari was in large part designed as a forward-looking rendering system.</p>
 <p>There's also the practical consideration that if Bevy ever wants to attract AAA game developers, we need these kinds of systems. Recent AAA games like <a rel="nofollow noreferrer" href="https://advances.realtimerendering.com/s2025/content/SOUSA_SIGGRAPH_2025_Final.pdf">DOOM: The Dark Ages</a> and <a rel="nofollow noreferrer" href="https://intro-to-restir.cwyman.org/presentations/2023ReSTIR_Course_Cyberpunk_2077_Integration.pdf">Cyberpunk 2077</a> rely heavily on raytracing, and artists working on these types of projects expect their tools to support similar techniques.</p>
 <p>And honestly? It's just cool, and something I love working on :)</p>
 <h2 id="frame-breakdown">Frame Breakdown<a class="zola-anchor" href="#frame-breakdown" aria-label="Anchor link for: frame-breakdown" style="visibility: hidden;"></a>
@@ -99,14 +99,14 @@ Path Reuse in Real-time</a> and <a rel="nofollow noreferrer" href="https://inter
 <p>There's also a second <code>Rg16Float</code> attachment for motion vectors, and of course the depth attachment.</p>
 <h4 id="drawing">Drawing<a class="zola-anchor" href="#drawing" aria-label="Anchor link for: drawing" style="visibility: hidden;"></a>
 </h4>
-<p>The GBuffer rendering itself uses <code>multi_draw_indirect</code> to draw several meshes at once, using <a rel="nofollow noreferrer" href="https://crates.io/crates/offset-allocator">sub-allocated</a> buffers. Culling is done on the GPU using <a href="https://jms55.github.io/posts/2024-06-09-virtual-geometry-bevy-0-14/#culling-first-pass">two-pass occlusion culling</a> against a hierarchal depth buffer. Textures are handled bindlessly, and we try to minimize overall pipeline permutations.</p>
+<p>The GBuffer rendering itself uses <code>multi_draw_indirect</code> to draw several meshes at once, using <a rel="nofollow noreferrer" href="https://crates.io/crates/offset-allocator">sub-allocated</a> buffers. Culling is done on the GPU using <a href="https://jms55.github.io/posts/2024-06-09-virtual-geometry-bevy-0-14/#culling-first-pass">two-pass occlusion culling</a> against a hierarchical depth buffer. Textures are handled bindlessly, and we try to minimize overall pipeline permutations.</p>
 <p>These combined techniques keep draw call overhead and per-pixel overdraw fairly low, even for complex scenes.</p>
 <h3 id="restir-di">ReSTIR DI<a class="zola-anchor" href="#restir-di" aria-label="Anchor link for: restir-di" style="visibility: hidden;"></a>
 </h3>
 <p>In order to calculate direct lighting (light emitted by a light source, bouncing off a surface, and then hitting the camera), for each pixel, we need to loop over every light and point on those lights, and then calculate the light's contribution, as well as whether or not the light is visible.</p>
 <p>This is very expensive, so realtime applications tend to approximate it by averaging many individual light samples. If you choose those samples well, you can get an approximate result that's very close to the real thing, without tons of expensive calculations.</p>
 <p>To quickly estimate direct lighting, Solari uses a pretty standard ReSTIR DI setup.</p>
-<p>ReSTIR DI randomly selects points on lights, and then shares the random samples between pixels based in order to choose the best light (most contribution to the image) for a given pixel.</p>
+<p>ReSTIR DI randomly selects points on lights, and then shares the random samples between pixels in order to choose the best light (most contribution to the image) for a given pixel.</p>
 <h4 id="di-structure">DI Structure<a class="zola-anchor" href="#di-structure" aria-label="Anchor link for: di-structure" style="visibility: hidden;"></a>
 </h4>
 <p>Reservoirs store the light sample, confidence weight, and unbiased contribution weight (acting as the sample's PDF).</p>
@@ -167,7 +167,7 @@ Path Reuse in Real-time</a> and <a rel="nofollow noreferrer" href="https://inter
 </h4>
 <p>A temporal reservoir is then obtained via motion vectors and last frame's pixel data. We validate the reprojection using the <code>pixel_dissimilar</code> heuristic. We also need to check that the temporal light sample still exists in the current frame (i.e. the light has not been despawned).</p>
 <p>Additionally, the chosen light from last frame might no longer be visible this frame, e.g. if an object moved behind a wall. We could trace an additional ray here to validate visibility, but it's cheaper to just assume that the temporal light sample is still visible from the current pixel this frame.</p>
-<p>Reusing temporal visibility saves one raytrace, at the cost of shadows for moving objects being delayed by 1 frame, and some slighty darker/wider shadows. Overall the artifacts are not very noticable, so I find that it's well worth reusing visibility for the temporal reservoir resampling.</p>
+<p>Reusing temporal visibility saves one raytrace, at the cost of shadows for moving objects being delayed by 1 frame, and some slightly darker/wider shadows. Overall the artifacts are not very noticeable, so I find that it's well worth reusing visibility for the temporal reservoir resampling.</p>
 <p>The initial and temporal reservoir are then merged together using constant MIS weights. I tried using the balance heuristic, but didn't notice much difference for DI, and constant MIS weights are much cheaper.</p>
 <pre data-lang="rust" style="background-color:#002b36;color:#839496;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#586e75;">// Reject if tangent plane difference difference more than 0.3% or angle between normals more than 25 degrees
 </span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">pixel_dissimilar</span><span style="color:#657b83;">(</span><span style="color:#268bd2;">depth</span><span>: </span><span style="color:#268bd2;">f32</span><span>, </span><span style="color:#268bd2;">world_position</span><span>: vec3&lt;</span><span style="color:#268bd2;">f32</span><span>&gt;, </span><span style="color:#268bd2;">other_world_position</span><span>: vec3&lt;</span><span style="color:#268bd2;">f32</span><span>&gt;, </span><span style="color:#268bd2;">normal</span><span>: vec3&lt;</span><span style="color:#268bd2;">f32</span><span>&gt;, </span><span style="color:#268bd2;">other_normal</span><span>: vec3&lt;</span><span style="color:#268bd2;">f32</span><span>&gt;</span><span style="color:#657b83;">) </span><span>-&gt; </span><span style="color:#268bd2;">bool </span><span style="color:#657b83;">{
@@ -196,7 +196,7 @@ Path Reuse in Real-time</a> and <a rel="nofollow noreferrer" href="https://inter
     
 </figure>
 <p>Spatial sampling is probably the least well-researched part of ReSTIR. I tried a couple of other schemes, including trying to reuse reservoirs across a workgroup/subgroup similar to <a rel="nofollow noreferrer" href="https://iribis.github.io/publication/2025_Stratified_Histogram_Resampling">Histogram Stratification for Spatio-Temporal Reservoir Sampling</a>, but none of them worked out well.</p>
-<p>Subgroups-level resampling was very cheap, but had tiling artifacts, and was not easily portable to different machines with different amounts of threads per workgroup.</p>
+<p>Subgroup-level resampling was very cheap, but had tiling artifacts, and was not easily portable to different machines with different amounts of threads per workgroup.</p>
 <figure>
     <img
         src="spatial_subgroup.jpg"
@@ -227,7 +227,7 @@ Path Reuse in Real-time</a> and <a rel="nofollow noreferrer" href="https://inter
 <h4 id="di-shading">DI Shading<a class="zola-anchor" href="#di-shading" aria-label="Anchor link for: di-shading" style="visibility: hidden;"></a>
 </h4>
 <p>Once the final reservoir is produced, we can use its chosen light sample to shade the pixel, producing the final direct lighting.</p>
-<p>I did try out shading the pixel using all 3 samples (initial, temporal, and spatial), weighed by their resampling probabilities as <a rel="nofollow noreferrer" href="https://cwyman.org/papers/hpg21_rearchitectingReSTIR.pdf">Rearchitecting Spatiotemporal Resampling for Production</a> suggests, but had noisier results compared to shading using the final reservoir only. I'm not sure if I messed up the implementation or what.</p>
+<p>I did try out shading the pixel using all 3 samples (initial, temporal, and spatial), weighted by their resampling probabilities as <a rel="nofollow noreferrer" href="https://cwyman.org/papers/hpg21_rearchitectingReSTIR.pdf">Rearchitecting Spatiotemporal Resampling for Production</a> suggests, but had noisier results compared to shading using the final reservoir only. I'm not sure if I messed up the implementation or what.</p>
 <p>Overall the DI pass uses two raytraces per pixel (1 initial, 1 spatial).</p>
 <figure>
     <img
@@ -245,7 +245,7 @@ Path Reuse in Real-time</a> and <a rel="nofollow noreferrer" href="https://inter
 </h3>
 <p>Indirect lighting (light emitted by a light source, bouncing off more than 1 surface, and then hitting the camera) is even more expensive to calculate than direct lighting, as you need to trace multiple bounces of each ray to calculate the lighting for a given path.</p>
 <p>To quickly estimate indirect lighting, Solari uses ReSTIR GI, with a very similar setup to the previous ReSTIR DI.</p>
-<p>Where as ReStir DI picks the best light, ReSTIR GI randomly selects directions in a hemisphere, and then shares the random samples between pixels in order to choose the best 1-bounce <em>path</em> for a given pixel.</p>
+<p>Whereas ReSTIR DI picks the best light, ReSTIR GI randomly selects directions in a hemisphere, and then shares the random samples between pixels in order to choose the best 1-bounce <em>path</em> for a given pixel.</p>
 <h4 id="gi-structure">GI Structure<a class="zola-anchor" href="#gi-structure" aria-label="Anchor link for: gi-structure" style="visibility: hidden;"></a>
 </h4>
 <p>Reservoirs store the cached radiance bouncing off of the sample point, sample point geometry info, confidence weight, and unbiased contribution weight.</p>
@@ -258,7 +258,7 @@ Path Reuse in Real-time</a> and <a rel="nofollow noreferrer" href="https://inter
 </span><span style="color:#657b83;">}
 </span></code></pre>
 <p>I tried some basic packing schemes for the GI reservoir (Rgb9e5 radiance, octahedral-encoded normals), but didn't find that it meaningfully reduced GI costs. Reservoir memory bandwidth is not a big bottleneck compared to raytracing and reading mesh/texture data for ray intersections.</p>
-<p>I have heard that people had good results storing reservoirs as struct-of-arrays instead of array-of-structs, so I'll likely revist this topic at some point.</p>
+<p>I have heard that people had good results storing reservoirs as struct-of-arrays instead of array-of-structs, so I'll likely revisit this topic at some point.</p>
 <p>ReSTIR GI again uses two compute dispatches, with the first pass doing initial and temporal resampling, and the second pass doing spatial resampling and shading.</p>
 <h4 id="gi-initial-sampling">GI Initial Sampling<a class="zola-anchor" href="#gi-initial-sampling" aria-label="Anchor link for: gi-initial-sampling" style="visibility: hidden;"></a>
 </h4>
@@ -671,7 +671,7 @@ Path Reuse in Real-time</a> and <a rel="nofollow noreferrer" href="https://inter
 <h4 id="cache-blend">Cache Blend<a class="zola-anchor" href="#cache-blend" aria-label="Anchor link for: cache-blend" style="visibility: hidden;"></a>
 </h4>
 <p>The second and final step of the world cache update process is to blend the new light samples with the existing irradiance samples, giving us an estimate of the overall irradiance via temporal accumulation. If you've ever seen code for temporal antialiasing, this should look pretty familiar.</p>
-<p>The blending factor is based on the total sample count of voxel, capped at a max value. New voxels without any existing irradiance estimate use more of the new sample's contribution, while existing voxels with existing irradiance estimates use less of the new sample.</p>
+<p>The blending factor is based on the total sample count of the voxel, capped at a max value. New voxels without any existing irradiance estimate use more of the new sample's contribution, while existing voxels with existing irradiance estimates use less of the new sample.</p>
 <p>Choosing the max sample count is a tradeoff between having the cache be stable and low-variance, and having the cache be responsive to changes in the scene's lighting.</p>
 <p>It's also important to note that this is a separate compute dispatch from the previous dispatch we used for sampling lighting. If the passes were combined, we would have data races from voxels writing new irradiance estimates at the same time other voxels were querying them.</p>
 <pre data-lang="rust" style="background-color:#002b36;color:#839496;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#859900;">@</span><span>compute </span><span style="color:#859900;">@workgroup_size</span><span style="color:#657b83;">(</span><span style="color:#6c71c4;">1024</span><span>, </span><span style="color:#6c71c4;">1</span><span>, </span><span style="color:#6c71c4;">1</span><span style="color:#657b83;">)
@@ -886,13 +886,13 @@ Path Reuse in Real-time</a> and <a rel="nofollow noreferrer" href="https://inter
 <li>Can't do this - we're already hitting 95% L2 cache throughput</li>
 <li>Would need to increase <a rel="nofollow noreferrer" href="https://gpuopen.com/learn/occupancy-explained">occupancy</a></li>
 </ol>
-<p>Unfortunately, the only real optimization I think we could do is hiding the latency by improving the occupancy. More threads for the GPU to swap between when while waiting for memory loads to finish = finishing the overall workload faster.</p>
+<p>Unfortunately, the only real optimization I think we could do is hiding the latency by improving the occupancy. More threads for the GPU to swap between while waiting for memory loads to finish = finishing the overall workload faster.</p>
 <p>NSight shows that we have a mediocre 32 out of a hardware maximum of 48 warps occupied, limited by the "registers per thread limiter". I.e. our shader code uses too many registers per thread, and NSight does not have enough register space to allocate additional warps.</p>
 <p>Source-code level profiling shows that the majority of live registers are consumed by the <a rel="nofollow noreferrer" href="https://github.com/bevyengine/bevy/blob/8b36cca28c4ea00425e1414fd88c8b82297e2b96/crates/bevy_solari/src/scene/raytracing_scene_bindings.wgsl#L177-L215">triangle resolve function</a>, which maps a point on a mesh to surface data like position, normal, material properties, etc. I'm not really sure how to reduce register usage here.</p>
 <p>For the other 3 passes limited by raytracing throughput, we have the same issue. Not a ton we can do besides hiding the latency, which runs into the same issue with register count and occupancy.</p>
 <p>For GI specifically though, there <em>is</em> a way I have thought of to do less work, again at the cost of worse quality depending on the scene.</p>
 <p>For the world cache, rather than trace rays for every active cell, we could do it for a random subset of cells each frame (up to some maximum), to help limit the cost of updating many cache entries.</p>
-<p>For the ReSTIR GI passes, we could perform them at quarter resolution (half the pixels along each axis). GI is not particuarly important to have exactly per-pixel data, so we can calculate it at a lower resolution, and then <a rel="nofollow noreferrer" href="https://www.nvidia.com/en-us/on-demand/session/gdc25-gdc1002">upscale</a> (timestamp 17:22). This upscaling would be in addition to the DLSS-RR upscaling.</p>
+<p>For the ReSTIR GI passes, we could perform them at quarter resolution (half the pixels along each axis). GI is not particularly important to have exactly per-pixel data, so we can calculate it at a lower resolution, and then <a rel="nofollow noreferrer" href="https://www.nvidia.com/en-us/on-demand/session/gdc25-gdc1002">upscale</a> (timestamp 17:22). This upscaling would be in addition to the DLSS-RR upscaling.</p>
 <h2 id="future-work">Future Work<a class="zola-anchor" href="#future-work" aria-label="Anchor link for: future-work" style="visibility: hidden;"></a>
 </h2>
 <p>As always, the first release of a new plugin is just the start. I still have a ton of ideas for future improvements to Solari!</p>
@@ -905,7 +905,7 @@ Path Reuse in Real-time</a> and <a rel="nofollow noreferrer" href="https://inter
 <p>Finally, Solari is eventually going to want to support more types of lights such as point lights, spot lights, and image-based lighting.</p>
 <h3 id="light-sampling">Light Sampling<a class="zola-anchor" href="#light-sampling" aria-label="Anchor link for: light-sampling" style="visibility: hidden;"></a>
 </h3>
-<p>Light sampling in Solari is currently purely random (not even uniformly random!), and there's big opportunities to improve it.</p>
+<p>Light sampling in Solari is currently purely random (not even uniformly random!), and there are big opportunities to improve it.</p>
 <p>Having a large number of lights in the scenes is <em>theoretically</em> viable with ReSTIR, but in practice Solari is not yet there. We need some sort of spatial/visibility-aware sampling to improve the quality of our initial candidate samples.</p>
 <p>One approach another Bevy developer is exploring is using <a rel="nofollow noreferrer" href="https://gpuopen.com/download/Hierarchical_Light_Sampling_with_Accurate_Spherical_Gaussian_Lighting.pdf">spherical gaussian light trees</a>.</p>
 <p>Another promising direction is copying from the recently released <a rel="nofollow noreferrer" href="https://advances.realtimerendering.com/s2025/content/MegaLights_Stochastic_Direct_Lighting_2025.pdf">MegaLights</a> presentation, and adding visible light lists. I want to experiment with implementing light lists in world space, so that it can also be used to improve our GI.</p>
@@ -946,7 +946,7 @@ Path Reuse in Real-time</a> and <a rel="nofollow noreferrer" href="https://inter
 </figure>
 <p>Despite the alternate scheme having higher variance and no multibounce pathtracing, it's actually <em>brighter</em> than using the world cache. For some reason, the voxelized nature of the world cache leads to a loss of energy.</p>
 <p>I've been thinking about trying out reprojecting the last frame to get multi bounce for rays that hit within the camera's view, instead of always relying on the world cache. That might mitigate some of the energy loss.</p>
-<p>Finally, the biggest problem with GI in general is both the overall lack of stability, and the slow reaction time to scene changes. The voxelized nature of the world cache, combined with how ReSTIR amplifies samples, means that bright outliers (e.g. world cache voxels much bighter than their neighbors) lead to temporal instability as shown below.</p>
+<p>Finally, the biggest problem with GI in general is both the overall lack of stability, and the slow reaction time to scene changes. The voxelized nature of the world cache, combined with how ReSTIR amplifies samples, means that bright outliers (e.g. world cache voxels much brighter than their neighbors) lead to temporal instability as shown below.</p>
 <p><img src="https://jms55.github.io/posts/2025-09-20-solari-bevy-0-17/gi_outlier.png" alt="gi_outlier" /></p>
 <p>While we could slow down the temporal accumulation speed to improve stability, that would slow down how fast Solari can react to changes in the scene's lighting. Our goal is realtime, <em>fully</em> dynamic lighting. Not sorta realtime, but actual realtime.</p>
 <p>Unfortunately the lack of validation rays in the ReSTIR GI temporal pass, combined with the recursive nature of the world cache, means that Solari already takes a decent amount of time to react to changes. Animated and moving light sources in particular leave trails behind in the GI. Slowing down the temporal accumulation speed would make it even worse.</p>
@@ -954,7 +954,7 @@ Path Reuse in Real-time</a> and <a rel="nofollow noreferrer" href="https://inter
 <p>While it would be more expensive, one option I've considered is combining the alternate sampling scheme with some kind of world-space feedback mechanism like the MegaLights visible light list I described above. The GI pass could trace an additional ray towards a light instead of sampling the world cache. If the light is visible, we could add it to a list stored in a world-space voxel, to be fed back into the (GI or DI) light sampling for future frames.</p>
 <h3 id="denoising-options">Denoising Options<a class="zola-anchor" href="#denoising-options" aria-label="Anchor link for: denoising-options" style="visibility: hidden;"></a>
 </h3>
-<p>While Solari currently requires a NVIDIA GPU, the DLSS-RR integration is a separate plugin from Solari. Users can optionally choose to bring their own denoiser.</p>
+<p>While Solari currently requires an NVIDIA GPU, the DLSS-RR integration is a separate plugin from Solari. Users can optionally choose to bring their own denoiser.</p>
 <p>In the future, whenever they release them, I'm hoping to add support for <a rel="nofollow noreferrer" href="https://web.archive.org/web/20250822144949/https://www.amd.com/en/products/graphics/technologies/fidelityfx/super-resolution.html#upcoming">AMD's FSR Ray Regeneration</a>, whatever XeSS extension <a rel="nofollow noreferrer" href="https://community.intel.com/t5/Blogs/Tech-Innovation/Client/Neural-Image-Reconstruction-for-Real-Time-Path-Tracing/post/1688192">Intel</a> eventually releases, and potentially even <a rel="nofollow noreferrer" href="https://developer.apple.com/documentation/metalfx/mtl4fxtemporaldenoisedscaler">Apple's MTL4FXTemporalDenoisedScaler</a>. Even <a rel="nofollow noreferrer" href="https://newsroom.arm.com/news/arm-announces-arm-neural-technology">ARM</a> is working on a neural-network based denoiser!</p>
 <p>Writing a denoiser from scratch is a lot of work, but it would also be nice to add <a rel="nofollow noreferrer" href="https://developer.download.nvidia.com/video/gputechconf/gtc/2020/presentations/s22699-fast-denoising-with-self-stabilizing-recurrent-blurs.pdf">ReBLUR</a> as a fallback for users of other GPUs.</p>
 <h2 id="thank-you">Thank You<a class="zola-anchor" href="#thank-you" aria-label="Anchor link for: thank-you" style="visibility: hidden;"></a>

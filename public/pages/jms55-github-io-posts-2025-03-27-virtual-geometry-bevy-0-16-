@@ -32,7 +32,7 @@
 </h3>
 <p>The real win however, was actually an entirely unrelated change I made in the same PR.</p>
 <p>After rasterizing to the visbuffer texture (packed depth + cluster ID + triangle ID), there are two fullscreen triangle render passes to read from the visbuffer and write depth to both an actual depth texture, and the "material depth" texture discussed in previous posts.</p>
-<p>Lets look at the material depth resolve shader:</p>
+<p>Let's look at the material depth resolve shader:</p>
 <pre data-lang="rust" style="background-color:#002b36;color:#839496;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#859900;">@</span><span>fragment
 </span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">resolve_material_depth</span><span style="color:#657b83;">(</span><span style="color:#268bd2;">in</span><span>: FullscreenVertexOutput</span><span style="color:#657b83;">) </span><span>-&gt; </span><span style="color:#859900;">@builtin</span><span style="color:#657b83;">(</span><span>frag_depth</span><span style="color:#657b83;">) </span><span style="color:#268bd2;">f32 </span><span style="color:#657b83;">{
 </span><span>    </span><span style="color:#268bd2;">let</span><span> visibility </span><span style="color:#657b83;">=</span><span> textureLoad</span><span style="color:#657b83;">(</span><span>meshlet_visibility_buffer, vec2&lt;</span><span style="color:#268bd2;">u32</span><span>&gt;</span><span style="color:#657b83;">(</span><span style="color:#859900;">in</span><span>.position.xy</span><span style="color:#657b83;">))</span><span>.r;
@@ -50,7 +50,7 @@
 <p>Adding this single line to discard the background fragments doubled the performance of the resolve depth/material depth passes in the demo scene.</p>
 <h3 id="issues-with-clearing">Issues With Clearing<a class="zola-anchor" href="#issues-with-clearing" aria-label="Anchor link for: issues-with-clearing" style="visibility: hidden;"></a>
 </h3>
-<p>In Bevy we cache resource between frames, and so at the start of the frame, we need to clear the visbuffer texture back to zero to prepare it for use during the frame.</p>
+<p>In Bevy we cache resources between frames, and so at the start of the frame, we need to clear the visbuffer texture back to zero to prepare it for use during the frame.</p>
 <p>Wgpu has some simple <code>CommandEncoder::clear_buffer()</code> and <code>CommandEncoder::clear_texture()</code> commands. But their behavior under the hood might be a little unintuitive if you've never used Vulkan before.</p>
 <p>When I initially switched the visbuffer from a buffer to a storage texture, and switched the clear from <code>CommandEncoder::clear_buffer()</code> to <code>CommandEncoder::clear_texture()</code>, I profiled and was shocked to see this:</p>
 <center>
@@ -97,17 +97,17 @@
 <h2 id="upcoming">Upcoming<a class="zola-anchor" href="#upcoming" aria-label="Anchor link for: upcoming" style="visibility: hidden;"></a>
 </h2>
 <p>And that's it for virtual geometry stuff I worked on during Bevy 0.16.</p>
-<p>In related but non-Bevy news, Nvidia revealed their blackwell RTX 50 series GPUs, with some exciting <a rel="nofollow noreferrer" href="https://github.com/nvpro-samples/build_all?tab=readme-ov-file#mega-geometry">new meshlet/virtual geometry stuff</a>!</p>
+<p>In related but non-Bevy news, Nvidia revealed their Blackwell RTX 50 series GPUs, with some exciting <a rel="nofollow noreferrer" href="https://github.com/nvpro-samples/build_all?tab=readme-ov-file#mega-geometry">new meshlet/virtual geometry stuff</a>!</p>
 <ul>
 <li>New raytracing APIs (not rasterization!) for meshlet-based acceleration structures (CLAS) that are cheaper to build
 <ul>
-<li>And on blackwell, CLAS's use a compressed (but sadly opaque) memory format</li>
+<li>And on Blackwell, CLAS's use a compressed (but sadly opaque) memory format</li>
 </ul>
 </li>
-<li>New demos using CLAS's for animated geometry, dynamic tesselation, and even full Nanite-style virtual geometry!</li>
+<li>New demos using CLAS's for animated geometry, dynamic tessellation, and even full Nanite-style virtual geometry!</li>
 <li>New libraries for generating raytracing-friendly meshlets (i.e. optimized for bounding-box size), and virtual geometry oriented DAGs of meshlets</li>
 </ul>
-<p>One of the biggest issues with Nanite (besides aggregate geometry like foilage) is that it came about right when realtime raytracing was starting to pick up. Until now, it hasn't been clear how to integrate virtual geometry with raytracing (beyond rasterizing the geometry to a gbuffer, so at least you get more primary visibility detail). These new APIs resolve that issue.</p>
+<p>One of the biggest issues with Nanite (besides aggregate geometry like foliage) is that it came about right when realtime raytracing was starting to pick up. Until now, it hasn't been clear how to integrate virtual geometry with raytracing (beyond rasterizing the geometry to a gbuffer, so at least you get more primary visibility detail). These new APIs resolve that issue.</p>
 <p>Meshoptimizer v0.23 also released recently, with some new APIs (<code>meshopt_buildMeshletsFlex</code>, <code>meshopt_partitionClusters</code>, <code>meshopt_computeSphereBounds</code>) that I need to try out for DAG building at some point.</p>
 <p>Finally of course, I need to work on BVH-based culling for Bevy's virtual geometry. As I went over in my last post, culling is the biggest bottleneck at the moment. I did start working on it during the 0.16 dev cycle, but burned out before the end. We'll see what happens this cycle.</p>
 <p>Enjoy Bevy 0.16!</p>

@@ -171,7 +171,7 @@
 </figcaption>
     
 </figure>
-<p>This improves performance by terminating paths sooner when appropriate. However, there are still visible artifacts when transitioning between LOD levels of the world cache — the lighting can pop or shift as the path termination crosses a LOD boundry. Unlike ReSTIR GI for diffuse, there's no temporal reservioirs to hide the transition. Smoothing out these transitions is still an open problem.</p>
+<p>This improves performance by terminating paths sooner when appropriate. However, there are still visible artifacts when transitioning between LOD levels of the world cache — the lighting can pop or shift as the path termination crosses a LOD boundary. Unlike ReSTIR GI for diffuse, there are no temporal reservoirs to hide the transition. Smoothing out these transitions is still an open problem.</p>
 <h2 id="brdf-correctness">BRDF Correctness<a class="zola-anchor" href="#brdf-correctness" aria-label="Anchor link for: brdf-correctness" style="visibility: hidden;"></a>
 </h2>
 <p>In 0.18, Solari's BRDF for non-metals simply added the diffuse and specular lobe contributions together. I assumed that's all there was to it — evaluate each lobe independently, sum the results, done.</p>
@@ -304,7 +304,7 @@
 </span><span>    </span><span style="color:#859900;">return</span><span>;
 </span><span style="color:#657b83;">}
 </span></code></pre>
-<p>Stochastic world cache updates keeps the performance hit down in larger scenes, at the cost of less reactive lighting.</p>
+<p>Stochastic world cache updates keep the performance hit down in larger scenes, at the cost of less reactive lighting.</p>
 <figure>
     <img
         src="bistro_stochastic_cells_update.png"
@@ -371,7 +371,7 @@
 <h3 id="what-didn-t-work">What Didn't Work<a class="zola-anchor" href="#what-didn-t-work" aria-label="Anchor link for: what-didn-t-work" style="visibility: hidden;"></a>
 </h3>
 <p>A bit ago, @SparkyPotato experimented with <a rel="nofollow noreferrer" href="https://gpuopen.com/download/Hierarchical_Light_Sampling_with_Accurate_Spherical_Gaussian_Lighting.pdf">light trees</a> — hierarchical acceleration structures that let you importance sample lights based on their estimated contribution. While theoretically sound (light trees are used a lot in the film industry), the overhead of constructing and traversing the tree ended up being too high for our use case.</p>
-<p>I explored building alias tables over light CDFs, built on top of Solari's existing world cache, which would give O(1) sampling from an theoretically high quality distribution. But building the alias table for every cell each frame turned out to be expensive, and the quality gains didn't justify the cost.</p>
+<p>I explored building alias tables over light CDFs, built on top of Solari's existing world cache, which would give O(1) sampling from a theoretically high quality distribution. But building the alias table for every cell each frame turned out to be expensive, and the quality gains didn't justify the cost.</p>
 <p>I also wanted to avoid methods like <a rel="nofollow noreferrer" href="https://research.nvidia.com/labs/rtr/publication/boksansky2021rendering">ReGIR</a>, which requires a lot of storage and computation to get good results, and relies heavily on temporal reuse.</p>
 <p>A key finding from my early experiments is that stochastic methods are best left to screen-space, where multiple pixels (samples) can contribute towards the same distribution (e.g. by splatting per-pixel contributions into world-space). Otherwise, each world-space cell requires quite a lot of computation per-frame to get usable results.</p>
 <h3 id="light-grids">Light Grids<a class="zola-anchor" href="#light-grids" aria-label="Anchor link for: light-grids" style="visibility: hidden;"></a>

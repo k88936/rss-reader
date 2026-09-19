@@ -38,7 +38,7 @@
     
 </figure>
 </p>
-<p>Solari has been a years long project, but it's finally becoming production ready, and I'm really happy with what I've ended up with!</p>
+<p>Solari has been a years-long project, but it's finally becoming production ready, and I'm really happy with what I've ended up with!</p>
 <p><figure>
     <img
         src="zorah1_lit.png"
@@ -164,7 +164,7 @@
 <p>Asking AI to explain things is not a solution, as it does a terrible job of explaining its own code. One of the biggest issues I've had reviewing code this year is just the terrible comments, documentation, and PR descriptions AI writes. It's somehow both dense, and yet utterly meaningless. I am fairly sick of reading AI-generated text.</p>
 <p>When it comes to the human aspects of AI, things are much worse. Bevy, thankfully, never really had the problem of hundreds of drive-by slop PRs. Instead, what we have had is a lot of arguments and distrust within the community as a result of AI.</p>
 <p>We recently changed our contributing policy from what I'll summarize as "no AI, at all" to "some AI for code, so long as you act in good faith and show understanding and build trust in your code". Even that was extremely contentious, with the change coming mainly because the "no AI, at all" rule was impossible to enforce, and led to a lot of witch hunting.</p>
-<p>Long time contributors I've been friends with have become extremely burnt out and disengaged from Bevy, OSS, and even programming in general, in large part due to AI (and in part due to e.g. lack of an editor for years).</p>
+<p>Long-time contributors I've been friends with have become extremely burnt out and disengaged from Bevy, OSS, and even programming in general, in large part due to AI (and in part due to e.g. lack of an editor for years).</p>
 <p>I have no magic solution to this, but I ask everyone: be kind to each other. We all want to see Bevy succeed, and we have more in common than we do differences that divide us.</p>
 <h3 id="questions-answers">Questions &amp; Answers<a class="zola-anchor" href="#questions-answers" aria-label="Anchor link for: questions-answers" style="visibility: hidden;"></a>
 </h3>
@@ -212,7 +212,7 @@
 <p>For me and I think a lot of other gamedevs, rendering is one of those things that is a voodoo sorcery black box where materials and meshes go in and pretty pictures come out.
 So, this may be a big ask, but my question is "as an engine dev do you have any resources to link or recommend that help crack open that black box and make it easier to understand?"</p>
 </blockquote>
-<p>Honestly, not really! I did try and write some higher-level docs for the Bevy book this year, but never finished or merged them. For specific rendering topics, there's lots of individual papers and articles I could point at, but I don't have anything for people just starting out.</p>
+<p>Honestly, not really! I did try and write some higher-level docs for the Bevy book this year, but never finished or merged them. For specific rendering topics, there are lots of individual papers and articles I could point at, but I don't have anything for people just starting out.</p>
 <p>Rendering is a really broad area! There's a lot of things that boil down to "it's done in this extremely complex, specialized way, because performance".</p>
 <p>I would say, unless you're really interested in being a rendering developer, you probably don't need to learn the details! The goal of engines like Bevy is to do all that for you, so that you don't need to learn and implement it all from scratch yourself. Learning how to use the tools, as an artist, should suffice for most users.</p>
 <p>If you <em>are</em> interested in rendering development, my recommendation is:</p>
