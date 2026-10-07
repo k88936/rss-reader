@@ -1,0 +1,43 @@
+<p>时间过得真快。</p>
+<p>不只是过去的一年，也是这个 14 天的中秋 + 国庆假期。</p>
+<p>本来今年国庆不打算回深圳的，但确实也没有更好的安排。原本想着国庆去意大利玩，或者是去东京走走，但女友忙于工作没办法陪我，最后只能买回深圳的机票了。</p>
+<p>国庆那天一家人去看了企鹅岛，后面又去大亚湾住了一晚，剩下的时间我就是在家里躺着刷手机，或者 Vibe 新的项目。我留了两天时间提前回上海，好提前处理下工作之类的。（虽然大部分时间也还是躺在床上刷手机）</p>
+<h2 id="ai-一天人间一年">AI 一天，人间一年</h2>
+<p>回看过去的一年，AI 的发展也很是迅猛。从今年年初的 OpenClaw 全民养虾，到后面的 Claude Mythos 给安全方面带来的变革；又陆续造出来了 Harness engineering、Loop engineering 这些新名词。模型已经迭代到 GPT 6.1、Claude Opus 5.5，可以说是 AI 一天，人间一年。</p>
+<p>我在两年前使用 Hugo 替换 WordPress 时，是将原本 WordPress 主题的 CSS 样式，一点点抠出来，复制到新的 Hugo CSS 文件中，尽可能保留之前的主题样式。完整迁移后，我曾尝试用当时的模型，将 <code>style.css</code> 里的 CSS 样式，使用原子化的 TailwindCSS 重构。试了很多次都不能 1:1 保留原本的样式不变。</p>
+<p>直到今年 GPT-6-Astra 做到了。正如你所看到的，虽然博客的主题样式没变，但 F12 打开开发者面板可以发现全都使用 TailwindCSS 重写了。说实话我也不清楚这么做有什么收益，只是显得这个站点更加“现代化”了。</p>
+<p>与此同时，我还让 GPT 用 Computer Use 操控谷歌浏览器跑 Lighthouse 测试页面性能，并进行调优。它将评论 API 改为异步请求，从而避免接口偶尔加载卡顿导致页面短暂白屏的问题。</p>
+<h2 id="sayrud-重生">Sayrud 重生</h2>
+<p>说到这个评论 API，我使用自己<a href="https://github.red/hello-sayrud/">两年前写的 Sayrud 搭建</a>。半个月前，我将 Sayrud 的历史代码丢给了 Claude Opus 5.5，让它将这个 Schemaless Table 改为多维表格，功能对着飞书多维表格抄。只用了三轮对话，带公式、带多人协作、带筛选、分组、排序，带看板、画册、表单视图的多维表格就完成了。只要是 Claude 写了的功能，都没问题一遍过。前端方面，Claude 还很有心机地使用了 Arco Design 以贴近飞书的风格。</p>
+<p>这下真看到核弹爆炸瘫坐在椅子上了。</p>
+<p>我在五年前<a href="https://github.red/the-beginning-of-eggmd/">尝试写 EggMD</a> 的时候，就提到过使用 OT 算法实现协同编辑，引用当时前 Google Wave 工程师的话：</p>
+<blockquote>
+<p>Unfortunately, implementing OT sucks. There’s a million algorithms with different tradeoffs, mostly trapped in academic papers. […] Wave took 2 years to write and if we rewrote it today, <strong>it would take almost as long to write a second time.</strong></p>
+<p><em>不幸的是，实现 OT（操作变换）很折磨人。相关算法多到数不清，各有取舍，而且大多还锁在学术论文里。[……] Wave 写了两年；<strong>就算今天重写一遍，也几乎还要再花那么久。</strong></em></p></blockquote>
+<p>当时的我觉得像 OT、CRDT 这些协同编辑算法我肯定是写不明白的，只能套前人的 Go 实现，只会在这之上简单封装一个 Markdown 编辑器。</p>
+<p>但现如今大模型来了，管你什么文本协同编辑还是 JSON 复杂嵌套格式的协同编辑，库都不用调，手写 OT 全给你秒了！</p>
+<p>甚至 Sayrud 后面实现了多维表格的公式列，后端动态计算公式后，也能多端快速同步结果。</p>
+<p>既然 Claude 帮我出色地完成了最复杂的部分，那我不如再加上用户系统、IdP、i18n 这些，造轮子开新坑，又双叒叕做一个开源的多维表格项目。最近这几天我就是在家 Vibe 新版 Sayrud 的相关功能，同时搭建了主站、文档站、在线体验站等生态站点。后续准备将自己现有飞书多维表格上的数据迁移过来，作为一个 use case 分享出来。</p>
+<p>整个 Vibe 的过程十分舒适，我又逐渐找回了以前写代码，创造新事物时的快乐了。</p>
+<p>欢迎尝试体验：</p>
+<blockquote>
+<p>GitHub：<a href="https://github.com/sayrud/sayrud">https://github.com/sayrud/sayrud</a></p>
+<p>主站：<a href="https://sayrud.com/">https://sayrud.com/</a></p>
+<p>在线体验：<a href="https://try.sayrud.com/">https://try.sayrud.com/</a></p></blockquote>
+<p>再胆大一点，我是不是还能复活前几年已经弃坑的 EggMD 项目？虽然开源协同编辑文档好像并不新鲜了。</p>
+<p>当时的想法是用 NuxtJS + Editor.js 做成块编辑器的形式。但 NuxtJS 巨难用，在不同的工具链配置下会有奇怪的报错，解决起来费时费事。而 Editor.js 又是个大鸽子，这个块编辑器的想法和样式都很好，但 TODO List 挂了四五年了，一点进展没有。计划的 Undo/Redo、协同编辑功能一直没做，哪怕是 AI 如此强大的今天，他们也没有使用 AI 来辅助开发，commit 频率更是按月来计！纯纯摆烂了属于是。</p>
+<p>我寻思要不自己拿 GPT 给他哐哐一顿干完算了。</p>
+<h2 id="nekobase-呢">NekoBase 呢？</h2>
+<p>在去年十周年的文章末尾，我提到自己购买并备案了 nekobase.com 域名。做了一个产品反馈平台，在五月份的时候默默上线了。没有任何推广和宣传，因此至今也没有人使用。</p>
+<p>一开始的想法是 NekoBox 现有的反馈平台太难用了，要不自己写一个吧。我开始用 Pencil（现在叫 Pen 了）设计原型图，再按照原型图实现前端。微信网页登录开通接入很麻烦，便自己封装了下微信内获取 OpenID 的接口，实现了网页端扫码登录。除此之外好像没有学到什么新东西了。</p>
+<p>一切完成上线后，我又迟迟没时间迁移数据，也没真正把它用起来。总会觉得哪哪没准备好，是不是不应该这么急着迁移。因此直到现在都还是没用起来。我也不知道后续会怎么样，短期内没有去继续维护的想法，就还是这样放着吧。😂</p>
+<h2 id="只剩一个聊天框">只剩一个聊天框</h2>
+<p>一两年前我还在写文章抱怨大模型没办法按我的编码习惯，写出我看着舒服的代码。为此还专门写了一个 Prompt 用于生成符合自己 taste 的代码。</p>
+<p>现如今只需要把历史项目的路径丢给 AI，让他对着项目的代码风格和文件结构抄就行。去年的我还是开着 IDE，右侧一个小窗口来和 AI 对话；现在已经是只有聊天框了，只有在最后 git commit 时，我才会在 Git Tower 里草草过一下后端代码，主要是看大方向是否正确，有没有冗余代码之类的。而前端的代码，我是一点不看了，在浏览器里测试交互没问题，就直接提交了。</p>
+<blockquote>
+<p>Everyone is asking: Will AI replace me? A better question is: What can I do with AI that I couldn&rsquo;t do before?</p></blockquote>
+<p>这大概就是我现在的心态。</p>
+<hr>
+<p>BTW，10 月份又是公布诺贝尔奖的日子。</p>
+<p>今年的生理学或医学奖是“关于光控离子通道（light-gated）和光遗传学的发现”；物理学奖是“对冰立方中微子天文台（IceCube）的决定性贡献”。</p>
+<p>我寻思这俩凑起来不就是 LightCube 吗？<del>今年诺贝尔文学奖颁给川原砾好了</del></p>

@@ -160,7 +160,7 @@
 <p>我用了一个简单粗暴且不靠谱的 HACK，将数字除以 1000，去除后三位。</p>
 </div>
 <p>消息表中的 <code>ParentID</code> 和 <code>ChildrenIDs</code> 字段，用于记录父子消息关系。就像豆包可以点击重新生成，进而再生成一条回复。</p>
-<p><img src="https://github.red/images/2025/03/doubao-child-message_hu_4f468edf91bb2586.webp" srcset="https://github.red/images/2025/03/doubao-child-message_hu_18fb8d8f1cb8c342.webp 400w, https://github.red/images/2025/03/doubao-child-message_hu_f8491e76036abbf8.webp 800w, https://github.red/images/2025/03/doubao-child-message_hu_4f468edf91bb2586.webp 928w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="928" height="518" alt="豆包子消息" decoding="async">
+<p><img src="https://github.red/images/2025/03/doubao-child-message_hu_ca3ed6ab4af74d4a.png" srcset="https://github.red/images/2025/03/doubao-child-message_hu_82ea09c991572c14.png 400w, https://github.red/images/2025/03/doubao-child-message_hu_c982a0da39de195a.png 800w, https://github.red/images/2025/03/doubao-child-message_hu_ca3ed6ab4af74d4a.png 928w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="928" height="518" alt="豆包子消息" decoding="async">
 </p>
 <p>更复杂的像 ChatGPT，可以点击上文任意一条消息，新建一个分支重新生成对话。为了实现这样的效果，我们在创建一条新的消息记录时，需要 <code>ParentID</code> 指定它的父消息，并更新它父消息的 <code>ChildrenIDs</code> 字段，这俩包在一个数据库事务里做就行。</p>
 <p>在需要构造大模型接口 JSON <code>messages</code> 参数时，只需从最后一条消息开始，沿着 <code>ParentID</code> 依次向上遍历，一直到 <code>ParentID</code> 为 0，即可拿到当前对话分支的消息列表。 前端实现像上图中豆包的“上一条”“下一条”翻页的效果，也只需取 <code>ChildrenIDs</code> 构造翻页即可。</p>
@@ -210,7 +210,7 @@
 </span></span><span style="display:flex;"><span>{<span style="color:#7ee787">&#34;v&#34;</span>:<span style="color:#a5d6ff">&#34;高兴&#34;</span>}
 </span></span><span style="display:flex;"><span>{<span style="color:#7ee787">&#34;v&#34;</span>:<span style="color:#a5d6ff">&#34;认识你&#34;</span>}
 </span></span></code></pre></div><p>现在大家都是选择后者。我担心的点是如果选择后者，前端拼接字符串时会不会有概率乱掉。我在不断测试豆包的时候遇到过一次，但这也是极端情况，实际后端文本是正常的，刷新一下就好了。因此我也随大流选择了返回每次新增的内容。😁</p>
-<p><img src="https://github.red/images/2025/03/doubao-delta-text-mistake_hu_7f0168b7dcd6b232.webp" srcset="https://github.red/images/2025/03/doubao-delta-text-mistake_hu_e5cd0761ee71ff27.webp 400w, https://github.red/images/2025/03/doubao-delta-text-mistake_hu_467f9b4bff4b495e.webp 800w, https://github.red/images/2025/03/doubao-delta-text-mistake_hu_7f0168b7dcd6b232.webp 818w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="818" height="335" alt="豆包生成文本错位" decoding="async">
+<p><img src="https://github.red/images/2025/03/doubao-delta-text-mistake_hu_d46ab73b5d3928d4.png" srcset="https://github.red/images/2025/03/doubao-delta-text-mistake_hu_ed98165afc149b24.png 400w, https://github.red/images/2025/03/doubao-delta-text-mistake_hu_e9f4dbda4f259d06.png 800w, https://github.red/images/2025/03/doubao-delta-text-mistake_hu_d46ab73b5d3928d4.png 818w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="818" height="335" alt="豆包生成文本错位" decoding="async">
 </p>
 <p>由于我前端处理 SSE 使用的是 <a href="https://www.npmjs.com/package/eventsource-client">eventsource-client</a> 这个库，它在传入对话接口的 URL 后，就只能处理 SSE 格式的响应了。因此这个对话接口的报错，也只能以写入单条 SSE 消息的形式返回，使用 <code>event: error</code> 来区分。</p>
 <h2 id="对话标题生成">对话标题生成</h2>
@@ -242,7 +242,7 @@
 <p>混元大模型本身提供了 <code>GetTokenCount</code> 接口用于计算消息中的 Token 数，20 QPS 的限制还不收费，足够我们使用了。</p>
 <p>从处理流程上来说，用户发起提问时，调用 <code>GetTokenCount</code> 计算提问的 Token 数；回答生成完毕后，计算并更新回答所消耗的 Token 数。为未来可能要做的 Token 付费功能铺垫。进一步，如果还要做不同套餐的上下文长度的限制，提问的长度在开始提问的时就进行判断，而对于大模型回答的长度，则是在调大模型接口时使用 <code>max_tokens</code> 参数限制。</p>
 <p>然而混元的 SDK 好像不能指定这个参数，只有走 OpenAI 兼容接口调用时才支持。</p>
-<p><img src="https://github.red/images/2025/03/simple-llm-arch_hu_e6455a806232e366.webp" srcset="https://github.red/images/2025/03/simple-llm-arch_hu_2066a10387e5fc66.webp 400w, https://github.red/images/2025/03/simple-llm-arch_hu_7e9d021b4b81eaee.webp 800w, https://github.red/images/2025/03/simple-llm-arch_hu_e6455a806232e366.webp 1200w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="1200" height="938" alt="简单的对话实现" decoding="async">
+<p><img src="https://github.red/images/2025/03/simple-llm-arch_hu_593f537b66b4459.png" srcset="https://github.red/images/2025/03/simple-llm-arch_hu_1ce0c283a94b1452.png 400w, https://github.red/images/2025/03/simple-llm-arch_hu_53b1b58fc97d45cb.png 800w, https://github.red/images/2025/03/simple-llm-arch_hu_b9e98da661871783.png 1200w, https://github.red/images/2025/03/simple-llm-arch_hu_593f537b66b4459.png 1446w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="1446" height="1130" alt="简单的对话实现" decoding="async">
 </p>
 <p>我画了一张流程图来梳理目前的整个过程，带 🚀 小火箭图标的意味着这一步可以开个 goroutine 异步进行。如果上述流程没问题，那就请做紧抓稳了，我们后面要引入 SSE 断点续传功能了。</p>
 <h2 id="sse-断点续传">SSE 断点续传</h2>
@@ -296,7 +296,7 @@
 </span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>}<span style="color:#6e7681">
 </span></span></span><span style="display:flex;"><span><span style="color:#6e7681"></span>}()<span style="color:#6e7681">
 </span></span></span></code></pre></div><p>至此，我们就完成了上述 SSE 断点续传的 4 个需求，属实不容易，这里的设计我斟酌思考了很久。我也不知道大厂们是怎么做的，如果你有更好的设计或者想法，欢迎留言和我讨论。</p>
-<p><img src="https://github.red/images/2025/03/breakpoint-resume-llm-arch_hu_853331cf50b697d4.webp" srcset="https://github.red/images/2025/03/breakpoint-resume-llm-arch_hu_3e2f369e7b2add44.webp 400w, https://github.red/images/2025/03/breakpoint-resume-llm-arch_hu_ec0b50394722b9f6.webp 800w, https://github.red/images/2025/03/breakpoint-resume-llm-arch_hu_853331cf50b697d4.webp 1200w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="1200" height="813" alt="带断点续传的对话实现" decoding="async">
+<p><img src="https://github.red/images/2025/03/breakpoint-resume-llm-arch_hu_25ef6aedec14c2a.png" srcset="https://github.red/images/2025/03/breakpoint-resume-llm-arch_hu_421734f49f6d476c.png 400w, https://github.red/images/2025/03/breakpoint-resume-llm-arch_hu_b18800626b1bc0f7.png 800w, https://github.red/images/2025/03/breakpoint-resume-llm-arch_hu_cbbb223df27a7c9.png 1200w, https://github.red/images/2025/03/breakpoint-resume-llm-arch_hu_25ef6aedec14c2a.png 1600w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="1600" height="1084" alt="带断点续传的对话实现" decoding="async">
 </p>
 <p>具体落实到代码上会复杂些，因为还有更新对话标题、计算 Token 等流程，很多步骤又是可以异步进行的，但互相之间又会用不同的 Context 来同步状态，然后 goroutine 中还有一堆的 <code>defer</code> ，这块的代码我打算后续梳理下流程好好美化下，现在只是停留在可用的状态。</p>
 <h2 id="来看看豆包和元宝">来看看豆包和元宝</h2>
@@ -336,7 +336,7 @@
 <p>这也是我写得第一个 React 项目，不出意外地踩了 <code>StrictMode</code> 下请求会发两次用来检查副作用的坑。🤣 这个过程跟我刚开始写 Vue 一样，一开始是很痛苦的，但写着写着突然就顿悟了，发现 React 把各种东西和功能定义成组件嵌套包起来的设计，还真有点妙。我也理解为什么 Vue 能火了，这俩入门难度确实不一样。</p>
 <h2 id="最后再聊聊">最后再聊聊</h2>
 <p>我的大模型套壳站现已部署至线上：TakoChat - <a href="https://tako.chat">https://tako.chat</a></p>
-<p><img src="https://github.red/images/2025/03/tako-chat-snapshot_hu_facd842c8c6f4374.webp" srcset="https://github.red/images/2025/03/tako-chat-snapshot_hu_d961012653323ea1.webp 400w, https://github.red/images/2025/03/tako-chat-snapshot_hu_c2b1f9d44f07177c.webp 800w, https://github.red/images/2025/03/tako-chat-snapshot_hu_facd842c8c6f4374.webp 1200w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="1200" height="700" alt="TakoChat" decoding="async">
+<p><img src="https://github.red/images/2025/03/tako-chat-snapshot_hu_c0c870a409736d59.png" srcset="https://github.red/images/2025/03/tako-chat-snapshot_hu_cc4fd5329f5d91af.png 400w, https://github.red/images/2025/03/tako-chat-snapshot_hu_c58c209d8735847b.png 800w, https://github.red/images/2025/03/tako-chat-snapshot_hu_c0c870a409736d59.png 1200w" sizes="(min-width: 68rem) 760px, calc(100vw - 30px)" width="1200" height="700" alt="TakoChat" decoding="async">
 </p>
 <p>Tako（たこ）是日文章鱼🐙的意思。起这个名字只是我单纯觉得微软 Teams 下的章鱼动态 Emoji 很可爱。背后接的是免费版的混元大模型，所以你可以注册体验下，只是目前的功能还很基础。（不清楚阿里云那边短信验证码备案的问题是否解决了，可能会遇到部分运营商收不到短信验证码的问题，可以换不同运营商的号试试）</p>
 <p>你可以看到左侧有「实验室」一栏，我是打算在这里动手做做像 MCP 和 Agent 这样的小玩意。（先把坑开了，填不填再说。</p>
