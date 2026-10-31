@@ -1,5 +1,5 @@
 <blockquote>
-<p>Written in response to <a rel="nofollow noreferrer" href="https://bevy.org/news/bevys-sixth-birthday">Bevy's Sixth Birthday</a>.</p>
+<p>Written in response to <a rel="nofollow noreferrer external" href="https://bevy.org/news/bevys-sixth-birthday">Bevy's Sixth Birthday</a>.</p>
 </blockquote>
 <h3 id="introduction">Introduction<a class="zola-anchor" href="#introduction" aria-label="Anchor link for: introduction" style="visibility: hidden;"></a>
 </h3>
@@ -13,57 +13,15 @@
 <p>If you've been following my work, it shouldn't come as a surprise that 90% of what I've done this year has been working on Solari.</p>
 <p>For those of you who haven't been following, Bevy Solari is a realtime pathtracer aiming to be a high-end, forward-looking alternative to Bevy's main renderer.</p>
 <p>I've written <a href="/tags/raytracing">plenty of articles on Solari</a> before, but the TLDR is that I want to make lighting more accessible to beginners, and push the boundaries of what Bevy is capable of. Rather than having to learn a mix of shadow maps, lightmap baking, light probe baking, environment maps, screen space methods, what their pitfalls and limitations are, and spending hours tweaking things, pathtracing replaces all that complexity with a single, much easier to reason about lighting algorithm.</p>
-<p><figure>
-    <img
-        src="zorah1_albedo.png"
-        
-        
-        
-    >
-    
-    <figcaption></figcaption>
-    
-</figure>
-
 <figure>
-    <img
-        src="zorah2_albedo.png"
-        
-        
-        
-    >
-    
-    <figcaption><p>NVIDIA Zorah Scene, albedo rendering (no lighting)</p>
-</figcaption>
-    
-</figure>
-</p>
+<img src="zorah1_albedo.png"><figcaption></figcaption></figure>
+<figure>
+<img src="zorah2_albedo.png"><figcaption><p>NVIDIA Zorah Scene, albedo rendering (no lighting)</p></figcaption></figure>
 <p>Solari has been a years-long project, but it's finally becoming production ready, and I'm really happy with what I've ended up with!</p>
-<p><figure>
-    <img
-        src="zorah1_lit.png"
-        
-        
-        
-    >
-    
-    <figcaption></figcaption>
-    
-</figure>
-
 <figure>
-    <img
-        src="zorah2_lit.png"
-        
-        
-        
-    >
-    
-    <figcaption><p>NVIDIA Zorah Scene, Solari rendering</p>
-</figcaption>
-    
-</figure>
-</p>
+<img src="zorah1_lit.png"><figcaption></figcaption></figure>
+<figure>
+<img src="zorah2_lit.png"><figcaption><p>NVIDIA Zorah Scene, Solari rendering</p></figcaption></figure>
 <p>It's been a long, <em>long</em> journey through several different rewrites:</p>
 <ul>
 <li>Lumen/AMD GI like screen-space probes (diffuse GI only), a spatial hashing based world irradiance cache, and a spherical-harmonic based spatial denoiser</li>
@@ -75,75 +33,32 @@
 <li>Another complete rewrite, now with a single unified pathtracer tracing direct and indirect diffuse and specular lighting, and a single ReSTIR pass resampling everything using the reconnection shift</li>
 <li>DLSS-RR 4.5 has gotten so good, ReSTIR is now optional!</li>
 </ul>
-<p><figure>
-    <img
-        src="cascades.png"
-        
-        
-        
-    >
-    
-    <figcaption><p>Cornell Box, old version of Solari GI from 2023, screen-space probes with world-space radiance cascade intervals</p>
-</figcaption>
-    
-</figure>
-
 <figure>
-    <img
-        src="cascades_merged.png"
-        
-        
-        
-    >
-    
-    <figcaption><p>The cascades merged together</p>
-</figcaption>
-    
-</figure>
-</p>
+<img src="cascades.png"><figcaption><p>Cornell Box, old version of Solari GI from 2023, screen-space probes with world-space radiance cascade intervals</p></figcaption></figure>
+<figure>
+<img src="cascades_merged.png"><figcaption><p>The cascades merged together</p></figcaption></figure>
 <p>There's still a decent amount to do, notably supporting transparent materials and more types of light sources, but the core lighting algorithm is pretty solid!</p>
 <p>I'm really proud of how everything's turned out. Expect another blog post on Solari soon for Bevy 0.20, where I'll cover things in more detail, and stay tuned for a formal publication coming at the end of the year that I can't talk about too much yet :)</p>
-<p><figure>
-    <img
-        src="zero_day_albedo.png"
-        
-        
-        
-    >
-    
-    <figcaption></figcaption>
-    
-</figure>
-
 <figure>
-    <img
-        src="zero_day.png"
-        
-        
-        
-    >
-    
-    <figcaption><p>NVIDIA Zero Day Scene, Solari rendering</p>
-</figcaption>
-    
-</figure>
-</p>
+<img src="zero_day_albedo.png"><figcaption></figcaption></figure>
+<figure>
+<img src="zero_day.png"><figcaption><p>NVIDIA Zero Day Scene, Solari rendering</p></figcaption></figure>
 <h4 id="dlss-wgpu">dlss_wgpu<a class="zola-anchor" href="#dlss-wgpu" aria-label="Anchor link for: dlss-wgpu" style="visibility: hidden;"></a>
 </h4>
 <p>Of course, a key part of my pivot to per-pixel pathtracing in Solari was predicated on having a good denoiser (ideally one that I didn't have to write myself). For that, NVIDIA's DLSS-RR and NRD were the best options available.</p>
 <p>One of my first contributions to Bevy was a TAA implementation I wrote, so adding DLSS support was a nice blast from the past :)</p>
 <p>Getting DLSS/FSR integration in Bevy has been something I have been eyeing for a long while, but getting them working with wgpu's resource tracking and automatic barrier system took some effort!</p>
-<p>I ended up submitting a PR to wgpu last year to add a new <a rel="nofollow noreferrer" href="https://github.com/gfx-rs/wgpu/pull/6678"><code>transition_resources()</code></a> function (which in hindsight should probably have been named something like <code>record_resource_usage</code>). This lets you insert new <a rel="nofollow noreferrer" href="https://gpuweb.github.io/gpuweb/#usage-scope">usage scopes</a> into wgpu's resource tracker, enabling users to integrate Vulkan/DirectX12/Metal libraries directly with wgpu.</p>
+<p>I ended up submitting a PR to wgpu last year to add a new <a rel="nofollow noreferrer external" href="https://github.com/gfx-rs/wgpu/pull/6678"><code>transition_resources()</code></a> function (which in hindsight should probably have been named something like <code>record_resource_usage</code>). This lets you insert new <a rel="nofollow noreferrer external" href="https://gpuweb.github.io/gpuweb/#usage-scope">usage scopes</a> into wgpu's resource tracker, enabling users to integrate Vulkan/DirectX12/Metal libraries directly with wgpu.</p>
 <p>Otherwise, there would be no (simple) way for users to e.g. insert a barrier and transition a texture from color attachment to shader read layout. This, along with some new <code>as_hal()</code> APIs, allows Bevy to now record depth/normal/color/etc data, pass it to DLSS, and then read DLSS's result back into wgpu-land.</p>
-<p>I've packaged up the barrier code, C FFI, wgpu&lt;-&gt;Vulkan interop, and DLL-linking build scripts into an open source, Bevy-independent crate called <a rel="nofollow noreferrer" href="https://github.com/bevyengine/dlss_wgpu">dlss_wgpu</a>. If you're looking to add DLSS-SR or DLSS-RR to your wgpu project, give it a try!</p>
+<p>I've packaged up the barrier code, C FFI, wgpu&lt;-&gt;Vulkan interop, and DLL-linking build scripts into an open source, Bevy-independent crate called <a rel="nofollow noreferrer external" href="https://github.com/bevyengine/dlss_wgpu">dlss_wgpu</a>. If you're looking to add DLSS-SR or DLSS-RR to your wgpu project, give it a try!</p>
 <p>In Bevy, DLSS-RR works as a great denoiser + upscaler for Solari, and DLSS-SR works as a better, mostly drop-in replacement for Bevy's TAA.</p>
 <p>I'd love to add FSR4 and FSR4-RR support to Bevy as well, but unfortunately AMD has not released any Vulkan bindings for them at this time.</p>
 <h4 id="compressedimagesaver-revamp">CompressedImageSaver Revamp<a class="zola-anchor" href="#compressedimagesaver-revamp" aria-label="Anchor link for: compressedimagesaver-revamp" style="visibility: hidden;"></a>
 </h4>
 <p>The other major project I worked on this year was revamping Bevy's texture compression pipeline.</p>
-<p>Until recently, Bevy's only option for texture compression and mipmap generation was an old version of <a rel="nofollow noreferrer" href="https://github.com/BinomialLLC/basis_universal">Basis Universal</a>. Basis Universal is sort of an intermediate format, that gets transcoded to BCn/ASTC at runtime. It's useful for web, as it lets you avoid shipping two sets of textures, but it's not so great for desktop and mobile. It's much better to just encode directly as BCn/ASTC for these platforms.</p>
+<p>Until recently, Bevy's only option for texture compression and mipmap generation was an old version of <a rel="nofollow noreferrer external" href="https://github.com/BinomialLLC/basis_universal">Basis Universal</a>. Basis Universal is sort of an intermediate format, that gets transcoded to BCn/ASTC at runtime. It's useful for web, as it lets you avoid shipping two sets of textures, but it's not so great for desktop and mobile. It's much better to just encode directly as BCn/ASTC for these platforms.</p>
 <p>The problem is that until recently, there's been no good tool or library for compressing textures for different platforms. There are several disparate tools, each with their own weird input formats, quirks, and supported or unsupported target formats. Trying to wrap different tools in a unified interface was... not very easy, and I gave up trying.</p>
-<p>However, @cwfitzgerald (a maintainer of wgpu) released <a rel="nofollow noreferrer" href="https://github.com/cwfitzgerald/ctt">ctt</a> this year - a Rust texture compression library that can take texture data of various layouts, generate mipmaps, encode into the various BCn/ASTC/etc formats (via FFI to all the different encoder libraries), super-compress with ZSTD for smaller disk sizes, and finally spit out a ktx2 file - all through one unified interface. It's a huge achievement, and I highly recommend using it if you need texture compression. There are even C bindings available!</p>
+<p>However, @cwfitzgerald (a maintainer of wgpu) released <a rel="nofollow noreferrer external" href="https://github.com/cwfitzgerald/ctt">ctt</a> this year - a Rust texture compression library that can take texture data of various layouts, generate mipmaps, encode into the various BCn/ASTC/etc formats (via FFI to all the different encoder libraries), super-compress with ZSTD for smaller disk sizes, and finally spit out a ktx2 file - all through one unified interface. It's a huge achievement, and I highly recommend using it if you need texture compression. There are even C bindings available!</p>
 <p>I took ctt, and used it as the new backend for CompressedImageSaver in Bevy. Look forward to much improved texture compression in Bevy 0.20!</p>
 <p>Huge thanks to @cwfitzgerald for helping me integrate ctt, fixing bugs I reported, and for creating ctt in the first place.</p>
 <h3 id="using-ai">Using AI<a class="zola-anchor" href="#using-ai" aria-label="Anchor link for: using-ai" style="visibility: hidden;"></a>
@@ -195,7 +110,7 @@
 <p>On the other hand, squashing every or even most bugs is not realistically something we can, or should really try to do.</p>
 <p>Shipping with ~zero bugs on the level of e.g. SQLite would mean <em>drastically</em> slowing down on developing new features. This would be a net negative overall, as an engine with no features is way less useful than a much more featureful engine that's a bit buggy.</p>
 <p>Every new feature, especially in rendering, tends to involve a large rewrite of and intersection with existing systems, with more and more potential for breakage. We could introduce some new feature X, but actually under TAA there's an issue, or when using multiple cameras, or it used to work with shadow maps and then we change the shadow pass internals which breaks that interaction or regressed performance on certain GPUs, etc.</p>
-<p>So you could say, add more tests! And <a rel="nofollow noreferrer" href="https://pixel-eagle.com/project/b04f67c0-c054-4a6f-92ec-f599fec2fd1d">we do</a>. It's helped a lot compared to when we had nothing, but there's only so much we can cover. We will never be able to cover every interaction between techniques, regressions on specific mobile devices with poor GPU drivers, etc.</p>
+<p>So you could say, add more tests! And <a rel="nofollow noreferrer external" href="https://pixel-eagle.com/project/b04f67c0-c054-4a6f-92ec-f599fec2fd1d">we do</a>. It's helped a lot compared to when we had nothing, but there's only so much we can cover. We will never be able to cover every interaction between techniques, regressions on specific mobile devices with poor GPU drivers, etc.</p>
 <p>The release candidate process we adopted last year <em>does</em> help a lot with both reliability, and giving library authors time to update their plugins before the official release. But it's also brought its own share of issues, e.g. Bevy 0.19 being very delayed from our typical 3 month schedule, in part due to the large number of bugs we spent time fixing, rather than sticking to the release schedule.</p>
 <p>In terms of stability, I'd much rather make breaking changes than try for backwards compatibility. Game engines are huge, have a lot of surface area to cover (rendering, physics, ui, assets, artist tooling, etc), and are constantly evolving. I'd much rather improve things but cause some breakage, rather than try to introduce more mess trying to make things backwards compatible.</p>
 <p>My advice for game developers: stick to a single version of Bevy, and backport individual parts if needed. The same advice applies to pretty much every game engine on the market, but one of Bevy's major benefits is modularity. Don't be afraid to pull in a new feature from a newer version via copy and pasting the plugin into your project, rather than trying to upgrade your whole game to a newer version of Bevy all at once.</p>
@@ -217,7 +132,7 @@ So, this may be a big ask, but my question is "as an engine dev do you have any 
 <p>I would say, unless you're really interested in being a rendering developer, you probably don't need to learn the details! The goal of engines like Bevy is to do all that for you, so that you don't need to learn and implement it all from scratch yourself. Learning how to use the tools, as an artist, should suffice for most users.</p>
 <p>If you <em>are</em> interested in rendering development, my recommendation is:</p>
 <ul>
-<li>Read through a couple of recent <a rel="nofollow noreferrer" href="https://www.gamedevpensieve.com/graphics/3d/3d_frame-breakdown">frame breakdowns</a> to get a broad sense of how real games are rendered. If you see something you don't recognize, do a quick google to get an idea of what it is, what the alternatives could be (e.g. baked vs dynamic lighting), and why the game might have chosen to do it this way.</li>
+<li>Read through a couple of recent <a rel="nofollow noreferrer external" href="https://www.gamedevpensieve.com/graphics/3d/3d_frame-breakdown">frame breakdowns</a> to get a broad sense of how real games are rendered. If you see something you don't recognize, do a quick google to get an idea of what it is, what the alternatives could be (e.g. baked vs dynamic lighting), and why the game might have chosen to do it this way.</li>
 <li>For Bevy specifically, come ask questions in #rendering or #rendering-dev in the Bevy discord! We're always happy to talk and help people understand things!</li>
 </ul>
 <p>That's it for this year. Happy sixth birthday to Bevy!</p>

@@ -4,7 +4,7 @@
 <p>Due to a combination of life being busy, and taking an ongoing break from the project to work on other stuff (due to burnout), I haven't gotten as much done as the last two releases. This will be a much shorter blog post than usual.</p>
 <h2 id="metis-based-triangle-clustering">METIS-based Triangle Clustering<a class="zola-anchor" href="#metis-based-triangle-clustering" aria-label="Anchor link for: metis-based-triangle-clustering" style="visibility: hidden;"></a>
 </h2>
-<p>PR <a rel="nofollow noreferrer" href="https://github.com/bevyengine/bevy/pull/16947">#16947</a> improves the DAG quality.</p>
+<p>PR <a rel="nofollow noreferrer external" href="https://github.com/bevyengine/bevy/pull/16947">#16947</a> improves the DAG quality.</p>
 <p>I've said it before, and I'll say it again - DAG quality is the most important part of virtual geometry (and the hardest to get right).</p>
 <p>Before, in order to group triangles into meshlets, I was simply relying on meshoptimizer's <code>meshopt_buildMeshlets()</code> function. It works pretty good for the general use case of splitting meshes into meshlets, but for virtual geometry, it's not ideal.</p>
 <p>Meshoptimizer prioritizes generating nice clusters for culling and vertex reuse, but for virtual geometry, we want to ensure that meshlets share as few vertices as possible. Less shared vertices between meshlets means less locked vertices when simplifying, which leads to better DAG quality.</p>
@@ -24,7 +24,7 @@
 <p>I'm still not done working on DAG quality - I haven't considered spatial positions of triangles/meshlets for grouping things yet - but this was a great step forwards.</p>
 <h2 id="texture-atomics">Texture Atomics<a class="zola-anchor" href="#texture-atomics" aria-label="Anchor link for: texture-atomics" style="visibility: hidden;"></a>
 </h2>
-<p>PR <a rel="nofollow noreferrer" href="https://github.com/bevyengine/bevy/pull/17765">#17765</a> improves the runtime performance.</p>
+<p>PR <a rel="nofollow noreferrer external" href="https://github.com/bevyengine/bevy/pull/17765">#17765</a> improves the runtime performance.</p>
 <p>Thanks once again to @atlv24's work on wgpu/naga, we now have access to atomic operations on u64/u32 storage textures!</p>
 <p>Instead of using a plain GPU buffer to store our visbuffer, and buffer atomics to rasterize, we'll now use a R64Uint/R32Uint storage texture, and use texture atomics for rasterization.</p>
 <p>Things get a little bit faster, mostly due to cache behaviors for texture-like access patterns being better with actual textures instead of buffers.</p>
@@ -33,19 +33,18 @@
 <p>The real win however, was actually an entirely unrelated change I made in the same PR.</p>
 <p>After rasterizing to the visbuffer texture (packed depth + cluster ID + triangle ID), there are two fullscreen triangle render passes to read from the visbuffer and write depth to both an actual depth texture, and the "material depth" texture discussed in previous posts.</p>
 <p>Let's look at the material depth resolve shader:</p>
-<pre data-lang="rust" style="background-color:#002b36;color:#839496;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#859900;">@</span><span>fragment
-</span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">resolve_material_depth</span><span style="color:#657b83;">(</span><span style="color:#268bd2;">in</span><span>: FullscreenVertexOutput</span><span style="color:#657b83;">) </span><span>-&gt; </span><span style="color:#859900;">@builtin</span><span style="color:#657b83;">(</span><span>frag_depth</span><span style="color:#657b83;">) </span><span style="color:#268bd2;">f32 </span><span style="color:#657b83;">{
-</span><span>    </span><span style="color:#268bd2;">let</span><span> visibility </span><span style="color:#657b83;">=</span><span> textureLoad</span><span style="color:#657b83;">(</span><span>meshlet_visibility_buffer, vec2&lt;</span><span style="color:#268bd2;">u32</span><span>&gt;</span><span style="color:#657b83;">(</span><span style="color:#859900;">in</span><span>.position.xy</span><span style="color:#657b83;">))</span><span>.r;
-</span><span>
-</span><span>    </span><span style="color:#268bd2;">let</span><span> depth </span><span style="color:#657b83;">=</span><span> visibility </span><span style="color:#657b83;">&gt;&gt;</span><span> 32u;
-</span><span>    </span><span style="color:#859900;">if</span><span> depth </span><span style="color:#657b83;">==</span><span> 0lu </span><span style="color:#657b83;">{</span><span> discard; </span><span style="color:#657b83;">} </span><span style="color:#586e75;">// This line is new
-</span><span>
-</span><span>    </span><span style="color:#268bd2;">let</span><span> cluster_id </span><span style="color:#657b83;">= </span><span style="color:#268bd2;">u32</span><span style="color:#657b83;">(</span><span>visibility</span><span style="color:#657b83;">) &gt;&gt;</span><span> 7u;
-</span><span>    </span><span style="color:#268bd2;">let</span><span> instance_id </span><span style="color:#657b83;">=</span><span> meshlet_cluster_instance_ids</span><span style="color:#657b83;">[</span><span>cluster_id</span><span style="color:#657b83;">]</span><span>;
-</span><span>    </span><span style="color:#268bd2;">let</span><span> material_id </span><span style="color:#657b83;">=</span><span> meshlet_instance_material_ids</span><span style="color:#657b83;">[</span><span>instance_id</span><span style="color:#657b83;">]</span><span>;
-</span><span>    </span><span style="color:#859900;">return </span><span style="color:#268bd2;">f32</span><span style="color:#657b83;">(</span><span>material_id</span><span style="color:#657b83;">) / </span><span style="color:#6c71c4;">65535.0</span><span>;
-</span><span style="color:#657b83;">}
-</span></code></pre>
+<pre class="giallo" style="color: #839496; background-color: #002B36;" ><code data-lang="rust"><span class="giallo-l"><span style="color: #859900;">@</span><span style="color: #268BD2;">fragment</span></span>
+<span class="giallo-l"><span style="color: #859900;">fn</span><span style="color: #268BD2;"> resolve_material_depth</span><span>(</span><span style="color: #859900;">in:</span><span style="color: #CB4B16;"> FullscreenVertexOutput</span><span>)</span><span style="color: #859900;"> -&gt; @</span><span style="color: #268BD2;">builtin</span><span>(</span><span style="color: #268BD2;">frag_depth</span><span>)</span><span style="color: #CB4B16;"> f32</span><span> {</span></span>
+<span class="giallo-l"><span style="color: #93A1A1;font-weight: bold;">    let</span><span style="color: #268BD2;"> visibility</span><span style="color: #859900;"> =</span><span style="color: #268BD2;"> textureLoad</span><span>(</span><span style="color: #268BD2;">meshlet_visibility_buffer</span><span>,</span><span style="color: #268BD2;"> vec2</span><span>&lt;</span><span style="color: #CB4B16;">u32</span><span>&gt;(</span><span style="color: #859900;">in.</span><span>position</span><span style="color: #859900;">.</span><span>xy))</span><span style="color: #859900;">.</span><span>r;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #93A1A1;font-weight: bold;">    let</span><span style="color: #268BD2;"> depth</span><span style="color: #859900;"> =</span><span style="color: #268BD2;"> visibility</span><span style="color: #859900;"> &gt;&gt;</span><span style="color: #268BD2;"> 32u</span><span>;</span></span>
+<span class="giallo-l"><span style="color: #859900;">    if</span><span style="color: #268BD2;"> depth</span><span style="color: #859900;"> ==</span><span style="color: #268BD2;"> 0lu</span><span> {</span><span style="color: #268BD2;"> discard</span><span>; }</span><span style="color: #586E75;font-style: italic;"> // This line is new</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #93A1A1;font-weight: bold;">    let</span><span style="color: #268BD2;"> cluster_id</span><span style="color: #859900;"> =</span><span style="color: #268BD2;"> u32</span><span>(</span><span style="color: #268BD2;">visibility</span><span>)</span><span style="color: #859900;"> &gt;&gt;</span><span style="color: #268BD2;"> 7u</span><span>;</span></span>
+<span class="giallo-l"><span style="color: #93A1A1;font-weight: bold;">    let</span><span style="color: #268BD2;"> instance_id</span><span style="color: #859900;"> =</span><span style="color: #268BD2;"> meshlet_cluster_instance_ids</span><span>[</span><span style="color: #268BD2;">cluster_id</span><span>];</span></span>
+<span class="giallo-l"><span style="color: #93A1A1;font-weight: bold;">    let</span><span style="color: #268BD2;"> material_id</span><span style="color: #859900;"> =</span><span style="color: #268BD2;"> meshlet_instance_material_ids</span><span>[</span><span style="color: #268BD2;">instance_id</span><span>];</span></span>
+<span class="giallo-l"><span style="color: #859900;">    return</span><span style="color: #268BD2;"> f32</span><span>(</span><span style="color: #268BD2;">material_id</span><span>)</span><span style="color: #859900;"> /</span><span style="color: #D33682;"> 65535.0</span><span>;</span></span>
+<span class="giallo-l"><span>}</span></span></code></pre>
 <p>For pixels where depth is 0 (i.e. the background, i.e. no meshes covering that pixel), we don't need to write depth out. The textures are already cleared to zero by the render pass setup.</p>
 <p>Adding this single line to discard the background fragments doubled the performance of the resolve depth/material depth passes in the demo scene.</p>
 <h3 id="issues-with-clearing">Issues With Clearing<a class="zola-anchor" href="#issues-with-clearing" aria-label="Anchor link for: issues-with-clearing" style="visibility: hidden;"></a>
@@ -65,25 +64,24 @@
 <p>Option #1 is out since R64Uint/R32Uint textures don't support the <code>TextureUsages::RENDER_ATTACHMENT</code> bit, and of course as we've found out, option #2 is horribly slow.</p>
 <p>The <em>best</em> option would be to use vkClearColorImage to clear the texture, which should be a similar fast path in the driver to using vkCmdFillBuffer with zeros, but wgpu neither uses vkClearColorImage internally, nor exposes it to users.</p>
 <p>So instead I wrote a custom compute pass (and all the CPU-side boilerplate that that entails) to manually zero the texture, like so:</p>
-<pre data-lang="rust" style="background-color:#002b36;color:#839496;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#859900;">#</span><span>ifdef </span><span style="color:#cb4b16;">MESHLET_VISIBILITY_BUFFER_RASTER_PASS_OUTPUT
-</span><span style="color:#859900;">@group</span><span style="color:#657b83;">(</span><span style="color:#6c71c4;">0</span><span style="color:#657b83;">) </span><span style="color:#859900;">@binding</span><span style="color:#657b83;">(</span><span style="color:#6c71c4;">0</span><span style="color:#657b83;">)</span><span> var meshlet_visibility_buffer: texture_storage_2d&lt;r64uint, write&gt;;
-</span><span style="color:#859900;">#else
-</span><span style="color:#859900;">@group</span><span style="color:#657b83;">(</span><span style="color:#6c71c4;">0</span><span style="color:#657b83;">) </span><span style="color:#859900;">@binding</span><span style="color:#657b83;">(</span><span style="color:#6c71c4;">0</span><span style="color:#657b83;">)</span><span> var meshlet_visibility_buffer: texture_storage_2d&lt;r32uint, write&gt;;
-</span><span style="color:#859900;">#</span><span>endif
-</span><span>var&lt;push_constant&gt; view_size: vec2&lt;</span><span style="color:#268bd2;">u32</span><span>&gt;;
-</span><span>
-</span><span style="color:#859900;">@</span><span>compute
-</span><span style="color:#859900;">@workgroup_size</span><span style="color:#657b83;">(</span><span style="color:#6c71c4;">16</span><span>, </span><span style="color:#6c71c4;">16</span><span>, </span><span style="color:#6c71c4;">1</span><span style="color:#657b83;">)
-</span><span style="color:#268bd2;">fn </span><span style="color:#b58900;">clear_visibility_buffer</span><span style="color:#657b83;">(</span><span>@builtin</span><span style="color:#657b83;">(</span><span style="color:#268bd2;">global_invocation_id</span><span style="color:#657b83;">) </span><span style="color:#268bd2;">global_id</span><span>: vec3&lt;</span><span style="color:#268bd2;">u32</span><span>&gt;</span><span style="color:#657b83;">) {
-</span><span>    </span><span style="color:#859900;">if any</span><span style="color:#657b83;">(</span><span>global_id.xy </span><span style="color:#657b83;">&gt;=</span><span> view_size</span><span style="color:#657b83;">) { </span><span style="color:#859900;">return</span><span>; </span><span style="color:#657b83;">}
-</span><span>
-</span><span style="color:#859900;">#</span><span>ifdef </span><span style="color:#cb4b16;">MESHLET_VISIBILITY_BUFFER_RASTER_PASS_OUTPUT
-</span><span>    textureStore</span><span style="color:#657b83;">(</span><span>meshlet_visibility_buffer, global_id.xy, </span><span style="color:#859900;">vec4</span><span style="color:#657b83;">(</span><span>0lu</span><span style="color:#657b83;">))</span><span>;
-</span><span style="color:#859900;">#else
-</span><span>    textureStore</span><span style="color:#657b83;">(</span><span>meshlet_visibility_buffer, global_id.xy, </span><span style="color:#859900;">vec4</span><span style="color:#657b83;">(</span><span>0u</span><span style="color:#657b83;">))</span><span>;
-</span><span style="color:#859900;">#</span><span>endif
-</span><span style="color:#657b83;">}
-</span></code></pre>
+<pre class="giallo" style="color: #839496; background-color: #002B36;" ><code data-lang="rust"><span class="giallo-l"><span>#</span><span style="color: #268BD2;">ifdef</span><span style="color: #CB4B16;"> MESHLET_VISIBILITY_BUFFER_RASTER_PASS_OUTPUT</span></span>
+<span class="giallo-l"><span style="color: #859900;">@</span><span style="color: #268BD2;">group</span><span>(</span><span style="color: #D33682;">0</span><span>)</span><span style="color: #859900;"> @</span><span style="color: #268BD2;">binding</span><span>(</span><span style="color: #D33682;">0</span><span>)</span><span style="color: #268BD2;"> var meshlet_visibility_buffer</span><span style="color: #859900;">:</span><span style="color: #268BD2;"> texture_storage_2d</span><span>&lt;</span><span style="color: #268BD2;">r64uint</span><span>,</span><span style="color: #268BD2;"> write</span><span>&gt;;</span></span>
+<span class="giallo-l"><span>#</span><span style="color: #859900;">else</span></span>
+<span class="giallo-l"><span style="color: #859900;">@</span><span style="color: #268BD2;">group</span><span>(</span><span style="color: #D33682;">0</span><span>)</span><span style="color: #859900;"> @</span><span style="color: #268BD2;">binding</span><span>(</span><span style="color: #D33682;">0</span><span>)</span><span style="color: #268BD2;"> var meshlet_visibility_buffer</span><span style="color: #859900;">:</span><span style="color: #268BD2;"> texture_storage_2d</span><span>&lt;</span><span style="color: #268BD2;">r32uint</span><span>,</span><span style="color: #268BD2;"> write</span><span>&gt;;</span></span>
+<span class="giallo-l"><span>#</span><span style="color: #268BD2;">endif</span></span>
+<span class="giallo-l"><span style="color: #268BD2;">var</span><span>&lt;</span><span style="color: #268BD2;">push_constant</span><span>&gt;</span><span style="color: #268BD2;"> view_size</span><span style="color: #859900;">:</span><span style="color: #268BD2;"> vec2</span><span>&lt;</span><span style="color: #CB4B16;">u32</span><span>&gt;;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #859900;">@</span><span style="color: #268BD2;">compute</span></span>
+<span class="giallo-l"><span style="color: #859900;">@</span><span style="color: #268BD2;">workgroup_size</span><span>(</span><span style="color: #D33682;">16</span><span>,</span><span style="color: #D33682;"> 16</span><span>,</span><span style="color: #D33682;"> 1</span><span>)</span></span>
+<span class="giallo-l"><span style="color: #859900;">fn</span><span style="color: #268BD2;"> clear_visibility_buffer</span><span>(</span><span style="color: #859900;">@</span><span style="color: #268BD2;">builtin</span><span>(</span><span style="color: #268BD2;">global_invocation_id</span><span>)</span><span style="color: #268BD2;"> global_id</span><span style="color: #859900;">:</span><span style="color: #268BD2;"> vec3</span><span>&lt;</span><span style="color: #CB4B16;">u32</span><span>&gt;) {</span></span>
+<span class="giallo-l"><span style="color: #859900;">    if</span><span style="color: #268BD2;"> any</span><span>(</span><span style="color: #268BD2;">global_id</span><span style="color: #859900;">.</span><span>xy </span><span style="color: #859900;">&gt;=</span><span style="color: #268BD2;"> view_size</span><span>) {</span><span style="color: #859900;"> return</span><span>; }</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>#</span><span style="color: #268BD2;">ifdef</span><span style="color: #CB4B16;"> MESHLET_VISIBILITY_BUFFER_RASTER_PASS_OUTPUT</span></span>
+<span class="giallo-l"><span style="color: #268BD2;">    textureStore</span><span>(</span><span style="color: #268BD2;">meshlet_visibility_buffer</span><span>,</span><span style="color: #268BD2;"> global_id</span><span style="color: #859900;">.</span><span>xy,</span><span style="color: #268BD2;"> vec4</span><span>(</span><span style="color: #268BD2;">0lu</span><span>));</span></span>
+<span class="giallo-l"><span>#</span><span style="color: #859900;">else</span></span>
+<span class="giallo-l"><span style="color: #268BD2;">    textureStore</span><span>(</span><span style="color: #268BD2;">meshlet_visibility_buffer</span><span>,</span><span style="color: #268BD2;"> global_id</span><span style="color: #859900;">.</span><span>xy,</span><span style="color: #268BD2;"> vec4</span><span>(</span><span style="color: #268BD2;">0u</span><span>));</span></span>
+<span class="giallo-l"><span>#</span><span style="color: #268BD2;">endif</span></span>
+<span class="giallo-l"><span>}</span></span></code></pre>
 <p>Still not as fast as vkClearColorImage likely is, but much faster than 0.68ms.</p>
 <h3 id="texture-atomic-results">Texture Atomic Results<a class="zola-anchor" href="#texture-atomic-results" aria-label="Anchor link for: texture-atomic-results" style="visibility: hidden;"></a>
 </h3>
@@ -97,7 +95,7 @@
 <h2 id="upcoming">Upcoming<a class="zola-anchor" href="#upcoming" aria-label="Anchor link for: upcoming" style="visibility: hidden;"></a>
 </h2>
 <p>And that's it for virtual geometry stuff I worked on during Bevy 0.16.</p>
-<p>In related but non-Bevy news, Nvidia revealed their Blackwell RTX 50 series GPUs, with some exciting <a rel="nofollow noreferrer" href="https://github.com/nvpro-samples/build_all?tab=readme-ov-file#mega-geometry">new meshlet/virtual geometry stuff</a>!</p>
+<p>In related but non-Bevy news, Nvidia revealed their Blackwell RTX 50 series GPUs, with some exciting <a rel="nofollow noreferrer external" href="https://github.com/nvpro-samples/build_all?tab=readme-ov-file#mega-geometry">new meshlet/virtual geometry stuff</a>!</p>
 <ul>
 <li>New raytracing APIs (not rasterization!) for meshlet-based acceleration structures (CLAS) that are cheaper to build
 <ul>
