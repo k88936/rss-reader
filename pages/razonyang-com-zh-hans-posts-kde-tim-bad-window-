@@ -1,0 +1,11 @@
+<p>在 KDE Plasma 桌面环境无法使用 TIM，提示：</p>
+
+ <blockquote
+ 
+ class="blockquote border-start ps-3 py-1 border-primary border-4">
+ <p>X Error of failed request: BadWindow (invalid Window parameter)<br>
+Major opcode of failed request: 20 (X_GetProperty)<br>
+Resource id in failed request: 0x0<br>
+Serial number of failed request: 10<br>
+Current serial number in output stream: 10</p>
+ </blockquote>

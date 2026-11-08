@@ -1,0 +1,20 @@
+<p>今天在安装一个<code>Python</code>模块&ndash;&gt;<code>pymysql</code>结果等待时间特别的长，最后超时失败啦，起初是以为是网络带宽问题，让IT调整后仍是失败，随后尝试查找国内的镜像，还有真人也遇到过相同的问题。镜像列表如下：</p>
+
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-0-1"><a class="lnlinks" href="#hl-0-1">1</a>
+</span><span class="lnt" id="hl-0-2"><a class="lnlinks" href="#hl-0-2">2</a>
+</span><span class="lnt" id="hl-0-3"><a class="lnlinks" href="#hl-0-3">3</a>
+</span><span class="lnt" id="hl-0-4"><a class="lnlinks" href="#hl-0-4">4</a>
+</span><span class="lnt" id="hl-0-5"><a class="lnlinks" href="#hl-0-5">5</a>
+</span><span class="lnt" id="hl-0-6"><a class="lnlinks" href="#hl-0-6">6</a>
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">https://pypi.douban.com/simple/ 豆瓣
+</span></span><span class="line"><span class="cl">http://mirrors.aliyun.com/pypi/simple/ 阿里
+</span></span><span class="line"><span class="cl">http://pypi.hustunique.com/simple/ 华中理工大学
+</span></span><span class="line"><span class="cl">http://pypi.sdutlinux.org/simple/ 山东理工大学
+</span></span><span class="line"><span class="cl">http://pypi.mirrors.ustc.edu.cn/simple/ 中国科学技术大学
+</span></span><span class="line"><span class="cl">https://pypi.tuna.tsinghua.edu.cn/simple 清华</span></span></code></pre></td></tr></table>
+</div>
+</div>

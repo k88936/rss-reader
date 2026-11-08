@@ -1,0 +1,114 @@
+<p>I recently came across a <a href="https://www.robertcaro.org/post/an-interview-with-robert-caro-and-kurt-vonnegut">link to an interview between Robert Caro and Kurt Vonnegut</a> conducted in 1999. I knew and loved Vonnegut, I had only vaguely heard of Caro.</p>
+<p>Caro, as Vonnegut writes,</p>
+<blockquote>
+<p>Caro is the author of magisterial biographies of Robert Moses and Lyndon Johnson, and the interview promised to be most interesting.</p>
+</blockquote>
+<p>He has spent most of his life studying how power in American politics works through the lives of two men, the New York civic planner Robert Moses in his book &ldquo;The Power Broker&rdquo;, and Amerian president Lyndon B. Johnson in a series of four volumes that has taken him since the 1970s to write and that he has still not completed yet. He wrote about how he decided to examine power,</p>
+<blockquote>
+<p>But I saw something else–or, rather, I saw what I didn’t see, had never seen. I was a young reporter, and Moses was then a great figure. But no one really understood where, what his power came from, okay? So you’d sit in the Newsday city room and you’d type, “City Park Commissioner Robert Moses” and you’d say, to yourself, “What does that have to do with the fact that he’s building the Long Island Expressway”. Or you’d type, “Triboro Bridge Authority Chairman Robert Moses” and you’d think, “what does that have to do with the fact that he’s building these great power dams up at Niagara and on the St. Lawrence river?” And what was a public authority anyway? There was at this time not one examination in any adequate depth, not one book or magazine article on the public authority as a source of political power. We just thought that a public authority was something that decided to build a bridge or a tunnel. It floated the bonds to build the bridge and it collected the tolls until the bonds were paid off and then it went out of existence. Yet somehow Moses had used these authorities to stay in power for almost half a century. So you had to start on square one and try to find out how they had become a source of political power–of vast political power, really.</p>
+</blockquote>
+<p>And I became intrigued just as much about the books as Caro the writer. I recently finished <a href="https://matthewkudija.com/reading-notes/2021-10-09-Working.html">Caro&rsquo;s &ldquo;Working&rdquo;</a>, which is all about how he prepared for and worked on writing these biographies, and which I strongly recommend as a read to anyone, regardless of their interest in American politics per se, but because the book so clearly shows how a consummate proffessional does work.</p>
+<p>Early in the book he describes how <a href="https://edgemagonline.com/article/robert-a-caro/">his first assignment</a> involved sitting overnight in a Federal Aviation Authority office.</p>
+<blockquote>
+<p>Well, the FAA wanted to give most of the land to real estate developers and keep part of it as a general aviation airport—which means a corporate airport—so all these big companies could have corporate jets and fly into the middle of Nassau County. Newsday was trying to prove that influence was being used by the developers and big corporations on the FAA, but the paper wasn’t having success in doing that. So I was in the city room on a Saturday afternoon and the phone rings. It’s a guy from the FAA. He said, “I know that what you’re doing is right, and if you want to be able to prove it, I’ll let you. Just send someone down here…there’s no one here but me.”</p>
+</blockquote>
+<p>After he wrote that article, he got promoted, and his <a href="https://jcbookreviews.wordpress.com/2019/09/04/working/">first editor told him</a>, &ldquo;Turn every page. Never assume anything. Turn every goddamned page, &quot; a philosophy that struck with him for the rest of his working life.</p>
+<p>There were two things that really struck me about Caro that are extremely applicable to development work. The first is that his success and reputation as a reporter and a biographer comes from constantly asking &ldquo;why&rdquo; and really trying to find a root cause. He writes that if he doesn&rsquo;t understand how to clearly explain something, it means he hasn&rsquo;t looked deeply enough at that thing.</p>
+<p>Caro, is, essentially, debugging history. I&rsquo;ve been thinking about how important it is to have context on root causes.</p>
+<p>In the age of <a href="https://vickiboykis.com/2022/12/05/the-cloudy-layers-of-modern-day-programming/">cloud development</a> and <a href="https://vickiboykis.com/2024/05/20/dont-worry-about-llms/">LLMs</a> as part of traditional engineering systems, this becomes particularly important for developers, although it&rsquo;s not specific to these environments.</p>
+<p>For example, a few weeks ago, <a href="https://www.linkedin.com/posts/edo-liberty-4380164_im-confused-shouldnt-this-be-2-activity-7237407856994496513-0JNj">this code snippet came across my LinkedIn feed, which I am using more and more these days unfortunately, and I was instantly nerd-sniped</a></p>
+<img width="559" alt="Screenshot 2024-09-13 at 7 02 12 PM" src="https://raw.githubusercontent.com/veekaybee/veekaybee.github.io/refs/heads/main/static/42b38e78-6696-4501-b68a-c6d9bfc369bf.png">
+<p>This made no sense to me, so my first approach was to look at it in iPython.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>In [<span style="color:#ae81ff">1</span>]: a <span style="color:#f92672">=</span> [<span style="color:#66d9ef">lambda</span> : i <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">10</span>)]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>In [<span style="color:#ae81ff">3</span>]: a[<span style="color:#ae81ff">2</span>]()
+</span></span><span style="display:flex;"><span>Out[<span style="color:#ae81ff">3</span>]: <span style="color:#ae81ff">9</span>
+</span></span></code></pre></div><p>Even though this is the Python standard library, there are still several levels of confusion happening.</p>
+<p>There are actually three puzzles here:</p>
+<ol>
+<li>How Python lambdas work</li>
+<li>How list comprehensions work</li>
+<li>How the combination of indexing plus a function call in Python <code>a[2]()</code></li>
+</ol>
+<p>First, let&rsquo;s take a look at <a href="https://docs.python.org/3/glossary.html#term-list-comprehension">list comprehensions.</a> A fairly standard Python feature, they allow us to compress methods into a method that acts upon elements in a sequence and returns a list data structure.</p>
+<p>Early on in Python history, <a href="http://python-history.blogspot.com/2009/04/origins-of-pythons-functional-features.html">as creator Guido van Rossum writes</a>, people coming from functional languages were used to built-in functionality that allowed users to map over functions and return a new list:</p>
+<blockquote>
+<p>A common operation on lists was that of mapping a function to each of the elements of a list and creating a new list. For example:</p>
+</blockquote>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span> <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">square</span>(x):
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">return</span> x<span style="color:#f92672">*</span>x
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> vals <span style="color:#f92672">=</span> [<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">4</span>]
+</span></span><span style="display:flex;"><span> newvals <span style="color:#f92672">=</span> []
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">for</span> v <span style="color:#f92672">in</span> vals:
+</span></span><span style="display:flex;"><span> newvals<span style="color:#f92672">.</span>append(square(v))
+</span></span></code></pre></div><blockquote>
+<p>In functional languages such as Lisp and Scheme, operations such as this were provided as built-in functions of the language. A subtle aspect of the above code is that many people didn&rsquo;t like the fact that you to define the operation that you were applying to the list elements as a completely separate function.</p>
+</blockquote>
+<p>This led to the rise of both <a href="http://python-history.blogspot.com/2010/06/from-list-comprehensions-to-generator.html">list comprehensions</a> and lambdas as first-class language features.</p>
+<p>A list comprehension compresses a method into a one-liner by using formal notations from mathematics set theory:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>In [<span style="color:#ae81ff">16</span>]: hello_list <span style="color:#f92672">=</span> []
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>In [<span style="color:#ae81ff">17</span>]: <span style="color:#66d9ef">for</span> x <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">10</span>):
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">...</span>: hello_list<span style="color:#f92672">.</span>append(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;Hello </span><span style="color:#e6db74">{</span>x<span style="color:#e6db74">}</span><span style="color:#e6db74">!&#34;</span>)
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">...</span>:
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>In [<span style="color:#ae81ff">18</span>]: hello_list
+</span></span><span style="display:flex;"><span>Out[<span style="color:#ae81ff">18</span>]:
+</span></span><span style="display:flex;"><span>[<span style="color:#e6db74">&#39;Hello 0!&#39;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#39;Hello 1!&#39;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#39;Hello 2!&#39;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#39;Hello 3!&#39;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#39;Hello 4!&#39;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#39;Hello 5!&#39;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#39;Hello 6!&#39;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#39;Hello 7!&#39;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#39;Hello 8!&#39;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#39;Hello 9!&#39;</span>]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>hello_list <span style="color:#f92672">=</span> [<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;Hello </span><span style="color:#e6db74">{</span>x<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span> <span style="color:#66d9ef">for</span> x <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">10</span>)]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>In [<span style="color:#ae81ff">20</span>]: hello_list <span style="color:#f92672">=</span> [<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;Hello </span><span style="color:#e6db74">{</span>x<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span> <span style="color:#66d9ef">for</span> x <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">10</span>)]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>In [<span style="color:#ae81ff">21</span>]: hello_list
+</span></span><span style="display:flex;"><span>Out[<span style="color:#ae81ff">21</span>]:
+</span></span><span style="display:flex;"><span>[<span style="color:#e6db74">&#39;Hello 0!&#39;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#39;Hello 1!&#39;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#39;Hello 2!&#39;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#39;Hello 3!&#39;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#39;Hello 4!&#39;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#39;Hello 5!&#39;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#39;Hello 6!&#39;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#39;Hello 7!&#39;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#39;Hello 8!&#39;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#39;Hello 9!&#39;</span>]
+</span></span></code></pre></div><p>Given that list comprehensions turn any generator expression into a list of elements, how do they work with lambdas?</p>
+<p>Lambdas are another functional feature added to Python that create an anonymously-named function that can be used as throwaway one-lines.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>In [<span style="color:#ae81ff">30</span>]: x<span style="color:#f92672">=</span><span style="color:#66d9ef">lambda</span> x: x<span style="color:#f92672">+</span><span style="color:#ae81ff">3</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>In [<span style="color:#ae81ff">31</span>]: x(<span style="color:#ae81ff">7</span>)
+</span></span><span style="display:flex;"><span>Out[<span style="color:#ae81ff">31</span>]: <span style="color:#ae81ff">10</span>
+</span></span></code></pre></div><p>You can also call it immediately without binding to a variable:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>In [<span style="color:#ae81ff">35</span>]: (<span style="color:#66d9ef">lambda</span> x: x<span style="color:#f92672">+</span><span style="color:#ae81ff">3</span>)(<span style="color:#ae81ff">5</span>)
+</span></span><span style="display:flex;"><span>Out[<span style="color:#ae81ff">35</span>]: <span style="color:#ae81ff">8</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>In [<span style="color:#ae81ff">37</span>]: (<span style="color:#66d9ef">lambda</span> x: print(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;hi </span><span style="color:#e6db74">{</span>x<span style="color:#e6db74">}</span><span style="color:#e6db74">!&#34;</span>))(<span style="color:#e6db74">&#34;Vicki&#34;</span>)
+</span></span><span style="display:flex;"><span>hi Vicki<span style="color:#960050;background-color:#1e0010">!</span>
+</span></span></code></pre></div><p>The properties of a lambda are such that <a href="https://dbader.org/blog/python-lambda-functions">they&rsquo;re bound to a single expression</a>, i.e. you can&rsquo;t return from within a lambda, because lambdas include return statements by default.</p>
+<p>Another important aspect of lambdas is scope.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>In [<span style="color:#ae81ff">26</span>]: <span style="color:#66d9ef">lambda</span>: [<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;Hello </span><span style="color:#e6db74">{</span>x<span style="color:#e6db74">}</span><span style="color:#e6db74">!&#34;</span> <span style="color:#66d9ef">for</span> x <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">10</span>)]
+</span></span><span style="display:flex;"><span>Out[<span style="color:#ae81ff">26</span>]: <span style="color:#f92672">&lt;</span>function __main__<span style="color:#f92672">.&lt;</span><span style="color:#66d9ef">lambda</span><span style="color:#f92672">&gt;</span>()<span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>(<span style="color:#66d9ef">lambda</span>: [<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;Hello </span><span style="color:#e6db74">{</span>x<span style="color:#e6db74">}</span><span style="color:#e6db74">!&#34;</span> <span style="color:#66d9ef">for</span> x <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">10</span>)])()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>[<span style="color:#e6db74">&#39;Hello 0!&#39;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#39;Hello 1!&#39;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#39;Hello 2!&#39;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#39;Hello 3!&#39;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#39;Hello 4!&#39;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#39;Hello 5!&#39;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#39;Hello 6!&#39;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#39;Hello 7!&#39;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#39;Hello 8!&#39;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#39;Hello 9!&#39;</span>]
+</span></span></code></pre></div>

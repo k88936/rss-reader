@@ -1,0 +1,4 @@
+<p><strong>Go</strong> 开发不像 <strong>PHP</strong>（解释型语言） 那样可以修改代码实时生效，而需要重新编译，如果每次手动执行肯定会降低开发速度。本文将介绍一款开发工具 <a
+ href="https://github.com/cortesi/modd"
+ 
+ target="_blank" rel="noopener noreferrer"><strong>Modd</strong></a> 来解决这一问题，它可以监控文件修改并重启服务进程。</p>

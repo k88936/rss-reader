@@ -1,0 +1,6 @@
+<h2 id="背景">背景</h2>
+<p>很久之前，我发现 Hugo 对 <code>zh-cn</code>、<code>zh-tw</code>、<code>zh-hk</code> 等语言代码无法正常本地化，而提交了一个<a
+ href="https://github.com/gohugoio/hugo/issues/9109"
+ 
+ target="_blank" rel="noopener noreferrer">特性请求</a>，不过几年过去了，并没有解决的意向。</p>
+<p>当你需要本地化功能，笔者建议使用 <code>zh-hans</code> 和 <code>zh-hant</code> 作为语言代码。</p>

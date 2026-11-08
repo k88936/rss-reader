@@ -1,0 +1,8 @@
+<p>通过<code>Kylin</code>自带的简单图表展示来进行数据分析的你是否觉得还不够过瘾？想在酷炫的仪表盘上进行数据分析？今天就给大家带来一款上手较快，简单易用的数据驱动式Notebook工具——<code>Apache Zeppelin</code>。将<code>Zeppelin</code>与Kylin 集成后，你就可以通过它来定制你的数据可视化报告，更直观地体验<code>Kylin</code>的分析“神”速啦～</p>
+<p>与<code>Kylin</code>一样， Apache<code>Zeppelin</code>也是 Apache 软件基金会的顶级项目，是一款基于Web的Notebook（类似于IPython的Notebook），支持友好交互式的数据分析体验，原生就支持Spark、Scala、SQL、Shell、Markdown等编程或脚本语言，可以访问其官方网站
+<a href="https://zeppelin.apache.org" title="Apache Zeppelin" rel="noopener external nofollow noreferrer" target="_blank" class=" exturl">
+ Apache Zeppelin
+ 
+ <i class="fa fa-external-link-alt"></i>
+ 
+</a>了解更多的信息。</p>

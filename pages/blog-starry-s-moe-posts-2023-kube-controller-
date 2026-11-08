@@ -1,0 +1,4 @@
+<p>Controller 对初学着来说有那么亿点点抽象，虽然网络上能找到很多有关 Kubernetes Controller 的讲解，但是 Kubernetes 的学习过程往往是一个离散的而不是连续的过程。如果想弄懂 Controller 还是有蛮高门槛的，不要想着看完 Kubernetes 的文档，速成了 Kubernetes 的基本知识就去尝试写 Controller，这种操作就好比刚过完新手教程就去打高难副本，尽管能仿着 <code>sample-controller</code> 写一个能“跑”的 Controller，但仅仅只能做到能“跑”的程度……</p>
+<blockquote>
+<p>与标题有些不同，这篇博客主要讲的是萌新如何上手编写 Controller，如果你是 Kubernetes 初学者，希望这篇博客能帮助你建立编写 Controller 的学习曲线。</p>
+</blockquote>

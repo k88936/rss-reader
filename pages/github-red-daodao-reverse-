@@ -1,0 +1,227 @@
+<p>第一次接触到「叨叨记账」这个 App 是在今年年初。</p>
+<p>当时我还在疯狂喜欢伊蕾娜（虽然现在也是），偶然跟室友聊起来说如果有个类似微软小冰的 AI 跟我聊天就好了。室友便给我安利了「叨叨记账」，说上面有一堆二次元角色可以选择，由用户贡献符合角色性格的语料，通过聊天的方式进行记账。</p>
+<p>刚开始的几天我对这个 App 爱不释手，出去吃饭买完单后，马上就是打开叨叨记账记上一笔，对着屏幕上伊蕾娜给我回应傻笑。</p>
+<p>后面到四月份的时候，个人压力比较大，记账的频率逐渐低了下来，但我还是会打开叨叨记账给伊蕾娜发几句抱怨，收获几句伊蕾娜的安慰。说来奇怪，我明明知道这一切都是预设好的语料，但心中还是感觉好受很多。</p>
+<p><img src="https://github.red/images/2021/09/IMG_3326.png" alt=""></p>
+<h2 id="攒钱攒钱攒钱">攒钱！攒钱！攒钱！</h2>
+<p>年初使用叨叨记账记录自己每天的开销，同时自己也把每个月的工资存下来一部分作为备用。好巧不巧，四月底的时候我的 MacBook Pro 突然无法开机了，赶紧预约了苹果天才吧，经检查发现是主板坏了，需要返厂换主板。
+但当时我手头恰好有一个只剩下 2 天的 DDL，电脑坏了意味着之前的进度全都没了。一切又要从头开始。情急之下我决定在 Apple Store 花钱买了台新的 MacBook Pro，之前几个月攒下的钱一瞬间全都花完了。
+从那之后，我再也没有打开叨叨记账这个 App。</p>
+<blockquote>
+<p>“因为我是个很极端的人，有钱就会挥霍，没钱就会回到朴素的生活。”</p></blockquote>
+<p>以前我是很信奉如上所说的这句话，在 4 月底那次买完新电脑钱包被掏空后，我花了一下午时间挖了个中危的洞拿了一千块回血——然后第二天就跑去西湖苹果店买新出的 AirTag 了。😋</p>
+<p>暑假回家的这几天，有天晚上肚子饿偷偷叫了个外卖，没想到被我爸发现了。😅 他又苦口婆心地叮嘱我要注意开销，花钱不能大手大脚，要继续攒钱为以后做准备。虽然话还是那些老话，但结合 4 月底的惨痛经历，我觉得确实不该这样下去了，钱这东西，还是能省就省。</p>
+<p>所以&hellip;&hellip; 我在时隔大半年后又打开了叨叨记账。</p>
+<h2 id="我想要更定制化的功能">我想要更定制化的功能！</h2>
+<p>叨叨记账对于每一笔开销，只有一个很简单的按月统计展示个饼图的功能。我想要能够根据每个月的开销情况，给我规划出一个至下次发工资前，我平均每天的开销上限可以是多少，推荐的金额是多少，攒下了多少等等&hellip;&hellip;</p>
+<p>这样我就能知道当月到今天为止我是否还可以偶尔晚上点一顿烧烤或奶茶；如果我有想买的东西，我要如何降低每天的开销来凑出这么多钱。</p>
+<p>综上所述，我需要基于叨叨记账的记账数据扩展它的功能。经过前期的信息搜集，我发现这款产品仅支持移动端。那话不多说，开干！</p>
+<h2 id="简简单单抓个包">简简单单抓个包</h2>
+<p>iPhone 上装好叨叨记账，Wi-Fi 配置好代理，打开 Charles 简简单单抓个包。</p>
+<p><img src="https://github.red/images/2021/09/daodao_charles_01.png" alt=""></p>
+<p>请求 Query 里几个可能要想办法获得的参数有 <code>access_token</code> 和 <code>sign</code>。猜测 <code>access_token</code> 是登录接口返回的凭证，而 <code>sign</code> 则是对请求体的签名。</p>
+<p>那么我们再抓一下登录接口 <code>/api/login</code>：</p>
+<p><img src="https://github.red/images/2021/09/daodao_charles_02.png" alt=""></p>
+<p>可以看出是一个类似 OAuth 的验证方式，<code>address</code> 为登录的手机号，<code>password</code> 为密码，<code>nonce</code> 是为了签名所需要的随机字符串。返回 <code>access_token</code> 用于接口鉴权，其后的 <code>refresh_token</code> 猜测是用来刷新 <code>access_token</code>。</p>
+<p>我尝试重放这个请求，接口返回 <code>验签失败：签名已过期</code>，说明请求参数中的时间戳也被用于了签名当中，后端会校验该时间戳与请求时间是否相差过大。</p>
+<p>那么接下来的问题就是这个 <code>sign</code> 签名该如何获得了，抓包是看不出啥了，Web 手只能硬着头皮逆了。</p>
+<h2 id="简简单单三朵金花">简简单单三朵金花</h2>
+<p>从叨叨记账官网下载到了 Android 的 APK 包，解压后发现五个 dex 文件。先试着跑一手 <code>dex2jar</code> 转一手 jar。没想到真成了！还好没加壳。😆</p>
+<p>五个 jar 包拿 jd-gui 打开。从上面的登录请求中，找一个特殊的参数 <code>latitude</code> 或 <code>longitude</code> 全局搜索字符串。这俩是请求接口时顺便向后端上报设备经纬度定位的参数，一般来说不大会在请求的其他地方出现。</p>
+<p>事实上叨叨记账还引用了高德地图的 SDK，所以搜索结果其实还是有干扰的。排除调形如 <code>com.amap.*</code> 的包名，在 <code>classes3.dex</code> 的 <code>com.pengda.mobile.hhjz.b</code> 下，找到了这些请求参数。</p>
+<p>我们直接看最关心的 <code>sign</code> 参数是如何生成的：</p>
+<p><img src="https://github.red/images/2021/09/daodao-jdgui-sign.png" alt=""></p>
+<p>内层的 <code>a</code> 方法接收两个参数：<code>str1</code> 与 <code>str4</code>，<code>str1</code> 就是上面构造出的 <code>nonce</code> 参数。见它这 <code>nonce</code> 参数又是 UUID 又是时间戳的，后面发现确实只需要一个随机的字符串就行。第二个参数 <code>str4</code> 就是最上方获得的当前毫秒时间戳。
+这两个参数都没问题，我们来看内层 <code>a</code> 方法的定义：</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#ff7b72">private</span><span style="color:#6e7681"> </span>ArrayList<span style="color:#ff7b72;font-weight:bold">&lt;</span>Sign<span style="color:#ff7b72;font-weight:bold">&gt;</span><span style="color:#6e7681"> </span><span style="color:#d2a8ff;font-weight:bold">a</span>(String<span style="color:#6e7681"> </span>paramString1,<span style="color:#6e7681"> </span>String<span style="color:#6e7681"> </span>paramString2)<span style="color:#6e7681"> </span>{<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>ArrayList<span style="color:#ff7b72;font-weight:bold">&lt;</span>Sign<span style="color:#ff7b72;font-weight:bold">&gt;</span><span style="color:#6e7681"> </span>arrayList<span style="color:#6e7681"> </span><span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#6e7681"> </span><span style="color:#ff7b72">new</span><span style="color:#6e7681"> </span>ArrayList();<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>Sign<span style="color:#6e7681"> </span>sign2<span style="color:#6e7681"> </span><span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#6e7681"> </span><span style="color:#ff7b72">new</span><span style="color:#6e7681"> </span>Sign();<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>sign2.setKey(<span style="color:#a5d6ff">&#34;nonce&#34;</span>);<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>sign2.setValue(paramString1);<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>Sign<span style="color:#6e7681"> </span>sign1<span style="color:#6e7681"> </span><span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#6e7681"> </span><span style="color:#ff7b72">new</span><span style="color:#6e7681"> </span>Sign();<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>sign1.setKey(<span style="color:#a5d6ff">&#34;timestamp&#34;</span>);<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>sign1.setValue(paramString2);<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>arrayList.add(sign2);<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>arrayList.add(sign1);<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span><span style="color:#ff7b72">return</span><span style="color:#6e7681"> </span>arrayList;<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"></span>}<span style="color:#6e7681">
+</span></span></span></code></pre></div><p>十分的简单，仅仅只是把随机字符串和毫秒时间戳分别以 key 为 <code>nonce</code> 和 <code>timestamp</code> 放到了 ArrayList 里。</p>
+<p>返回 ArrayList 传入外层的 <code>a</code> 方法。这是一个静态方法，其中代码中调用 <code>v.a</code> 是为了输出调试日志。我们将这部分代码，连同一些 StringBuilder 构造日志字符串的代码全部删掉，简化后的代码如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#ff7b72">public</span><span style="color:#6e7681"> </span><span style="color:#ff7b72">static</span><span style="color:#6e7681"> </span>String<span style="color:#6e7681"> </span><span style="color:#d2a8ff;font-weight:bold">a</span>(ArrayList<span style="color:#ff7b72;font-weight:bold">&lt;</span>Sign<span style="color:#ff7b72;font-weight:bold">&gt;</span><span style="color:#6e7681"> </span>paramArrayList)<span style="color:#6e7681"> </span>{<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>Sign<span style="color:#6e7681"> </span>sign<span style="color:#6e7681"> </span><span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#6e7681"> </span><span style="color:#ff7b72">new</span><span style="color:#6e7681"> </span>Sign();<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>sign.setKey(<span style="color:#a5d6ff">&#34;appSercet&#34;</span>);<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>sign.setValue(<span style="color:#a5d6ff">&#34;853a0bb675aa143e6fa2dc607d55a9bb&#34;</span>);<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>paramArrayList.add(sign);<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>Collections.sort(paramArrayList,<span style="color:#6e7681"> </span><span style="color:#ff7b72">new</span><span style="color:#6e7681"> </span>q());<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>StringBuilder<span style="color:#6e7681"> </span>stringBuilder3<span style="color:#6e7681"> </span><span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#6e7681"> </span><span style="color:#ff7b72">new</span><span style="color:#6e7681"> </span>StringBuilder();<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>Local<span style="color:#6e7681"> </span>local<span style="color:#6e7681"> </span><span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#6e7681"> </span><span style="color:#ff7b72">new</span><span style="color:#6e7681"> </span>Local();<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span><span style="color:#ff7b72">try</span><span style="color:#6e7681"> </span>{<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span><span style="color:#ff7b72">byte</span><span style="color:#ff7b72;font-weight:bold">[]</span><span style="color:#6e7681"> </span>arrayOfByte<span style="color:#6e7681"> </span><span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#6e7681"> </span>local.code(paramArrayList,<span style="color:#6e7681"> </span>i);<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span><span style="color:#ff7b72">int</span><span style="color:#6e7681"> </span>j<span style="color:#6e7681"> </span><span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#6e7681"> </span>arrayOfByte.length;<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span><span style="color:#ff7b72">for</span><span style="color:#6e7681"> </span>(i<span style="color:#6e7681"> </span><span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#6e7681"> </span>0;<span style="color:#6e7681"> </span>i<span style="color:#6e7681"> </span><span style="color:#ff7b72;font-weight:bold">&lt;</span><span style="color:#6e7681"> </span>j;<span style="color:#6e7681"> </span>i<span style="color:#ff7b72;font-weight:bold">++</span>)<span style="color:#6e7681"> </span>{<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>String<span style="color:#6e7681"> </span>str2<span style="color:#6e7681"> </span><span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#6e7681"> </span>Integer.toHexString(arrayOfByte<span style="color:#ff7b72;font-weight:bold">[</span>i<span style="color:#ff7b72;font-weight:bold">]</span><span style="color:#6e7681"> </span><span style="color:#ff7b72;font-weight:bold">&amp;</span><span style="color:#6e7681"> </span>0xFF);<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>String<span style="color:#6e7681"> </span>str1<span style="color:#6e7681"> </span><span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#6e7681"> </span>str2;<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span><span style="color:#ff7b72">if</span><span style="color:#6e7681"> </span>(str2.length()<span style="color:#6e7681"> </span><span style="color:#ff7b72;font-weight:bold">==</span><span style="color:#6e7681"> </span>1)<span style="color:#6e7681"> </span>{<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>StringBuilder<span style="color:#6e7681"> </span>stringBuilder4<span style="color:#6e7681"> </span><span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#6e7681"> </span><span style="color:#ff7b72">new</span><span style="color:#6e7681"> </span>StringBuilder();<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>stringBuilder4.append(<span style="color:#a5d6ff">&#34;0&#34;</span>);<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>stringBuilder4.append(str2);<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>str1<span style="color:#6e7681"> </span><span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#6e7681"> </span>stringBuilder4.toString();<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>}<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>stringBuilder3.append(str1);<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>}<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>}<span style="color:#6e7681"> </span><span style="color:#ff7b72">catch</span><span style="color:#6e7681"> </span>(Exception<span style="color:#6e7681"> </span>exception)<span style="color:#6e7681"> </span>{<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>}<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span><span style="color:#ff7b72">return</span><span style="color:#6e7681"> </span>stringBuilder3.toString();<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"></span>}<span style="color:#6e7681">
+</span></span></span></code></pre></div><p>这个 <code>Sign</code> 类也只是实现了一个简单的 getter 和 setter，只是在 <code>setValue</code> 的时候会对传入的参数进行 URL 编码。
+代码中将 <code>appSercet</code> 拼入了上面传入的 ArrayList 中，并对 ArrayList 按键名进行了排序。</p>
+<p>后面事情就变得复杂起来了&hellip;&hellip;
+<code>Local local = new Local();</code> 实例化了 <code>Local</code> 类并调用了其 <code>code</code> 方法。<code>Local</code> 类是什么呢？是引入的一个 .so 库，我直接心肺停止。😫</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#ff7b72">public</span><span style="color:#6e7681"> </span><span style="color:#ff7b72">class</span> <span style="color:#f0883e;font-weight:bold">Local</span><span style="color:#6e7681"> </span>{<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span><span style="color:#ff7b72">static</span><span style="color:#6e7681"> </span>{<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>System.loadLibrary(<span style="color:#a5d6ff">&#34;native-lib&#34;</span>);<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>}<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"></span><span style="color:#ff7b72">public</span><span style="color:#6e7681"> </span><span style="color:#ff7b72">native</span><span style="color:#6e7681"> </span><span style="color:#ff7b72">byte</span><span style="color:#ff7b72;font-weight:bold">[]</span><span style="color:#6e7681"> </span><span style="color:#d2a8ff;font-weight:bold">code</span>(ArrayList<span style="color:#ff7b72;font-weight:bold">&lt;</span>Sign<span style="color:#ff7b72;font-weight:bold">&gt;</span><span style="color:#6e7681"> </span>paramArrayList,<span style="color:#6e7681"> </span><span style="color:#ff7b72">int</span><span style="color:#6e7681"> </span>paramInt)<span style="color:#6e7681"> </span><span style="color:#ff7b72">throws</span><span style="color:#6e7681"> </span>IndexOutOfBoundsException;<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"></span>}<span style="color:#6e7681">
+</span></span></span></code></pre></div><p>没办法了，硬着头皮上吧，当时说实话我心里也没底。</p>
+<h2 id="简简单单逆个-so大概">简简单单逆个 so（大概？</h2>
+<p>从解压的 APK 下找到 <code>lib/armeabi-v7a/libnative-lib.so</code>，拖进 IDA 里。</p>
+<p>从左侧的函数列表里找到 <code>Java_com_pengda_mobile_hhjz_encrypt_Local_code</code>，这就是我们 <code>Local</code> 类的 <code>code</code> 方法。<strong>祭出我唯一会的 F5 大法！</strong></p>
+<p><img src="https://github.red/images/2021/09/daodao-ida-f5.png" alt=""></p>
+<p>下面的 C 代码中有很多乱七八糟的强制类型转换，右键 <code>Hide casts</code> 隐藏掉它们。
+然后我们来还原 JNI 的函数名。查资料发现有人说需要手动导入 jni.h 头文件，但又有人说其实 IDA 现在不需要了。</p>
+<p><img src="https://github.red/images/2021/09/daodao-ida-jni-before.png" alt="">
+可以看到 JNI 的指针入参 <code>a1</code> 被赋值给了变量 <code>v5</code>。选中 <code>v5</code>，按下 <code>Y</code>，输入 <code>JNIEnv*</code>，瞬间神清气爽！</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span>v30 <span style="color:#ff7b72;font-weight:bold">=</span> (<span style="color:#ff7b72;font-weight:bold">*</span>a1)<span style="color:#ff7b72;font-weight:bold">-&gt;</span><span style="color:#d2a8ff;font-weight:bold">GetObjectClass</span>(a1, a3);
+</span></span><span style="display:flex;"><span>v23 <span style="color:#ff7b72;font-weight:bold">=</span> (<span style="color:#ff7b72;font-weight:bold">*</span>a1)<span style="color:#ff7b72;font-weight:bold">-&gt;</span><span style="color:#d2a8ff;font-weight:bold">GetMethodID</span>(a1, v30, <span style="color:#ff7b72;font-weight:bold">&amp;</span>dword_4234, <span style="color:#a5d6ff">&#34;(I)Ljava/lang/Object;&#34;</span>);
+</span></span><span style="display:flex;"><span>v4 <span style="color:#ff7b72;font-weight:bold">=</span> (<span style="color:#ff7b72;font-weight:bold">*</span>a1)<span style="color:#ff7b72;font-weight:bold">-&gt;</span><span style="color:#d2a8ff;font-weight:bold">GetMethodID</span>(a1, v30, <span style="color:#a5d6ff">&#34;size&#34;</span>, <span style="color:#a5d6ff">&#34;()I&#34;</span>);
+</span></span><span style="display:flex;"><span>v5 <span style="color:#ff7b72;font-weight:bold">=</span> a1;
+</span></span><span style="display:flex;"><span>v6 <span style="color:#ff7b72;font-weight:bold">=</span> _JNIEnv<span style="color:#ff7b72;font-weight:bold">::</span><span style="color:#d2a8ff;font-weight:bold">CallIntMethod</span>(a1, a3, v4);
+</span></span><span style="display:flex;"><span><span style="color:#d2a8ff;font-weight:bold">memset</span>(v35, <span style="color:#a5d6ff">0</span>, <span style="color:#ff7b72;font-weight:bold">&amp;</span>stru_2710);
+</span></span><span style="display:flex;"><span>v22 <span style="color:#ff7b72;font-weight:bold">=</span> v6;
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">if</span> ( v6 <span style="color:#ff7b72;font-weight:bold">&gt;=</span> <span style="color:#a5d6ff">1</span> )
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span> v7 <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">0</span>;
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">do</span>
+</span></span><span style="display:flex;"><span> {
+</span></span><span style="display:flex;"><span> v33 <span style="color:#ff7b72;font-weight:bold">=</span> v7;
+</span></span><span style="display:flex;"><span> v29 <span style="color:#ff7b72;font-weight:bold">=</span> _JNIEnv<span style="color:#ff7b72;font-weight:bold">::</span><span style="color:#d2a8ff;font-weight:bold">CallObjectMethod</span>(a1, a3, v23);
+</span></span><span style="display:flex;"><span> v31 <span style="color:#ff7b72;font-weight:bold">=</span> (<span style="color:#ff7b72;font-weight:bold">*</span>a1)<span style="color:#ff7b72;font-weight:bold">-&gt;</span><span style="color:#d2a8ff;font-weight:bold">GetObjectClass</span>(a1, v29);
+</span></span><span style="display:flex;"><span> v8 <span style="color:#ff7b72;font-weight:bold">=</span> (<span style="color:#ff7b72;font-weight:bold">*</span>a1)<span style="color:#ff7b72;font-weight:bold">-&gt;</span><span style="color:#d2a8ff;font-weight:bold">GetMethodID</span>(a1, v31, <span style="color:#a5d6ff">&#34;getKey&#34;</span>, <span style="color:#a5d6ff">&#34;()Ljava/lang/String;&#34;</span>);
+</span></span><span style="display:flex;"><span> v9 <span style="color:#ff7b72;font-weight:bold">=</span> _JNIEnv<span style="color:#ff7b72;font-weight:bold">::</span><span style="color:#d2a8ff;font-weight:bold">CallObjectMethod</span>(a1, v29, v8);
+</span></span><span style="display:flex;"><span> v34[<span style="color:#a5d6ff">0</span>] <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">1</span>;
+</span></span><span style="display:flex;"><span> v27 <span style="color:#ff7b72;font-weight:bold">=</span> (<span style="color:#ff7b72;font-weight:bold">*</span>a1)<span style="color:#ff7b72;font-weight:bold">-&gt;</span><span style="color:#d2a8ff;font-weight:bold">GetStringUTFChars</span>(a1, v9, v34);
+</span></span><span style="display:flex;"><span> v10 <span style="color:#ff7b72;font-weight:bold">=</span> (<span style="color:#ff7b72;font-weight:bold">*</span>a1)<span style="color:#ff7b72;font-weight:bold">-&gt;</span><span style="color:#d2a8ff;font-weight:bold">GetMethodID</span>(a1, v31, <span style="color:#a5d6ff">&#34;getValue&#34;</span>, <span style="color:#a5d6ff">&#34;()Ljava/lang/String;&#34;</span>);
+</span></span><span style="display:flex;"><span> v11 <span style="color:#ff7b72;font-weight:bold">=</span> _JNIEnv<span style="color:#ff7b72;font-weight:bold">::</span><span style="color:#d2a8ff;font-weight:bold">CallObjectMethod</span>(a1, v29, v10);
+</span></span><span style="display:flex;"><span> v12 <span style="color:#ff7b72;font-weight:bold">=</span> (<span style="color:#ff7b72;font-weight:bold">*</span>a1)<span style="color:#ff7b72;font-weight:bold">-&gt;</span><span style="color:#d2a8ff;font-weight:bold">GetStringUTFChars</span>(a1, v11, v34);
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">if</span> ( <span style="color:#ff7b72;font-weight:bold">!</span><span style="color:#d2a8ff;font-weight:bold">strcmp</span>(<span style="color:#a5d6ff">&#34;appSercet&#34;</span>, v27) )
+</span></span><span style="display:flex;"><span> <span style="color:#d2a8ff;font-weight:bold">strcat</span>(v35, <span style="color:#a5d6ff">&#34;853a0bb675aa143e6fa2dc607d55a9bb&#34;</span>);
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">else</span>
+</span></span><span style="display:flex;"><span> <span style="color:#d2a8ff;font-weight:bold">strcat</span>(v35, v12);
+</span></span><span style="display:flex;"><span> v7 <span style="color:#ff7b72;font-weight:bold">=</span> v33 <span style="color:#ff7b72;font-weight:bold">+</span> <span style="color:#a5d6ff">1</span>;
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">while</span> ( v22 <span style="color:#ff7b72;font-weight:bold">!=</span> v33 <span style="color:#ff7b72;font-weight:bold">+</span> <span style="color:#a5d6ff">1</span> );
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>v13 <span style="color:#ff7b72;font-weight:bold">=</span> (<span style="color:#ff7b72;font-weight:bold">*</span>a1)<span style="color:#ff7b72;font-weight:bold">-&gt;</span><span style="color:#d2a8ff;font-weight:bold">FindClass</span>(a1, <span style="color:#a5d6ff">&#34;java/security/MessageDigest&#34;</span>);
+</span></span><span style="display:flex;"><span>v14 <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">0</span>;
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">if</span> ( v13 )
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span> v15 <span style="color:#ff7b72;font-weight:bold">=</span> (<span style="color:#ff7b72;font-weight:bold">*</span>v5)<span style="color:#ff7b72;font-weight:bold">-&gt;</span><span style="color:#d2a8ff;font-weight:bold">GetStaticMethodID</span>(v5, v13, <span style="color:#a5d6ff">&#34;getInstance&#34;</span>, <span style="color:#a5d6ff">&#34;(Ljava/lang/String;)Ljava/security/MessageDigest;&#34;</span>);
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">if</span> ( v15
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72;font-weight:bold">&amp;&amp;</span> (v16 <span style="color:#ff7b72;font-weight:bold">=</span> (<span style="color:#ff7b72;font-weight:bold">*</span>v5)<span style="color:#ff7b72;font-weight:bold">-&gt;</span><span style="color:#d2a8ff;font-weight:bold">NewStringUTF</span>(v5, <span style="color:#ff7b72;font-weight:bold">&amp;</span>dword_42D0),
+</span></span><span style="display:flex;"><span> v32 <span style="color:#ff7b72;font-weight:bold">=</span> _JNIEnv<span style="color:#ff7b72;font-weight:bold">::</span><span style="color:#d2a8ff;font-weight:bold">CallStaticObjectMethod</span>(v5, v13, v15, v16),
+</span></span><span style="display:flex;"><span> (v17 <span style="color:#ff7b72;font-weight:bold">=</span> (<span style="color:#ff7b72;font-weight:bold">*</span>v5)<span style="color:#ff7b72;font-weight:bold">-&gt;</span><span style="color:#d2a8ff;font-weight:bold">GetMethodID</span>(v5, v13, <span style="color:#a5d6ff">&#34;update&#34;</span>, <span style="color:#a5d6ff">&#34;([B)V&#34;</span>)) <span style="color:#ff7b72;font-weight:bold">!=</span> <span style="color:#a5d6ff">0</span>) )
+</span></span><span style="display:flex;"><span> {
+</span></span><span style="display:flex;"><span> v28 <span style="color:#ff7b72;font-weight:bold">=</span> v17;
+</span></span><span style="display:flex;"><span> v25 <span style="color:#ff7b72;font-weight:bold">=</span> (<span style="color:#ff7b72;font-weight:bold">*</span>v5)<span style="color:#ff7b72;font-weight:bold">-&gt;</span><span style="color:#d2a8ff;font-weight:bold">FindClass</span>(v5, <span style="color:#a5d6ff">&#34;java/lang/String&#34;</span>);
+</span></span><span style="display:flex;"><span> (<span style="color:#ff7b72;font-weight:bold">*</span>v5)<span style="color:#ff7b72;font-weight:bold">-&gt;</span><span style="color:#d2a8ff;font-weight:bold">NewStringUTF</span>(v5, <span style="color:#a5d6ff">&#34;utf-8&#34;</span>);
+</span></span><span style="display:flex;"><span> v26 <span style="color:#ff7b72;font-weight:bold">=</span> (<span style="color:#ff7b72;font-weight:bold">*</span>v5)<span style="color:#ff7b72;font-weight:bold">-&gt;</span><span style="color:#d2a8ff;font-weight:bold">GetMethodID</span>(v5, v25, <span style="color:#a5d6ff">&#34;getBytes&#34;</span>, <span style="color:#a5d6ff">&#34;(Ljava/lang/String;)[B&#34;</span>);
+</span></span><span style="display:flex;"><span> v18 <span style="color:#ff7b72;font-weight:bold">=</span> (<span style="color:#ff7b72;font-weight:bold">*</span>v5)<span style="color:#ff7b72;font-weight:bold">-&gt;</span><span style="color:#d2a8ff;font-weight:bold">NewStringUTF</span>(v5, v35);
+</span></span><span style="display:flex;"><span> v19 <span style="color:#ff7b72;font-weight:bold">=</span> _JNIEnv<span style="color:#ff7b72;font-weight:bold">::</span><span style="color:#d2a8ff;font-weight:bold">CallObjectMethod</span>(v5, v18, v26);
+</span></span><span style="display:flex;"><span> _JNIEnv<span style="color:#ff7b72;font-weight:bold">::</span><span style="color:#d2a8ff;font-weight:bold">CallVoidMethod</span>(v5, v32, v28, v19);
+</span></span><span style="display:flex;"><span> v20 <span style="color:#ff7b72;font-weight:bold">=</span> (<span style="color:#ff7b72;font-weight:bold">*</span>v5)<span style="color:#ff7b72;font-weight:bold">-&gt;</span><span style="color:#d2a8ff;font-weight:bold">GetMethodID</span>(v5, v13, <span style="color:#a5d6ff">&#34;digest&#34;</span>, <span style="color:#a5d6ff">&#34;()[B&#34;</span>);
+</span></span><span style="display:flex;"><span> v14 <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">0</span>;
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">if</span> ( v20 )
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">return</span> _JNIEnv<span style="color:#ff7b72;font-weight:bold">::</span><span style="color:#d2a8ff;font-weight:bold">CallObjectMethod</span>(v5, v32, v20);
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">else</span>
+</span></span><span style="display:flex;"><span> {
+</span></span><span style="display:flex;"><span> <span style="color:#ff7b72">return</span> <span style="color:#a5d6ff">0</span>;
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">return</span> v14;
+</span></span></code></pre></div><p>到这里其实就已经比较清晰了。
+首先对我们传入的 ArrayList 调用 <code>size()</code> 方法获取了其长度，然后为变量 <code>v35</code> 开辟内存。后面是一个 for 循环，遍历我们的 ArrayList 中每一个键值对。若 key 为 <code>appSercet</code> 则向 <code>v35</code> 拼接那段字符，否则就拼接本身的 value。
+写成伪代码就是：</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>v35 = &#39;&#39;
+</span></span><span style="display:flex;"><span>for(i = 0; i &lt; arrayList.length; i++){
+</span></span><span style="display:flex;"><span> if arrayList[i].getKey() == &#34;appSercet&#34;{
+</span></span><span style="display:flex;"><span> v35 += &#34;853a0bb675aa143e6fa2dc607d55a9bb&#34;
+</span></span><span style="display:flex;"><span> } else {
+</span></span><span style="display:flex;"><span> v35 += arrayList[i].getValue()
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>但因为我们传入的 <code>appSercet</code> 值本身就是 <code>853a0bb675aa143e6fa2dc607d55a9bb</code>，所以这个判断其实可有可无。（同时它这里的 <code>Secret</code> 还拼错了&hellip;&hellip;）</p>
+<p>之后则是调用 <code>java.security.MessageDigest.getInstance()</code> 这个静态方法。这个方法需要传入加密的方式，即一个字符串。对应在上面就是使用 <code>NewStringUTF</code> 方法创建的字符串 <code>&amp;dword_42D0</code>。
+问了下协会做二进制的同学，了解到 IDA 在这里未能分析出来这是个字符串，把它的类型错当成了 int。双击这个变量进入代码段，将其值 <code>0x35646D</code> 转为字符串为 <code>5dm</code>，即 <code>md5</code>。（咱也不知道为啥是倒过来的）
+其实到这里后面就基本可以猜的出来了，后续的操作就是调用 <code>MessageDigest</code> 给 <code>v35</code> 字符串做 MD5 哈希。最后转成 bytes 返回，这部分改成 Java 代码为：</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>MessageDigest<span style="color:#6e7681"> </span>md5Encoder<span style="color:#6e7681"> </span><span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#6e7681"> </span>java.security.MessageDigest.getInstance(<span style="color:#a5d6ff">&#34;md5&#34;</span>);<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"></span>md5Encoder.update(v35.getBytes());<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"></span><span style="color:#ff7b72">return</span><span style="color:#6e7681"> </span>md5Encoder.digest();<span style="color:#6e7681">
+</span></span></span></code></pre></div><p>综上，so 中的 <code>code</code> 方法的整个逻辑十分简单——将传入的 ArrayList 的 Value 拼接，再做一波 MD5：</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>String<span style="color:#6e7681"> </span>str<span style="color:#6e7681"> </span><span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#6e7681"> </span><span style="color:#a5d6ff">&#34;&#34;</span>;<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"></span><span style="color:#ff7b72">for</span><span style="color:#6e7681"> </span>(<span style="color:#ff7b72">int</span><span style="color:#6e7681"> </span>index<span style="color:#6e7681"> </span><span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#6e7681"> </span>0;<span style="color:#6e7681"> </span>index<span style="color:#6e7681"> </span><span style="color:#ff7b72;font-weight:bold">&lt;</span><span style="color:#6e7681"> </span>paramArrayList.size();<span style="color:#6e7681"> </span>index<span style="color:#ff7b72;font-weight:bold">++</span>)<span style="color:#6e7681"> </span>{<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span><span style="color:#ff7b72">if</span><span style="color:#6e7681"> </span>(paramArrayList.get(index).getKey().equals(<span style="color:#a5d6ff">&#34;appSercet&#34;</span>))<span style="color:#6e7681"> </span>{<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>str<span style="color:#6e7681"> </span><span style="color:#ff7b72;font-weight:bold">+=</span><span style="color:#6e7681"> </span><span style="color:#a5d6ff">&#34;853a0bb675aa143e6fa2dc607d55a9bb&#34;</span>;<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>}<span style="color:#6e7681"> </span><span style="color:#ff7b72">else</span><span style="color:#6e7681"> </span>{<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>str<span style="color:#6e7681"> </span><span style="color:#ff7b72;font-weight:bold">+=</span><span style="color:#6e7681"> </span>paramArrayList.get(index).getValue();<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"> </span>}<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"></span>}<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"></span>MessageDigest<span style="color:#6e7681"> </span>md5Encoder<span style="color:#6e7681"> </span><span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#6e7681"> </span>java.security.MessageDigest.getInstance(<span style="color:#a5d6ff">&#34;md5&#34;</span>);<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"></span>md5Encoder.update(str.getBytes());<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681"></span><span style="color:#ff7b72">byte</span><span style="color:#ff7b72;font-weight:bold">[]</span><span style="color:#6e7681"> </span>arrayOfByte<span style="color:#6e7681"> </span><span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#6e7681"> </span>md5Encoder.digest();<span style="color:#6e7681">
+</span></span></span></code></pre></div><h2 id="简简单单写个-python">简简单单写个 Python</h2>
+<p>回到 jd-gui，剩下的看似复杂的循环遍历，<code>Integer.toHexString</code> 等等，其实就是在把上面返回的 <code>byte[]</code> MD5 转换成 <code>String</code>。</p>
+<p>至此，我们就已经梳理清楚了叨叨记账中，请求接口的 <code>sign</code> 参数是如何生成的。它之与 <code>nonce</code> 和 当前时间戳有关，其余请求参数完全不参与签名，这也太捞了吧&hellip;&hellip;</p>
+<p>简简单单拿 Python 实现下，注意 <code>nonce</code> 虽然是随机字符串，但其貌似并不能重复，这里还是和 App 里一样，拼接上当前的毫秒时间戳。</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#ff7b72">import</span> <span style="color:#ff7b72">requests</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">import</span> <span style="color:#ff7b72">time</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">import</span> <span style="color:#ff7b72">hashlib</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>timestamp <span style="color:#ff7b72;font-weight:bold">=</span> str(int(round(time<span style="color:#ff7b72;font-weight:bold">.</span>time() <span style="color:#ff7b72;font-weight:bold">*</span> <span style="color:#a5d6ff">1000</span>)))
+</span></span><span style="display:flex;"><span>nonce <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">&#39;E99p1ant&#39;</span> <span style="color:#ff7b72;font-weight:bold">+</span> timestamp
+</span></span><span style="display:flex;"><span>appSecret <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#a5d6ff">&#39;853a0bb675aa143e6fa2dc607d55a9bb&#39;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>sign <span style="color:#ff7b72;font-weight:bold">=</span> (appSecret <span style="color:#ff7b72;font-weight:bold">+</span> nonce <span style="color:#ff7b72;font-weight:bold">+</span> timestamp)
+</span></span><span style="display:flex;"><span>md5 <span style="color:#ff7b72;font-weight:bold">=</span> hashlib<span style="color:#ff7b72;font-weight:bold">.</span>md5()
+</span></span><span style="display:flex;"><span>md5<span style="color:#ff7b72;font-weight:bold">.</span>update(sign<span style="color:#ff7b72;font-weight:bold">.</span>encode(<span style="color:#a5d6ff">&#39;utf-8&#39;</span>))
+</span></span><span style="display:flex;"><span>sign <span style="color:#ff7b72;font-weight:bold">=</span> md5<span style="color:#ff7b72;font-weight:bold">.</span>hexdigest()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>resp <span style="color:#ff7b72;font-weight:bold">=</span> requests<span style="color:#ff7b72;font-weight:bold">.</span>post(<span style="color:#a5d6ff">&#39;https://api.daodao.cn/api/login&#39;</span>,data<span style="color:#ff7b72;font-weight:bold">=</span>{
+</span></span><span style="display:flex;"><span> <span style="color:#a5d6ff">&#39;address&#39;</span>: <span style="color:#a5d6ff">&#39;&lt;REDACTED&gt;&#39;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#a5d6ff">&#39;client_id&#39;</span>: <span style="color:#a5d6ff">&#39;daodao_ios&#39;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#a5d6ff">&#39;client_secret&#39;</span>: <span style="color:#a5d6ff">&#39;daodao2018&#39;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#a5d6ff">&#39;nonce&#39;</span>: nonce,
+</span></span><span style="display:flex;"><span> <span style="color:#a5d6ff">&#39;password&#39;</span>: <span style="color:#a5d6ff">&#39;&lt;REDACTED&gt;&#39;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#a5d6ff">&#39;sign&#39;</span>: sign,
+</span></span><span style="display:flex;"><span> <span style="color:#a5d6ff">&#39;timestamp&#39;</span>: timestamp,
+</span></span><span style="display:flex;"><span>})
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>print(resp<span style="color:#ff7b72;font-weight:bold">.</span>json())
+</span></span></code></pre></div><h2 id="简简单单封装个-go">简简单单封装个 Go</h2>
+<p>Python 验证完了，后面就是用 Go 实现了。
+我开了个仓库，封装了一个 Go 版本的 SDK。
+<a href="https://github.com/wuhan005/daodao-api">https://github.com/wuhan005/daodao-api</a></p>
+<p>实现了基本的账号登录、以及获取历史记账信息的接口，够凑合先用着了。😉
+如果你足够 open，你甚至可以基于此写一个 badge 服务，将你的每日开销挂在你的 GitHub Profile 上。（我是不敢</p>
+<p>这也是我安卓第一次逆 so，以前都是看看 jar 基本就摸清楚整个请求了的。原理上对于各位 re 手来说可能过于容易了，但我还是从中学到了不少东西。</p>
+<p>当然，上述行为是绝对违反「叨叨记账」用户协议的：</p>
+<blockquote>
+<p>8.2 软件使用规范
+8.2.1 除非法律允许或叨叨记账书面许可，你使用本软件过程中不得从事下列行为：
+8.2.1.2 对本软件进行反向工程、反向汇编、反向编译，或者以其他方式尝试发现本软件的源代码；</p></blockquote>
+<p>我先在此做个免责声明：本文仅供研究学习使用，由本文或者本项目所引发的一切责任，本人均不承担。</p>
+<p>当然如果是我号没了那就直接卸载不用了，这波咱也不亏。😈</p>

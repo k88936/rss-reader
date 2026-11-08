@@ -1,0 +1,35 @@
+<figure><img src="https://veekaybee.github.io/images/308389132-dbbb8ee7-f19f-44df-bce7-2612817cacd2.png" width="400">
+</figure>
+
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+<p><strong>Table of Contents</strong></p>
+<ul>
+<li><a href="#how-we-use-llm-artifacts">How We Use LLM Artifacts</a></li>
+<li><a href="#what-is-a-machine-learning-model">What is a machine learning model</a>
+<ul>
+<li><a href="#starting-with-a-simple-model">Starting with a simple model</a></li>
+</ul>
+</li>
+<li><a href="#writing-the-model-code">Writing the model code</a>
+<ul>
+<li><a href="#instantiating-the-model-object">Instantiating the model object</a></li>
+<li><a href="#serializing-our-objects">Serializing our objects</a></li>
+</ul>
+</li>
+<li><a href="#what-is-a-file">What is a file</a></li>
+<li><a href="#how-does-pytorch-write-objects-to-files">How does PyTorch write objects to files?</a>
+<ul>
+<li><a href="#how-pickle-works">How Pickle works</a></li>
+<li><a href="#from-pickle-to-safetensors">From pickle to safetensors</a></li>
+<li><a href="#how-safetensors-works">How safetensors works</a></li>
+<li><a href="#checkpoint-files">Checkpoint files</a></li>
+<li><a href="#ggml">GGML</a></li>
+<li><a href="#finally-gguf">Finally, GGUF</a></li>
+</ul>
+</li>
+<li><a href="#conclusion">Conclusion</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+<h1 id="how-we-use-llm-artifacts">How We Use LLM Artifacts</h1>
+<p>Large language models today are <a href="https://vickiboykis.com/2024/01/15/whats-new-with-ml-in-production/">consumed in one of several ways</a>:</p>

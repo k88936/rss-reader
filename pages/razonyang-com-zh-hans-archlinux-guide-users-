@@ -1,0 +1,26 @@
+<h2 id="创建用户">创建用户</h2>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="ln">1</span><span class="cl">useradd -G wheel -m foobar
+</span></span></code></pre></div>
+
+<ul>
+<li><code>foobar</code> 为用户名，请自行修改。</li>
+<li><code>-G</code> 指定用户组，<code>wheel</code> 是一个特殊的用户组，用于获取管理员权限（sudo），后续步骤会进行说明。</li>
+</ul>
+<h2 id="设置密码">设置密码</h2>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="ln">1</span><span class="cl">passwd foobar
+</span></span></code></pre></div>
+
+<h2 id="sudoer">Sudoer</h2>
+<p>为了让用户可以获取管理员权限，我们需要修改 sudo 的配置。</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="ln">1</span><span class="cl">visudo
+</span></span></code></pre></div>
+
+<p>若出现类似 <code>visudo: no editor found (editor path = /usr/bin/vi)</code> 等找不到编辑器的错误，可以通过 <code>EDITOR</code> 指定编辑器，或者安装对应的编辑器。</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="ln">1</span><span class="cl"><span class="nv">EDITOR</span><span class="o">=</span>vim visudo
+</span></span></code></pre></div>
+
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="ln">1</span><span class="cl">## Uncomment to allow members of group wheel to execute any command
+</span></span><span class="line"><span class="ln">2</span><span class="cl">#%wheel ALL=(ALL:ALL) ALL
+</span></span></code></pre></div>
+
+<p>去掉 <code>%wheel ALL=(ALL:ALL) ALL</code> 前面的 <code>#</code> 以取消注释，让 <code>wheel</code> 用户组获得管理员权限。</p>

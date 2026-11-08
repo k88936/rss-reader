@@ -1,0 +1,6 @@
+<h2 id="修改配置">修改配置</h2>
+<p>修改 <code>/etc/containers/registries.conf</code> 以追加以下配置，并替换其中的 <code>location</code> 为对应的镜像源，因为镜像源经常变动，不担保可用，请自行搜索可用的镜像源。</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-toml" data-lang="toml"><span class="line"><span class="ln">1</span><span class="cl"><span class="p">[[</span><span class="nx">registry</span><span class="p">]]</span>
+</span></span><span class="line"><span class="ln">2</span><span class="cl"><span class="nx">prefix</span> <span class="p">=</span> <span class="s2">&#34;docker.io&#34;</span>
+</span></span><span class="line"><span class="ln">3</span><span class="cl"><span class="nx">location</span> <span class="p">=</span> <span class="s2">&#34;docker.m.daocloud.io&#34;</span>
+</span></span></code></pre></div><p>保存后重新拉取镜像即可，一般无须重启 Podman 服务。</p>

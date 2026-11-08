@@ -1,0 +1,8 @@
+<p>今天更新 Arch Linux 时出现以下错误：</p>
+
+ <blockquote
+ 
+ class="blockquote border-start ps-3 py-1 border-primary border-4">
+ <p>File *** is corrupted (invalid or corrupted package (PGP signature)).</p>
+ </blockquote>
+<p>更新 <code>archlinux-keyring</code> 包即可解决。</p>

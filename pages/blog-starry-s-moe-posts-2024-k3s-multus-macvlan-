@@ -1,0 +1,1 @@
+<p><a href="https://k3s.io/">K3s</a> 是一个轻量的 Kubernetes 集群，<a href="https://github.com/k8snetworkplumbingwg/multus-cni">Multus</a> 是一个用于给 Pod 创建多个网络接口的 CNI (Container Network Interface) 插件，其创建的接口支持 <code>macvlan</code>。</p>

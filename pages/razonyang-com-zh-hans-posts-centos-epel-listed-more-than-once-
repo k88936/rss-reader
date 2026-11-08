@@ -1,0 +1,7 @@
+<p>在使用 <code>yum</code> 如果出现以下提示，一般是设置了多个 epel 仓库：</p>
+
+ <blockquote
+ 
+ class="blockquote border-start ps-3 py-1 border-primary border-4">
+ <p>Repository epel is listed more than once in the configuration</p>
+ </blockquote>

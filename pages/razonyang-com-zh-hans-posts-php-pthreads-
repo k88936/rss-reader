@@ -1,0 +1,4 @@
+<p>本文阐述如何在 Linux 下安装 PHP 的多线程扩展 - <a
+ href="http://php.net/manual/en/book.pthreads.php"
+ 
+ target="_blank" rel="noopener noreferrer">pthreads</a>。</p>

@@ -1,0 +1,1 @@
+<p>Go 语言复制指针的值可以通过 <code>*copy = *pointer</code> 完成。</p>

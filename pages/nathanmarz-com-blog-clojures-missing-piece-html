@@ -1,0 +1,430 @@
+<style>
+.journal-comment-area-wrapper {
+  display: none;
+}
+.footnote {
+  line-height: 10px;
+}
+</style>
+
+<p>After two years of being open source and a lot of development, <a href="https://github.com/nathanmarz/specter">Specter</a> has reached 1.0. In this post I'll explain why I call Specter "Clojure's missing piece" and why it should be used in most Clojure and ClojureScript programs.</p>
+
+<h3>Clojure's glaring hole</h3>
+
+<p>I've been using Clojure as my primary language for almost 7 years. With it I created <a href="http://storm.apache.org">Apache Storm</a> which became a large, important, international project in the Big Data world. I also used Clojure to do a successful startup called BackType that was <a href="https://techcrunch.com/2011/07/05/twitter-acquires-social-analytics-startup-backtype/">acquired by Twitter</a>. I consider Clojure to be by far the best general-purpose language and have long evangelized it.</p>
+
+<p>As much as I enjoyed programming in Clojure, I came to realize that beyond basic use cases Clojure fails to provide an elegant <span class="caps">API </span>for immutable programming. This deficiency in Clojure manifested itself in my projects as unreadable code, complexity, lots of bugs, and bad performance.</p>
+
+<p>To demonstrate this deficiency, I'll start with a few examples where Clojure does immutable programming well:</p>
+
+
+
+<pre class="brush: clojure;">
+(assoc {:a 1 :b 2} :a 3) ; =&gt; {:a 3, :b 2}
+(dissoc {:a 1 :b 2} :a) ; =&gt; {:b 2}
+(conj [1 2 3] 4) ; =&gt; [1 2 3 4]
+(pop [1 2 3]) ; =&gt; [1 2]
+(conj #{1 2 3} 4) ; =&gt; #{1 2 3 4}
+</pre>
+
+
+
+<p>This is how immutable programming should be. You perform an operation on your data and get back a new data structure with your changes represented. The details of how immutability is implemented, like structural sharing, copying, and creating new instances of the same type, are encapsulated.</p>
+
+<p>Unfortunately, you only get this elegance when doing basic operations on basic data structures. The elegance evaporates for a lot of common operations, especially those involving compound data structures. And unfortunately, your problem domain frequently dictates that you must use compound data structures. In my own work, I use a lot of directed acyclic graphs. Nodes can be a variety of record types, with fields ranging the whole gamut of data structures. Some nodes can have embedded within them another <span class="caps">DAG.</span> Manipulating a data structure like this with vanilla Clojure was a non-starter and I was forced to come up with Specter to handle it.</p>
+
+<p>As an example of the lack of elegance of vanilla Clojure, consider the task of namespace qualifying the keys of a map. The obvious way to do this with vanilla Clojure is as follows:</p>
+
+
+
+<pre class="brush: clojure;">
+(defn ns-qualify-keys [m]
+  (into {}
+    (map (fn [[k v]] [(keyword (str *ns*) (name k)) v]))
+    m
+    ))
+</pre>
+
+
+
+<p>This function has two problems: it's slow, and it's wrong. Performance-wise, this function runs upwards of <a href="https://gist.github.com/nathanmarz/8e1809bbd3a7632311c2b45ba02eb880">3x as slow</a> as an optimal implementation. It turns out the best way to iterate over the input map and construct the output map completely changes depending on the type of the map. Writing optimal code for this task requires esoteric knowledge of the internals of Clojure<sup class="footnote"><a href="#fn1">1</a></sup>. For something as fundamental as manipulating program data, the idiomatic way should also be the most performant way. This point alone is enough to warrant a new approach to immutable programming.</p>
+
+<p>However, there's an even more important point: this code is wrong. If you give this function a sorted map, it will return an unsorted map as the result. That's a totally unintended effect to what should just be a transformation on each map key. Whereas the goal of the function is to change some subvalues of the map (the map keys), to write the function correctly you have to reconstruct everything around those subvalues as well. This is a bunch of extra "stuff" you have to do and it's easy to make errors in the reconstruction process. So while you can fix the function by replacing <code>{}</code> with <code>(empty m)</code>, the very fact you have to do so is the problem.</p>
+
+<p>It's not just the map you have to reconstruct in this function. It's also the keywords. The only thing you want to modify is the namespace of each keyword, but to do so you have to construct a whole new keyword with everything else exactly the same. Hence the need to call <code>name</code> and <code>keyword</code> in the anonymous function. Reconstructing the map and keywords is intertwined with the desire to change the namespaces. This is the very definition of complexity as defined by Rich Hickey in his great talk <a href="https://www.infoq.com/presentations/Simple-Made-Easy">Simple Made Easy</a>. I can't even begin to describe how often I wanted to tear my hair out debugging issues that were ultimately caused by a stupid error during reconstruction, like using <code>map</code> instead of <code>mapv</code>.</p>
+
+<p>The way to improve this code is to factor out reusable functions <code>map-keys</code> and <code>update-namespace</code> which each concern themselves with doing their one task well. You can then compose them to implement the original function with proper separation of concerns (and optimal performance):</p>
+
+
+
+<pre class="brush: clojure;">
+(defn ns-qualify-keys [m]
+  (map-keys
+    (fn [k]
+      (update-namespace k (fn [_] (str *ns*)))
+      )
+    m
+    ))
+</pre>
+
+
+
+<p>This code is significantly improved. Gone is the need to reconstruct the map and keywords – the code concerns itself only with navigating to the namespaces and changing them. That prior intertwinement between updating the namespaces and reconstructing the surrounding data structure has been teased out.</p>
+
+<p>Unfortunately, this isn't quite enough. While having an expanded set of transformation functions like <code>map-keys</code> and <code>update-namespace</code> is the right start, composing them together using nested anonymous functions just doesn't work well. Code quickly becomes unreadable and hard to maintain. Even this code is hard to read, and it gets far worse with more levels of nesting. Consider this code which increments the even numbers in a map of vector of maps (with a hypothetical <code>map-vals</code> function):</p>
+
+
+
+<pre class="brush: clojure;">
+(map-vals
+  (fn [v]
+    (mapv
+      (fn [m2]
+        (map-vals
+          (fn [n] (if (even? n) (inc n) n))
+          m2
+          ))
+      v
+      ))
+  m)
+</pre>
+
+
+
+<p>This is totally unreadable. What's needed are the transformation functions <strong>and</strong> an elegant way to compose them together. Clojure lacks both of these things.</p>
+
+<p>Here's a non-exhaustive list of basic data structure transformations missing from Clojure:</p>
+
+<p>- Transform each key of a map<br />
+- Transform each value of a map<br />
+- Transform each value of a generic sequence<br />
+- Append to a generic sequence<br />
+- Prepend to a generic sequence<br />
+- Add anywhere into a generic sequence (e.g. <code>[1 2 4 5]</code> =&gt; <code>[1 2 3 4 5]</code>)<br />
+- Remove anywhere from a generic sequence (e.g. <code>'(1 :a 2)</code> =&gt; <code>'(1 2)</code>)<br />
+- Update the name or namespace of a keyword or symbol</p>
+
+<p><em>(Some of these cannot be implemented "efficiently", like prepending to a vector in O(1) time. I'm guessing this is why Clojure core does not provide the functionality. However, in reality the need to do these "inefficient" operations sometimes comes up and the efficiency aspect doesn't matter because it's infrequent or not a bottleneck.)</em></p>
+
+<p>Some of these are quite difficult to implement optimally. And again, implementing these is not enough. What's also needed is an elegant way to compose them so that a nested data structure is just as easy (and readable) to handle as a top-level data structure.</p>
+
+<h3>Navigation, the missing abstraction</h3>
+
+<p>Specter provides an abstraction called "navigation" which completely solves the problem of doing elegant, high-performance immutable transformations on arbitrarily complicated data structures with all the details (e.g. reconstruction) encapsulated. Here's how to namespace qualify the keys of a map with Specter:</p>
+
+
+
+<pre class="brush: clojure;">
+(setval [MAP-KEYS NAMESPACE] (str *ns*) any-map)
+</pre>
+
+
+
+<p>This code only changes the keys of the maps – the type of the map remains identical to what it was before. Additionally, the <a href="https://gist.github.com/nathanmarz/8e1809bbd3a7632311c2b45ba02eb880">performance</a> is near-optimal regardless of the type of the map (that is, it's extremely difficult to write faster code).</p>
+
+<p><code>setval</code> is like <code>assoc-in</code> on steroids. It's given a path, a value, and a piece of data to transform. The path tells it what subvalues to set to the new value. You should think of the path as navigating into the data structure, step by step. In this case, it navigates to each map key, and then for each map key navigates to its namespace. The navigators encapsulate the details of iteration and any necessary reconstruction during the transformation.</p>
+
+<p><code>setval</code> is a thin wrapper over the more general operation <code>transform</code>. <code>transform</code> takes in a function to apply to each navigated subvalue. For example:</p>
+
+
+
+<pre class="brush: clojure;">
+(transform [ALL :a even?] inc [{:a 1} {:a 2 :b 1} {:a 4}])
+;; =&gt; [{:a 1} {:a 3, :b 1} {:a 5}]
+</pre>
+
+
+
+<p>This transformation navigates to each element of the vector, then to the value of <code>:a</code> for every map, stays navigated at a value only if it's even, and then applies the <code>inc</code> function.</p>
+
+<p>Specter has two components. The first is the core of Specter which defines the navigator abstraction (<code>defnav</code>) and implements a high-performance method of composing navigators together. You can read about how that works <a href="https://github.com/nathanmarz/specter/wiki/Specter%27s-inline-caching-implementation">here</a>. Implementing this method was the most difficult code I've ever written, and the fact it's even possible is a huge testament to the power of Clojure.</p>
+
+<p>The second component of Specter is a comprehensive set of navigators for Clojure's core data structures. These include implementations of all of Clojure's aforementioned missing transformation functions, as well as many other kinds of navigations. These navigators encapsulate the most efficient means possible of performing traversal and reconstruction, often utilizing esoteric knowledge of Clojure's internals. It's important to note that navigators (like <code>ALL</code>, <code>MAP-KEYS</code>, <code>NAMESPACE</code>) are first-class objects and <strong>not</strong> syntax, a common point of confusion to those new to Specter.</p>
+
+<p>As discussed before, these are the two missing pieces of Clojure. By filling these holes, Specter enables all immutable transformations to be done elegantly and with near-optimal performance.</p>
+
+<p>Initially I developed Specter for the kinds of examples already shown: transforming subvalues in a compound data structure. Then I discovered a new category of navigators which shocked me in their expressiveness: substructure navigators. They give an extraordinary amount of control over the manipulation of data and made me believe that manipulating data via the composition of navigators should be a <strong>fundamental skill for all functional programmers</strong>. I'll go through a few examples of substructure navigators.</p>
+
+<p><code>srange</code> navigates you to a subsequence of a list or vector. That subsequence is then replaced by whatever sequence it's transformed to. Among other tasks, this navigator can be used to splice new elements into a sequence or remove elements. For example:</p>
+
+
+
+<pre class="brush: clojure;">
+(setval [:a (srange 2 4)] [] {:a [1 2 3 4 5]})
+;; =&gt; {:a [1 2 5]}
+
+(setval (srange 2 2) [:A :A] '(1 2 3 4 5))
+;; =&gt; (1 2 :A :A 3 4 5)
+
+(transform [:a (srange 1 5)] reverse {:a [1 2 3 4 5 6]})
+;; =&gt; {:a [1 5 4 3 2 6]}
+</pre>
+
+
+
+<p><code>filterer</code> navigates you to a sequence of all elements matching the predicate. Transformations on that sequence are represented back in the original sequence. For example:</p>
+
+
+
+<pre class="brush: clojure;">
+(transform (filterer even?) reverse [1 2 3 4 5 6 7 8 9])
+;; =&gt; [1 8 3 6 5 4 7 2 9]
+</pre>
+
+
+
+<p><code>subselect</code> navigates you to the sequence of elements matched by the given path. Like <code>filterer</code>, transformations on that sequence are represented back in the original locations for each value. For example:</p>
+
+
+
+<pre class="brush: clojure;">
+(transform (subselect ALL :a even?)
+  reverse
+  [{:a 1} {:a 2 :b 1} {:a 4} {:a 5} {:a 6} {:a 8}])
+;; =&gt; [{:a 1} {:a 8 :b 1} {:a 6} {:a 5} {:a 4} {:a 2}]]
+</pre>
+
+
+
+<p>Combining substructure navigators with other navigators enables some truly beautiful code. Take a look at how to increment the last odd number in a sequence:</p>
+
+
+
+<pre class="brush: clojure;">
+(transform [(filterer odd?) LAST] inc [1 2 3 4 5 6])
+;; =&gt; [1 2 3 4 6 6]
+</pre>
+
+
+
+<p>This is not an operation on a compound data structure, yet navigation proves to be a beautiful abstraction for this task, far more elegant than anything you could write in vanilla Clojure. I cannot emphasize this point enough. Although compound data structures are the most glaring use cases in need of Specter, Specter proves to be incredibly useful for the manipulation of non-compound data structures. Its nature as a <em>composable abstraction</em> lets you concisely express very sophisticated transformations. Every newly defined navigator increases the range of use cases <em>combinatorially</em>.</p>
+
+<h3>Querying, another natural use case for navigation</h3>
+
+<p>The navigation abstraction has been shown for performing transformations, but the abstraction also lends itself naturally for querying. Here's one example:</p>
+
+
+
+<pre class="brush: clojure;">
+(select [ALL :a even?] [{:a 1} {:a 2 :b 1} {:a 4}])
+;; =&gt; [2 4]
+</pre>
+
+
+
+<p><code>select</code> always returns a vector of results. To select just a single value, use <code>select-any</code>:</p>
+
+
+
+<pre class="brush: clojure;">
+(select-any [:a :b :c] {:a {:b {:c 1}}})
+;; =&gt; 1
+</pre>
+
+
+
+<p>This code looks effectively identical to the equivalent <code>get-in</code> usage, except it runs <a href="https://gist.github.com/nathanmarz/b7c612b417647db80b9eaab618ff8d83#file-results-clojure-1-7-0-clj-L6">30% faster</a>. All navigators can be used for querying, as the mental model of navigation is identical for both querying and transformation.</p>
+
+<h3>Navigation is generic and extensible</h3>
+
+<p>As explained before, the core of Specter is the <code>defnav</code> operator upon which Specter's entire collection of navigators is built. Specter's extensibility is one of its most important features, as you may use data structures other than the ones Clojure provides. As I mentioned, I do a lot of work with graphs, and I just wouldn't be able to work with them in any reasonable way without my internal collection of graph navigators (e.g. subgraph, topological traversal, to a node id, to outgoing nodes, to incoming nodes, etc.).</p>
+
+<p>Specter's navigator interface is completely generic, able to express any navigator. Let's see how it works by looking at the implementation of a simple navigator, <code>NAMESPACE</code>:</p>
+
+
+
+<pre class="brush: clojure;">
+(defnav ^{:doc &quot;Navigates to the namespace portion of the keyword or symbol&quot;}
+  NAMESPACE
+  []
+  (select* [this structure next-fn]
+    (next-fn (namespace structure)))
+  (transform* [this structure next-fn]
+    (let [name (name structure)
+          new-ns (next-fn (namespace structure))]
+      (cond (keyword? structure) (keyword new-ns name)
+            (symbol? structure) (symbol new-ns name)
+            :else (i/throw-illegal &quot;NAMESPACE can only be used on symbols or keywords - &quot; structure)
+            ))))
+</pre>
+
+
+
+<p>There are two codepaths, one for querying (<code>select*</code>) and one for transforming (<code>transform*</code>). Querying in Specter works very similar to how transducers work. It achieves great performance by avoiding the creation of any intermediate data structures. In this case, it navigates to the namespace of the value by calling <code>next-fn</code> on it. A navigator that navigates to multiple subvalues (like <code>ALL</code>) must call <code>next-fn</code> on each subvalue. (As an aside, <code>select*</code> used to work exactly like the list monad. However, materializing intermediate lists during navigation killed performance so the method was changed in 0.12.0 to avoid that problem.)</p>
+
+<p><code>transform*</code> is expected to transform any subvalues using <code>next-fn</code> and perform any necessary operations to reconstruct the surrounding data structure. In this case, it transforms the namespace using <code>next-fn</code> and creates a new keyword or symbol depending on the type of the original value.</p>
+
+<p>As you can see, the way navigators are defined is completely generic. Each codepath is a function free to do whatever it needs. It's a simple but very effective interface. Since every navigator composes with all the other navigators, the possibilities are endless. I recommend <a href="https://github.com/nathanmarz/specter/blob/master/src/clj/com/rpl/specter.cljc">browsing the source</a> to see how the built-in navigators are defined.</p>
+
+<p>Besides defining a navigator using <code>defnav</code>, you can also define one by combining other navigators together. This is often useful when working with a specific compound data structure for your particular application. For example, suppose you're working on a Blackjack game and storing game information like this:</p>
+
+
+
+<pre class="brush: clojure;">
+{:players [{:name &quot;Hopper&quot;, :funds 100, :games-played 10}
+           {:name &quot;Eleven&quot;, :funds 6941, :games-played 7}
+           {:name &quot;Will&quot;, :funds -12, :games-played -8}]
+ :bank {:funds 9850}}
+</pre>
+
+
+
+<p>Players are indexed by their id (e.g. index 0, index 1) but not by their name. If you wanted to easily manipulate a player by their name, you could define a navigator for it:</p>
+
+
+
+<pre class="brush: clojure;">
+(defn player-by-name [name]
+  (path :players
+        ALL
+        #(= (:name %) name)))
+
+
+;; Take $1 from Hopper
+(transform [(player-by-name &quot;Hopper&quot;) :funds] dec data)
+
+;; Retrieve :games-played for Will
+(select-any [(player-by-name &quot;Will&quot;) :games-played] data)
+</pre>
+
+
+
+<p>You could imagine defining a similar navigator <code>player-by-id</code> as well. Abstracting out domain-specific navigators like this significantly reduces the cognitive load of working with your data, as you can write your code in terms of application-specific concepts instead of lower level data structure concepts.</p>
+
+<p>Finally, it's worth mentioning one last concept for building navigators called "dynamic navs". These are kind of like macros, but for navigators. Dynamic navs are too much to explain for this post, but you can read about them <a href="https://github.com/nathanmarz/specter/wiki/Specter%27s-inline-caching-implementation">here</a>. Also, the <a href="https://github.com/nathanmarz/specter/blob/master/src/clj/com/rpl/specter.cljc">source code</a> has many examples of them.</p>
+
+
+<h3>Recursive navigation</h3>
+
+<p>Unsurprisingly, Specter is fantastic at working with recursive data structures. For a simple example of this, suppose you had a tree represented using vectors:</p>
+
+
+
+<pre class="brush: clojure;">
+(def tree [1 [2 [[3]] 4] [[5] 6] [7] 8 [[9]]])
+</pre>
+
+
+
+<p>You can define a navigator to all the leaves of the tree like this:</p>
+
+
+
+<pre class="brush: clojure;">
+(def TREE-VALUES
+  (recursive-path [] p
+    (if-path vector?
+      [ALL p]
+      STAY)))
+</pre>
+
+
+
+<p><code>recursive-path</code> allows your path definition to refer to itself, in this case using <code>p</code>. This path definition leverages the <code>if-path</code> navigator which uses the predicate to determine which path to continue on. If currently navigated to a vector, it recurses navigation at all elements of the vector. Otherwise, it uses <code>STAY</code> to stop traversing and finish navigation at the current point. The effect of all this is a depth-first traversal to each leaf node.</p>
+
+<p>You can then compose <code>TREE-VALUES</code> with other navigators to do all sorts of manipulations:</p>
+
+
+
+<pre class="brush: clojure;">
+;; Increment even leaves
+(transform [TREE-VALUES even?] inc tree)
+;; =&gt; [1 [3 [[3]] 5] [[5] 7] [7] 9 [[9]]]
+
+;; Get odd leaves
+(select [TREE-VALUES odd?] tree)
+;; =&gt; [1 3 5 7 9]
+
+;; Reverse order of even leaves (order based on depth-first search)
+(transform (subselect TREE-VALUES even?) reverse tree)
+;; =&gt; [1 [8 [[3]] 6] [[5] 4] [7] 2 [[9]]]
+</pre>
+
+
+
+<p>That you can define how to get to the values you care about once and easily reuse that logic for both querying and transformation is invaluable. And, as always, the performance is near-optimal for both querying and transformation.</p>
+
+<h3>New in Specter 1.0</h3>
+
+<p>Specter 1.0 is a really big milestone for the project. My goal with Specter had always been to hit that sweet spot of:</p>
+
+<p>- Provides a set of navigators for Clojure's core data structures that feels complete<br />
+- Can be used completely dynamically (e.g. pass paths as arguments, store and use paths later, etc.)<br />
+- Near-optimal performance for all use cases</p>
+
+<p>It took a few years to figure out how to achieve all this, and after a lot of work Specter is finally there.</p>
+
+<p>The most important part of the Specter 1.0 release is a commitment to backwards compatibility. The 0.11.0, 0.12.0, and 0.13.0 releases had major breaking changes, all of which were required to get Specter to that sweet spot. Now that Specter is there, it will be very stable moving forward.</p>
+
+<p>Specter 1.0 also has some significant new features filling in gaps in the library. For starters, it now can remove elements from maps and sequences with high performance:</p>
+
+
+
+<pre class="brush: clojure;">
+;; Remove nil elements form a vector
+(setval [ALL nil?] NONE [1 2 nil 3 nil])
+;; =&gt; [1 2 3]
+
+;; Remove even values from a map
+(setval [MAP-VALS even?] NONE {:a 1 :b 2 :c 3})
+;; =&gt; {:a 1, :c 3}
+
+;; Remove a key from a nested map
+(setval [:a :b :c] NONE {:a {:b {:c 1}}})
+;; =&gt; {:a {:b {}}}
+</pre>
+
+
+
+<p>Specter 1.0 extends many of the core navigators to operate on strings:</p>
+
+
+
+<pre class="brush: clojure;">
+;; Append to a string
+(setval [:a END] &quot;!!!&quot; {:a &quot;Hi&quot;})
+{:a &quot;Hi!!!&quot;}
+
+;; Remove middle of a string
+(setval (srange 1 3) &quot;&quot; &quot;abcd&quot;)
+;; =&gt; &quot;ad&quot;
+</pre>
+
+
+
+<p>Another major new feature is integration with Clojure's transducers via the new <code>traverse-all</code> operation. A lot of common transducer use cases can be expressed more elegantly with <code>traverse-all</code>:</p>
+
+
+
+<pre class="brush: clojure;">
+;; Using Vanilla Clojure
+(transduce
+  (comp (map :a) (mapcat identity) (filter odd?))
+  +
+  [{:a [1 2]} {:a [3]} {:a [4 5]}])
+;; =&gt; 9
+
+;; The same logic expressed with Specter
+(transduce
+  (traverse-all [:a ALL odd?])
+  +
+  [{:a [1 2]} {:a [3]} {:a [4 5]}])
+</pre>
+
+
+
+<p>Specter 1.0 also adds some new navigators and has improved performance for a number of use cases. See the full release notes <a href="https://github.com/nathanmarz/specter/blob/master/CHANGES.md">here</a>.</p>
+
+
+<h3>Conclusion</h3>
+
+<p>I think of Specter differently than other libraries. Whereas most libraries provide functionality for a particular task, like interacting with a database, what Specter provides is fundamental to functional programming. Manipulating data structures is one of the most core things you do as a programmer, so even improving that a little bit would have a big effect on your programs. And I would argue that Specter improves that <strong>a lot</strong>, letting you work at a significantly higher level of abstraction while simultaneously improving performance a great deal.</p>
+
+<p>If you have a Haskell background, I'm sure you're screaming to yourself "Lenses! Lenses!" I actually didn't know about lenses before I made Specter, but they are certainly very similar. I'm not on expert on Haskell, but what I do know is it explicitly distinguishes between navigators that go to one element (Lens) vs. zero or more (Traversal). I fail to see how that complication adds any sort of expressive or performance benefit, but perhaps a Haskeller out there can educate me.</p>
+
+<p>And to answer one of the most common questions I get: no, Specter is not going to become part of Clojure core anytime soon. I'm open to the idea and think it would be a major improvement to Clojure, but the core team has <a href="https://groups.google.com/forum/#!topic/clojure/qN1UPMVQmaM">no interest whatsoever</a>. You can, however, achieve the same effect by adding Specter as a dependency and writing <code>(use 'com.rpl.specter)</code>.</p>
+
+<p>Leveraging Specter to its maximum potential requires you to change how you think about manipulating data. I've noticed many people struggle to grasp all the ways Specter can be applied, no doubt an instance of the <a href="http://paulgraham.com/avg.html">blub paradox</a>. Substructure navigation, recursive paths, and higher-order navigators are a few of the more advanced concepts that can seem overwhelming. I recommend starting with the most obvious use case, transformations of compound data structures, and letting your brain slowly adapt to the navigation way of thinking. That's the way I started, and the library slowly evolved from there as I saw the different ways these ideas could be leveraged. Eventually it will become part of your basic programming instinct, and you'll wonder how you ever lived without it.</p>
+
+
+<p class="footnote" id="fn1"><sup>1</sup> For a small map (PersistentArrayMap), the optimal transformation uses the IMapIterable interface to iterate over the keys and values. The underlying array is created manually and the PersistentArrayMap/createAsIfByAssoc static method is used to create the new map. For a larger map (PersistentHashMap), reduce-kv for iteration plus transients for construction prove to be the most efficient method.</p>

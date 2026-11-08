@@ -1,0 +1,1 @@
+Shows that floating point trunc(x/y) equals integer x/y provided the integers fit in the floating point format.

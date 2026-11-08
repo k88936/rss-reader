@@ -1,0 +1,2 @@
+<p>首先介绍几个概念 <strong>root</strong> 和 <strong>successor</strong>， <strong>root</strong> 后面拼接一个单词可以形成一个长单词，该长单词被称为 <strong>successor</strong>。举个例子， <strong>root</strong> 为 <strong>an</strong>， 拼接单词 <strong>other</strong> 形成 <strong>another</strong>， <strong>another</strong> 就是 <strong>successor</strong>。</p>
+<p>现在给出一个包含多个 <strong>root</strong> 的字典数组和一个句子。请将句子中的 <strong>successor</strong> 替换成 <strong>root</strong>。 如果 <strong>successor</strong> 有多个 <strong>root</strong>， 则用最短的 <strong>root</strong> 替换。</p>

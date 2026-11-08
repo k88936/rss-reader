@@ -1,0 +1,4 @@
+<p>今天写了个简繁体转换的命令行工具 <a
+ href="https://github.com/razonyang/gopencc"
+ 
+ target="_blank" rel="noopener noreferrer">gopencc</a>，以便对博客内容的简繁体转换。自然地，笔者也为各个平台编译打包为二进制执行文件，但是每次手动编译并上传到 GitHub Releases Assets 是十分耗时和枯燥的，幸好我们可以通过 GitHub Actions 来解决这个问题。</p>

@@ -1,0 +1,1 @@
+<p><code>CREATE TABLE ... LIKE</code> 基于另一个表的定义创建一个空表，包括原表的所有列属性和索引。</p>

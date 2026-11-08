@@ -1,0 +1,1 @@
+<p>YAY 默认的 AUR 镜像很慢，我们可以通过 <code>--aururl</code> 指定国内的 AUR 镜像。</p>

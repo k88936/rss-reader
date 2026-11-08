@@ -1,0 +1,126 @@
+<p>1、</p>
+
+<p>本周末，有一条最热闹的 AI 新闻，震动了太平洋两岸，连马斯克都关注了。</p>
+<p>昨天，AI 编程工具 Cursor 推出了"自己的"模型 <a href="https://cursor.com/cn/docs/models/cursor-composer-2">Composer 2</a>。</p>
+
+<p><img src="https://cdn.beekka.com/blogimg/asset/202603/bg2026032101.webp" alt="" title="" /></p>
+
+<p>上图是官网截图，现在点进去还写着"自有模型"。</p>
+
+<p>自从2024年10月，Composer 1 发布以来，外界就一直怀疑，它是套壳的中国模型，因为行为很类似，但苦于找不到证据。</p>
+
+<p>现在 Composer 2 来了，很多人就开始研究，它的背后到底是什么模型，真的是 Cursor 自家的吗？</p>
+
+<p>Cursor 为了防止破解，做了很多限制，但是百密一疏。国外推友 @fynnso <a href="https://x.com/fynnso/status/2034710006546014363">发现</a>，有一个地方在上一个版本是禁止的，但是这个版本却可以执行。</p>
+
+<p>首先，你自己架设一台服务器，充当 AI 模型的调用接口，有没有模型无所谓，只要能收到客户端请求就行。</p>
+
+<p>然后，你在本地的 Cursor 里面，设置使用的模型为 Composer 2，模型网址就是你刚架设的服务器。这样一来，Cursor 就会向你的服务器发出请求，从而可以看到它到底在请求什么模型。</p>
+
+<p>真相就暴露了，它请求的模型 ID 居然是 kimi-k2p5-rl-0317-s515-fast（下图）。</p>
+
+<p><img src="https://cdn.beekka.com/blogimg/asset/202603/bg2026032102.webp" alt="" title="" /></p>
+
+<p>2、</p>
+
+<p>这位国外推友就把上面的截图，<a href="https://x.com/fynnso/status/2034706304875602030">发布</a>到网上。这下炸锅了，明眼人都看出来，这是铁证，<strong>Composer 2 实际上是套壳的 Kimi K2.5</strong>。</p>
+
+<p><img src="https://cdn.beekka.com/blogimg/asset/202603/bg2026032115.webp" alt="" title="" /></p>
+
+<p>可笑的是，事情一爆发，Cursor 第一时间就把漏洞堵上，现在已经没法复现这个请求（下图）。</p>
+
+<p><img src="https://cdn.beekka.com/blogimg/asset/202603/bg2026032103.webp" alt="" title="" /></p>
+
+<p>但是为时已晚，网上传遍了，就连马斯克也<a href="https://x.com/elonmusk/status/2034941631871455262">发推</a>："它就是 Kimi K2.5"。</p>
+
+<p><img src="https://cdn.beekka.com/blogimg/asset/202603/bg2026032104.webp" alt="" title="" /></p>
+
+<p>这下好了，变成了公开的秘密，再也无法掩盖了。</p>
+
+<p>3、</p>
+
+<p>大家的关注点，很快就转移到 Cursor 是否侵权。因为 Kimi K2.5 虽然是开源模型，但是采用的是修改的 MIT 许可证（下图）。</p>
+
+<p><img src="https://cdn.beekka.com/blogimg/asset/202603/bg2026032105.webp" alt="" title="" /></p>
+
+<p>许可证这样说：你可以任意使用这个模型，唯一的条件是如果你的商业产品月活用户超过1亿，或者月收入超过2000万美元，<strong>你必须在用户界面的醒目位置披露，你使用了 Kimi K2.5</strong>。</p>
+
+<p>Cursor 最新披露的年化收入是20亿美元，相当于月收入1.67亿美元，显然满足上面的条件。但是，它隐藏了使用 K2.5 的事实。</p>
+
+<p>就在大家认定 Cursor 侵权的时候，他们的一个负责人终于坐不住了，出来<a href="https://x.com/leerob/status/2035050444347600936">说话</a>了。</p>
+
+<p><img src="https://cdn.beekka.com/blogimg/asset/202603/bg2026032106.webp" alt="" title="" /></p>
+
+<p>他承认确实使用 Kimi K2.5，但是没有侵权，他们的许可证来自合作伙伴 Fireworks AI。</p>
+
+<p>稍后，Kimi 官方也<a href="https://x.com/Kimi_Moonshot/status/2035074972943831491">发推</a>了。</p>
+
+<p><img src="https://cdn.beekka.com/blogimg/asset/202603/bg2026032107.webp" alt="" title="" /></p>
+
+<p>Kimi 官方确认，Cursor 是从 Fireworks AI 得到了授权。后者是一家硅谷的华人 AI 公司，从事 AI 模型的微调和强化学习，它从 Kimi 得到授权对模型进行再训练，然后又转授权给了 Cursor。</p>
+
+<p>4、</p>
+
+<p>事情到这里就基本清楚了，Cursor 并没有违反 Kimi 的授权条款，因此不存在侵权。</p>
+
+<p>既然如此，为什么它拼命掩盖这个事实，大大方方承认，提供 Kimi K2.5 的修改版模型，很难吗？</p>
+
+<p>我猜测，<strong>原因跟 Cursor 不断膨胀的估值有关</strong>。</p>
+
+<p>彭博社本月报道，Cursor 正在进行下一轮融资，估值达到500亿美元。</p>
+
+<p><img src="https://cdn.beekka.com/blogimg/asset/202603/bg2026032108.webp" alt="" title="" /></p>
+
+<p>大家知道吗，它以前的估值是多少？</p>
+
+<p>2023年10月，Cursor 成立时的估值是5000万美元；2024年8月的 A 轮融资，估值上升到4亿美元；12月的 B 轮融资，估值快速上升到26美元；2025年11月的最新一轮融资，估值已经到了293亿美元。</p>
+
+<p>可以看到，每过几个月，估值就会翻倍。这种火箭式的上升速度，需要有业绩支持。但它本身只是一个 VS Code 的修改版，使用的都是开源技术。</p>
+
+<p>为了支撑越来越高的估值，<strong>它有动机把自己从 AI 工具，包装成具有模型研发能力的大模型公司</strong>。</p>
+
+<p>我认为，这才是它不愿意披露使用了 Kimi K2.5 的主要原因。</p>
+
+<p>5、</p>
+
+<p>纵观整个事件，Cursor 无疑是输家，Kimi 则是这次的赢家，免费得到一大波高价值的曝光。</p>
+
+<p>Cursor 发布 Composer 2 时，披露了性能和成本比较。</p>
+
+<p>Composer 2 的性能低于 GPT-5.4，但高于 Opus 4.6。</p>
+
+<p><img src="https://cdn.beekka.com/blogimg/asset/202603/bg2026032109.webp" alt="" title="" /></p>
+
+<p>但是，它的生成速度比 GPT-5.4 和 Opus 4.6 都快，成本也是最低的。</p>
+
+<p><img src="https://cdn.beekka.com/blogimg/asset/202603/bg2026032110.webp" alt="" title="" /></p>
+
+<p>既然 Composer 2 就是微调的 Kimi K2.5，那么<strong>直接使用 Kimi，也能得到同样的效果</strong>。</p>
+
+<p>6、</p>
+
+<p>以前，国外总是有人指责，中国公司窃取外国技术。但是，这个事件证明了，中国公司也有技术输出。那些国外的明星公司，背地也在偷偷摸摸使用中国技术。</p>
+
+<p>联想到上周，Kimi 的创始人杨植麟收到黄仁勋的邀请，在 Nvidia GTC 大会<a href="https://www.51cto.com/article/838459.html">演讲</a>，是唯一的中国大模型公司代表。</p>
+
+<p><img src="https://cdn.beekka.com/blogimg/asset/202603/bg2026032112.webp" alt="" title="" /></p>
+
+<p>他在台上宣讲，Kimi 团队刚刚发表的论文<a href="https://github.com/MoonshotAI/Attention-Residuals">《注意力残差》</a>（Attention Residuals）。</p>
+
+<p><img src="https://cdn.beekka.com/blogimg/asset/202603/bg2026032113.webp" alt="" title="" /></p>
+
+<p>这种新技术据说可以显著提升大模型的推理能力。</p>
+
+<p>我的想法是，大家要对国产大模型有信心，日常工作完全可以放心使用。国产大模型与国外旗舰模型的差距，正在不断缩小，而且价格实惠。</p>
+
+<p><img src="https://cdn.beekka.com/blogimg/asset/202603/bg2026032114.webp" alt="" title="" /></p>
+
+<p><a href="https://www.51cto.com/article/835315.html">据杨植麟说</a>，下一个要发布的 K3 模型性能提升巨大，即便没有强10倍，也比 K2.5 强得多，我们可以期待一下。</p>
+
+<p>（完）</p>
+<div style="color:#556677;line-height:160%;padding:0.3em 0.5em;border:1px solid #d3d3d3;margin:1em;background-color:#AAD2F0;-moz-border-radius: 10px;-webkit-border-radius:10px;border-radius: 10px;"><h3>文档信息</h3>
+<ul>
+<li>版权声明：自由转载-非商用-非衍生-保持署名（<a href="http://creativecommons.org/licenses/by-nc-nd/3.0/deed.zh">创意共享3.0许可证</a>）</li>
+<li>发表日期： <abbr class="published" title="2026-03-21T18:19:11+08:00">2026年3月21日</abbr></li>
+
+</ul></div><div style="color:#556677;line-height:160%;padding:0.3em 0.5em;margin:1em;-moz-border-radius: 10px;-webkit-border-radius:10px;border-radius: 10px;"></div>

@@ -1,0 +1,7 @@
+<p>起初本站的文章搜索功能使用是本地搜索支持，但后来发现有众多网友（包括 Hugo 官网文档搜索）都使用的是 
+<a href="https://www.algolia.com/" title="Algolia" rel="noopener external nofollow noreferrer" target="_blank" class=" exturl">
+ Algolia
+ 
+ <i class="fa fa-external-link-alt"></i>
+ 
+</a> 在线搜索引擎，便顺手也给自己的站点移植到该搜索引擎上面。既然提到搜索引擎自然是少了索引文件的维护，接下来就给大家分享下结合 <code>Github Action</code> 实现自动化的流程。</p>

@@ -1,0 +1,487 @@
+<p>In February I open-sourced a library called <a href="https://github.com/nathanmarz/specter">Specter</a>, and in my own work it has become by far my most-used library. It has changed the way I approach some fundamental aspects of programming, namely how I interact with and manipulate my program's data. I call the approach I take now "functional-navigational programming". I'm not the first one to come up with these ideas, nor is it a full-fledged paradigm in the sense of object-oriented or functional programming. But I give it a name because these techniques have changed the way I go about structuring huge amounts of my code. The best part is the abstractions used in this approach are not only concise and elegant – but also have performance rivaling hand-optimized code.</p>
+
+<p>One of Clojure's greatest strengths is its powerful facilities for doing immutable programming: persistent data structures and a standard library that incorporates immutable programming at its core. Where Clojure's standard library gives you difficulty is dealing with composite immutable data structures, like a map of lists of maps. This is incredibly common, and I've run into it over and over in my years of programming Clojure. You're forced to write code that not only finds and manipulates the subvalue you care about, but also reconstructs the rest of the input data structure in the process.</p>
+
+<p>Much more powerful than having getters and setters for individual data structures is having navigators into those data structures. Navigators can be composed arbitrarily, allowing you to concisely manipulate composite data structures of arbitrary sophistication. Let's look at an example to illustrate this difference. Suppose you're writing a program whose state looks something like this:</p>
+
+<pre class="brush: clojure;">
+(def world
+  {:people [{:money 129827 :name "Alice Brown"}
+            {:money 100 :name "John Smith"}
+            {:money 6821212339 :name "Donald Trump"}
+            {:money 2870 :name "Charlie Johnson"}
+            {:money 8273821 :name "Charlie Rose"}
+            ]
+   :bank {:funds 4782328748273}}
+  )
+</pre>
+
+<p>This data structure contains information about a bank and its list of customers. Notice that customers are indexed by the order in which they joined the bank, not by their names.</p>
+
+<p>Now suppose you want to do a simple transformation that transfers money from a user to the bank. This code is ugly but also typical of Clojure code that deals with composite data structures:</p>
+
+<pre class="brush: clojure;">
+(defn user->bank [world name amt]
+  (let [;; First, find out how much money that user has
+        ;; to determine whether or not this is a valid transfer
+        curr-funds (->> world
+                        :people
+                        (filter (fn [user] (= (:name user) name)))
+                        first
+                        :money
+                        )]
+   (if (< curr-funds amt)
+     (throw (IllegalArgumentException. "Not enough funds!"))
+     ;; If valid, then need to subtract the transfer amount from the
+     ;; user and add the amount to the bank
+     (-> world
+         (update 
+           :people
+           (fn [user-list]
+             ;; Important to use mapv to maintain the type of the 
+             ;; sequence containing the list of users. This code
+             ;; modifies the user matching the name and keeps
+             ;; every other user in the sequence the same.
+             (mapv (fn [user]
+                     ;; Notice how nested this code is that manipulates the users          
+                     (if (= (:name user) name)
+                       (update user :money #(+ % amt))
+                       ;; If a user doesn't match the name during the scan,
+                       ;; don't modify them
+                       user
+                       ))
+                   user-list)))
+         (update-in
+           [:bank :funds]
+           #(- % amt))
+           ))))
+</pre>
+
+<p>There's a lot of problems with this code:</p>
+
+<ul>
+<li>Not only does it need to do the appropriate credit and deduction, it also needs to reconstruct the world data structure it traversed on its way to the manipulated values. This logic is spread throughout the function.</li>
+<li>The code is nested and difficult to read.</li>
+<li>This function is specific to only one particular kind of transfer. There are many other kinds of transfers you may want to do: bank to a user, bank to many users, users to users, and so on. Each one of these functions would be burdened with the same necessity of navigating and reconstructing the data structure. </li>
+</ul>
+
+<h3>A better approach</h3>
+
+<p>Of course, there's a far better approach. Let's take a look at a generic transfer function that uses Specter to do a many-to-many transfer of a fixed amount between any two sets of entities. To be clear on the semantics of this function:</p>
+
+<ul>
+<li>If the bank, Bob, and Alice transfer $50 to Jim and Sally, then Jim and Sally each receive $150 while the bank, Bob, and Alice each lose $100. </li>
+<li>If any of the transferring entities lack sufficient funds, an error is thrown.</li>
+</ul>
+
+<p>Here is the implementation:</p>
+
+<pre class="brush: clojure;">
+(defn transfer
+  "Note that this function works on *any* world structure. This handles
+   arbitrary many to many transfers of a fixed amount without overdrawing anyone"
+  [world from-path to-path amt]
+  (let [;; Get the sequence of funds for all entities making a transfer
+        givers (select from-path world)
+
+        ;; Get the sequence of funds for all entities receiving a transfer
+        receivers (select to-path world)
+
+        ;; Compute total amount each receiver will be credited
+        total-receive (* amt (count givers))
+
+        ;; Compute total amount each transferrer will be deducted
+        total-give (* amt (count receivers))]
+
+    ;; Make sure every transferrer has sufficient funds
+    (if (every? #(>= % total-give) givers)
+      (->> world
+           ;; Deduct from transferrers
+           (transform from-path #(- % total-give))
+           ;; Credit the receivers
+           (transform to-path #(+ % total-receive))
+           )
+      (throw (IllegalArgumentException. "Not enough funds!"))
+      )))
+</pre>
+
+<p>The keys to this code are the "select" and "transform" functions. They utilize the concept of a "path" which identifies elements within a data structure that should be queried or manipulated. Let's hold off for a second on the details of what those paths look like and make some observations about this transfer function:</p>
+
+<ul>
+<li>It's extremely generic. It handles fixed many-to-many transfers between any sets of entities.</li>
+<li>It's easy to read and elegant.</li>
+<li>Unlike the first example, this code is agnostic to the details of the "world" data structure. This works with <strong>any</strong> representation of the world. </li>
+<li>It's very fast. Even though it's so much more generic than the initial user->bank function, it only executes slightly slower for that one particular use case.</li>
+</ul>
+
+<p>This is some of the power of functional-navigational programming. How to get to your data is separated from what you want to do with it. This allows for generic and powerful abstractions like the transfer function.</p>
+
+<p>Of course, the transfer function is only as powerful as the paths that can be passed to it. So let's take a quick detour to explore the concept of a "path" within a data structure. You'll see that they're extremely flexible and allow you to navigate in a very fine-grained way. </p>
+
+<h3>Core concepts of Specter</h3>
+
+<p>A path is just a list of steps for how to navigate into a data structure. That path can then be used to either query for subvalues or to do a transformation of a data structure. For example, if your data structure is a list of maps, here's code that increments all even values for :a keys:</p>
+
+<pre class="brush: clojure;">
+(transform [ALL :a even?]
+            inc
+            [{:a 2 :b 3} {:a 1} {:a 4}])
+;; => [{:a 3 :b 3} {:a 1} {:a 5}]
+</pre>
+
+<p>First, the "ALL" selector navigates to every map in the sequence. For each map, the ":a" keyword navigates to the value for that key within every map. Then, the "even?" function only stays at values which are even. After the selector is the "transform function" which takes in each value navigated to and returns its replacement value.</p>
+
+<p>To understand how this code works its helpful to walk through how the data flows from step to step. First you start off with the input data structure:</p>
+
+<pre class="brush: clojure; gutter: false;">
+[{:a 2 :b 3} {:a 1} {:a 4}]
+</pre>
+
+<p>ALL navigates to each element of the sequence, continuing the navigation from each element independently:</p>
+
+<pre class="brush: clojure; gutter: false;">
+{:a 2 :b 3}
+{:a 1}
+{:a 4}
+</pre>
+
+<p>The :a keyword navigates to the value of that keyword for each element, leading to:</p>
+
+<pre class="brush: clojure; gutter: false;">
+2
+1
+4
+</pre>
+
+<p>Then, the even? function only stays navigated at values which match the filter. This removes 1 from the navigated values, leaving:</p>
+
+<pre class="brush: clojure; gutter: false;">
+2
+4
+</pre>
+
+<p>Now Specter has reached the end of navigation, so it applies the update function to every value:</p>
+
+<pre class="brush: clojure; gutter: false;">
+3
+5
+</pre>
+
+<p>Now it's time to reconstruct the original data structure with these changes applied. To do this the navigators are traversed in reverse. The even? function brings back any values which it filtered out before:</p>
+
+<pre class="brush: clojure; gutter: false;">
+3
+1
+5
+</pre>
+
+<p>The :a keyword replaces the values for :a in the original maps with the new values:</p>
+
+<pre class="brush: clojure; gutter: false;">
+{:a 3 :b 3}
+{:a 1}
+{:a 5}
+</pre>
+
+<p>Finally, the ALL keyword puts everything back together in a sequence of the same type of the original sequence:</p>
+
+<pre class="brush: clojure; gutter: false;">
+[{:a 3 :b 3} {:a 1} {:a 5}]
+</pre>
+
+<p>And that completes this transformation. Let's take a look at another example. This one increments the last odd number in a sequence of numbers:</p>
+
+<pre class="brush: clojure;">
+(transform [(filterer odd?) LAST]
+           inc
+           [2 1 3 6 7 4 8])
+;; => [2 1 3 6 8 4 8]
+</pre>
+
+<p>"(filterer odd?)" navigates to a view of the sequence that only contains the odd numbers. "LAST" navigates to the last element of that sequence. When the data structure is reconstructed, only the last odd number is incremented.</p>
+
+<p>Let's look at the data flow for this transformation as well. The transformation starts with the input data structure:</p>
+
+<pre class="brush: clojure; gutter: false;">
+[2 1 3 6 7 4 8]
+</pre>
+
+<p>The (filterer odd?) navigator filters the sequence for odd numbers. It also remembers to which index in the original sequence each of the filtered numbers came from. This will be used later during reconstruction.</p>
+
+<pre class="brush: clojure; gutter: false;">
+[1 3 7]
+</pre>
+
+<p>The LAST navigator simply takes the last value of the sequence:</p>
+
+<pre class="brush: clojure; gutter: false;">
+7
+</pre>
+
+<p>This is the end of navigation, so the update function is applied:</p>
+
+<pre class="brush: clojure; gutter: false;">
+8
+</pre>
+
+<p>Now Specter works backwards through the navigators to reconstruct the data structure. LAST replaces the last value of its input sequence:</p>
+
+<pre class="brush: clojure; gutter: false;">
+[1 3 8]
+</pre>
+
+<p>(filterer odd?) uses the index map it made before to set the values of its input sequence at the appropriate indices:</p>
+
+<pre class="brush: clojure; gutter: false;">
+[2 1 3 6 8 4 8]
+</pre>
+
+<p>That's how you end up with the final result.</p>
+
+<p>The next example reverses the positions of all the even numbers between indices 4 and 11:</p>
+
+<pre class="brush: clojure;">
+(transform [(srange 4 11) (filterer even?)]
+           reverse
+           [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15])
+;; => [0 1 2 3 10 5 8 7 6 9 4 11 12 13 14 15]
+</pre>
+
+<p>"srange" navigates to the subsequence bound by the two specified indices. The "reverse" function receives all the odd numbers between those two indices, and then Specter reconstructs the original data structure with the appropriate changes. This example is nifty because writing it by hand is actually quite difficult.</p>
+
+<p>Let's take a look at doing queries using Specter. Here's how to get every number divisible by three out of a sequence of sequences:</p>
+
+<pre class="brush: clojure;">
+(select [ALL ALL #(= 0 (mod % 3))]
+        [[1 2 3 4] [] [5 3 2 18] [2 4 6] [12]])
+;;=> [3 3 18 6 12]
+</pre>
+
+<p>"select" always returns a sequence of results because paths can select many elements. In this case two ALL's are needed because there are two levels of sequences in this data structure.</p>
+
+<p>As you can see, each component of a path specifies one step of a navigation. What's powerful is that these individual steps can be composed together any which way, arbitrarily. This allows you to specify queries and transformations of immense sophistication.</p>
+
+<p>At the core of Specter is a protocol for specifying one step of navigation. It looks like this:</p>
+
+<pre class="brush: clojure;">
+(defprotocol StructurePath
+  (select* [this structure next-fn])
+  (transform* [this structure next-fn])
+  )
+</pre>
+
+<p>Every single selector you've seen so far is defined in terms of this protocol. For example, here's how keywords implement it:</p>
+
+<pre class="brush: clojure;">
+(extend-type clojure.lang.Keyword
+  StructurePath
+  (select* [kw structure next-fn]
+    (next-fn (get structure kw)))
+  (transform* [kw structure next-fn]
+    (assoc structure kw (next-fn (get structure kw)))
+    ))
+</pre>
+
+<p>The protocol has one method for doing selects and another for doing transforms. In the select case, the "next function" finishes the selection from whatever values this step navigates to. In the transform case, the "next function" will transform any value this step navigates to, and the step is responsible for incorporating any transformed subvalues into the original data structure. As you can see from this example, the StructurePath implementation for keywords perfectly captures what it means to navigate within a data structure by a keyword. </p>
+
+<h3>Back to the bank example</h3>
+
+<p>Now that you've seen how paths work within Specter, I'll demonstrate how flexible this abstraction is with a variety of different kinds of transfers on the original bank example.</p>
+
+<p>Here's how to get every person to pay a $1 fee to the bank:</p>
+
+<pre class="brush: clojure;">
+(defn pay-fee [world]
+  (transfer world
+            [:people ALL :money]
+            [:bank :funds]
+            1))
+</pre>
+
+<p>Here's how to have every person receive $1 from the bank. The arguments are simply reversed as you would expect:</p>
+
+<pre class="brush: clojure;">
+(defn bank-give-dollar [world]
+  (transfer world
+            [:bank :funds]
+            [:people ALL :money]
+            1))
+</pre>
+
+<p>Here's a function that returns a path to a particular user. It scans through all users and only selects those matching the given name. This function can be used to do transfers involving particular users. </p>
+
+<pre class="brush: clojure;">
+(defn user [name]
+  [:people
+   ALL
+   #(= (:name %) name)])
+</pre>
+
+<p>Later on, you'll see that there's a better way to implement "user" that allows for much better performance. For now, here's a function that transfers between two users:</p>
+
+<pre class="brush: clojure;">
+(defn transfer-users [world from to amt]
+  (transfer world
+            [(user from) :money]
+            [(user to) :money]
+            amt))
+</pre>
+
+<p>And here's a function to implement the initial example, transferring money from a user to the bank:</p>
+
+<pre class="brush: clojure;">
+(defn user->bank [world from amt]
+  (transfer world
+            [(user from) :money]
+            [:bank :funds]
+            amt))
+</pre>
+
+<p>Finally, here's a function to give a $5000 "loyalty bonus" to the oldest three users of the bank:</p>
+
+<pre class="brush: clojure;">
+(defn bank-loyal-bonus [world]
+  (transfer world
+            [:bank :funds]
+            [:people (srange 0 3) ALL :money]
+            5000))
+</pre>
+
+<p>As you can see, Specter can navigate through data structures in a very diverse set of ways. And what you've seen so far is just the tip of the iceberg: see the <a href="https://github.com/nathanmarz/specter/blob/master/README.md">README</a> to see more of the selectors that come with Specter.</p>
+
+<p>Without Specter, implementing each of these transformations would have been tedious and repetitive – each would have been burdened with precisely reconstructing anything in the input data structure it didn't touch. But by having a few simple navigators and composing them together, each specific transformation can be handled very easily. This is the crux of functional-navigational programming: better a handful of generic navigators than a lot of specific operations. </p>
+
+<h3>Achieving high performance with precompilation</h3>
+
+<p><em>Edit: The need to manually precompile paths has been almost completely superseded by the inline factoring and caching feature introduced in Specter 0.11.0. See <a href="https://github.com/nathanmarz/specter/wiki/Specter-0.11.0:-Performance-without-the-tradeoffs">this post</a> for more details.</em></p>
+
+<p>Using Specter as shown actually won't get you very good performance – interpreting those paths is quite costly. But the good news is that with a slight amount more effort, you can get performance that's 5-10x better and rivals hand-optimized code. </p>
+
+<p>Most of the cost of running a <code>select</code> or <code>transform</code> is interpreting those paths, especially when the data structure being manipulated is small and the individual navigation operations are cheap. So Specter allows you to precompile your paths to achieve much higher perfomance by stripping away all the overhead. Here's a precompiled version of one of the previous examples:</p>
+
+<pre class="brush: clojure;">
+(def compiled-path (comp-paths ALL :a even?))
+(transform compiled-path
+           inc
+           [{:a 2 :b 3} {:a 1} {:a 4}])
+</pre>
+
+<p>Precompiled paths act just like any other navigator and can be composed with other navigators. If you know for sure that your path is going to be precompiled, you can use the <code>compiled-select</code> and <code>compiled-transform</code> functions to squeeze out even more performance.</p>
+
+<p>Let's take a look at some basic microbenchmarks to see how good Specter's performance is. Here are five different ways to get a value out of a many-nested map. The benchmark function times how long it takes to run its input function that many times.</p>
+
+<pre class="brush: clojure;">
+(def DATA {:a {:b {:c 1}}})
+(def compiled-path (comp-paths :a :b :c))
+
+(benchmark 1000000 #(get-in DATA [:a :b :c]))
+;; => "Elapsed time: 77.018 msecs"
+
+(benchmark 1000000 #(select [:a :b :c] DATA))
+;; => "Elapsed time: 4143.343 msecs"
+
+(benchmark 1000000 #(select compiled-path DATA))
+;; => "Elapsed time: 63.183 msecs"
+
+(benchmark 1000000 #(compiled-select compiled-path DATA))
+;; => "Elapsed time: 51.964 msecs"
+
+(benchmark 1000000 #(-> DATA :a :b :c vector))
+;; => "Elapsed time: 34.235 msecs"
+</pre>
+
+<p>You can see what a huge difference precompilation makes, giving almost a 100x improvement for this particular use case. The fully compiled Specter execution is also more than 30% faster than get-in, one of Clojure's few built-in functions for dealing with nested data structures! Finally, the last example shows how long it takes to run the equivalent selection with direct, inlined code. Specter's not too far off, especially when you consider how high-level of an abstraction it is.</p>
+
+<p>Let's now look at a benchmark for transforms. Here are five different ways to increment the value in that nested map:</p>
+
+<pre class="brush: clojure;">
+(benchmark 1000000 #(update-in DATA [:a :b :c] inc))
+;; => "Elapsed time: 1037.94 msecs"
+
+(benchmark 1000000 #(transform [:a :b :c] inc DATA))
+;; => "Elapsed time: 4305.429 msecs"
+
+(benchmark 1000000 #(transform compiled-path inc DATA))
+;; => "Elapsed time: 184.593 msecs"
+
+(benchmark 1000000 #(compiled-transform compiled-path inc DATA))
+;; => "Elapsed time: 169.841 msecs"
+
+(defn manual-transform [data]
+  (update data
+          :a
+          (fn [d1]
+            (update d1
+                    :b
+                    (fn [d2]
+                      (update d2 :c inc))))))
+(benchmark 1000000 #(manual-transform DATA))
+;; => "Elapsed time: 161.945 msecs"
+</pre>
+
+<p>Once again, precompilation brings massive performance improvements. In this case, the comparison against Clojure's built-in equivalent update-in is even more dramatic: Specter is over 5x faster. Even more striking, the last benchmark measures a hand-written implementation, and Specter's performance is extremely close to it. </p>
+
+<h3>Precompile anywhere, anytime</h3>
+
+<p>Up until a few weeks ago, this was the extent of Specter's story. Specter could precompile paths and achieve great performance if the path was known statically. In the 0.7.0 release though, Specter gained a new capability that allows it to precompile any path at any time, even if the path requires parameters which aren't available yet. This lets you use Specter's very high level of abstraction with great performance in all situations. Since the problem Specter solves is so common, with this new capability I'm now comfortable referring to Specter as Clojure's missing piece.</p>
+
+<p>Let's take a look at compiling paths that don't yet have their parameters. Earlier you saw this example that reverses the position of all even numbers in a subsequence:</p>
+
+<pre class="brush: clojure;">
+(transform [(srange 4 11) (filterer even?)]
+           reverse
+           [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15])
+;; => [0 1 2 3 10 5 8 7 6 9 4 11 12 13 14 15]
+</pre>
+
+<p>Let's say you want a function that encapsulates this behavior but takes in the indices and the filtering predicate as parameters. An attempt without precompilation would look like this:</p>
+
+<pre class="brush: clojure;">
+(defn reverse-matching-in-range [aseq start end predicate]
+  (transform [(srange start end) (filterer predicate)]
+             reverse
+             aseq))
+</pre>
+
+<p>Because there's no precompilation, there's a lot of overhead in running this function. To precompile this without its parameters, you can do this:</p>
+
+<pre class="brush: clojure;">
+(let [compiled-path (comp-paths srange (filterer pred))]
+  (defn reverse-matching-in-range [aseq start end predicate]
+    (compiled-transform (compiled-path start end predicate)
+                    reverse
+                    aseq)))
+</pre>
+
+<p>The compiled path takes in parameters equal to the sum of the parameters its path elements require. And since all the precompilation optimizations are applied, this code executes very fast.</p>
+
+<p>We can now come back to the bank example and make an efficient implementation of the user->bank function in terms of Specter. All you have to do is take advantage of the ability to precompile paths without their parameters, like so:</p>
+
+<pre class="brush: clojure;">
+(def user
+  (comp-paths :people
+              ALL
+              (paramsfn [name]
+                        [elem]
+                        (= name (:name elem)))
+              ))
+
+(def user-money (comp-paths user :money))
+
+(def BANK-MONEY (comp-paths :bank :funds))
+
+(defn user->bank [world name amt]
+  (transfer world (user-money name) BANK-MONEY amt))
+</pre>
+
+<p>That's all there is to it! Converting uncompiled paths to compiled paths is always a straightforward refactoring.</p>
+
+<h3>Conclusion</h3>
+
+<p>Specter has very close similarities to prior work, especially lenses in Haskell. I'm not intimately familiar with Haskell lenses, so I'm not sure if they're entirely equivalent. Specter has other features that weren't discussed in this post (discussed in <a href="https://github.com/nathanmarz/specter/blob/master/README.md">the README</a>) that I'm not sure are in Haskell. Any clarification from Haskell experts out there would be welcome.</p>
+
+<p>The functional-navigational approach leverages the power of composition to produce more concise and declarative code. In my own work I have selectors for navigating graphs in a variety of ways: in topological order, to a subgraph (with the ability to replace the subgraph with a new subgraph, with metadata indicating how to reattach the edges to the surrounding graph), to other nodes via outgoing or incoming edges, and so on. By focusing on making generic navigators, rather than functions for the specific transformations I need, I'm able to define the transformations I need for particular cases via the composition of my generic navigators. Since the graph navigators compose with all the other navigators you've seen, the possibilities are endless (The graph navigators are a little tied to my own datatypes, so I haven't open-sourced them yet. But they are surprisingly easy to implement – only about 150 lines of code. I would love to see someone contribute a specter-graph library).</p>
+
+<p>And that pretty much summarizes the functional-navigational approach. Instead of thinking in terms of specific transformations, you make generic navigators that compose to your specific transformations – plus a heck of a lot more. My major accomplishment with Specter was figuring out how to make this all blazing fast within a dynamic language.</p>
+
+<p>I've loved using Clojure for the majority of my work the past five years, and Specter makes that experience even better. To me Specter really does feel like Clojure's missing piece, and I strongly believe every single Clojure/ClojureScript programmer will benefit from using it.</p>

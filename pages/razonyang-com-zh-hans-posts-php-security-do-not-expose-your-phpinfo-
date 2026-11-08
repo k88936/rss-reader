@@ -1,0 +1,2 @@
+<p>有时候为了验证和测试配置是否正常，可能会利用 <strong>phpinfo</strong> 打印配置信息，而测试完毕后千万别忘记删掉对应的文件，因为 <strong>phpinfo</strong> 包含了很多敏感的数据。<br>
+举个例子，如果你配置了 Redis 作为 Session Handler，那么你的 Redis 连接信息就已经暴露出去了，这是十分危险的行为。</p>

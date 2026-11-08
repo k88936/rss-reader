@@ -1,0 +1,1 @@
+Given a unit quaternion $Q$ factor into a pair such that $Q = Q_rQ_a$ where $a$ is a predefined axis and $r$ is an orthogonal axis.  This is commonly called swing-twist decomposition.

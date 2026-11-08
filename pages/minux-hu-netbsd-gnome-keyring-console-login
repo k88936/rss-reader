@@ -1,0 +1,4 @@
+<span property="schema:name" class="field field--name-title field--type-string field--label-hidden">Gnome keyring setup on NetBSD</span>
+<span rel="schema:author" class="field field--name-uid field--type-entity-reference field--label-hidden"><span lang about="https://minux.hu/user/1" typeof="schema:Person" property="schema:name" datatype>Fekete Zoltán</span></span>
+<span property="schema:dateCreated" content="2024-02-08T06:55:44+00:00" class="field field--name-created field--type-created field--label-hidden"><time datetime="2024-02-08T07:55:44+01:00" title="Thursday, February 8, 2024 - 07:55" class="datetime">Thu, 02/08/2024 - 07:55</time>
+</span>

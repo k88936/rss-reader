@@ -1,0 +1,14 @@
+<p>该错误由微软商店下载的 Debian 发行版并不自带 <code>dbus</code> 和 <code>dbus-user-session</code> 包导致的，安装并重启 WSL 即可。</p>
+<h2 id="安装-dbus-user-session">安装 <code>dbus-user-session</code></h2>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="ln">1</span><span class="cl">sudo apt install dbus-user-session
+</span></span></code></pre></div><h2 id="重启-wsl-2">重启 WSL 2</h2>
+<p>于 Windows PowerShell 下执行以下命令以重启 WSL 2。</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="ln">1</span><span class="cl">wsl --shutdown
+</span></span><span class="line"><span class="ln">2</span><span class="cl">wsl
+</span></span></code></pre></div><h2 id="相关参考">相关参考</h2>
+<ul>
+<li><a
+ href="https://github.com/microsoft/WSL/issues/10350"
+ 
+ target="_blank" rel="noopener noreferrer">https://github.com/microsoft/WSL/issues/10350</a></li>
+</ul>

@@ -1,0 +1,13 @@
+<p>在官方文档的介绍中，了解到<code>Azkaban</code>所支持的工作类型还是很丰富的，如：<code>Command</code>，<code>HadoopShell</code>，<code>Python</code>，<code>Java</code>，<code>Hive</code>，<code>Pig</code>等等。不过在此我们主要具体只来讲解下<code>Python</code>与<code>Java</code>的工作类型任务，其它工作类型的话，比如<code>Commnad</code>，<code>Hive</code>，<code>HadoopShell</code>相对比较简单就不做详解，有需要的话可以自行实践一下。</p>
+<p>不管提交哪一种任务，<code>Azkaban</code>默认都是通过上传压缩包来管理，那么在此建议大家养成一个习惯，不要所执行的文件(代码)打包到<code>Azkaban</code>的工程包里面。这样带来的好处是显而易见的，比如：</p>
+<ul>
+<li>
+<p>工程创建的速度快，不需要上传执行部分文件</p>
+</li>
+<li>
+<p>避免了修改<code>MySQL</code>中的<code>max_allow_packet</code>参数以解决工程文件上传失败的问题</p>
+</li>
+<li>
+<p>在分布式布署环境中，当执行Task免去了在不同节点中拷贝工程包的麻烦</p>
+</li>
+</ul>

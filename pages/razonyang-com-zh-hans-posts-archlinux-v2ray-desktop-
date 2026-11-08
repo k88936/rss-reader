@@ -1,0 +1,8 @@
+<p>V2ray Desktop 是一个跨平台的 V2ray 的图形客户端，在 Arch Linux 下可以通过以下命令安装 AUR 包 <code>v2ray-desktop</code>：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="ln">1</span><span class="cl">$ yay -S v2ray-desktop
+</span></span></code></pre></div>
+ <blockquote
+ 
+ class="blockquote border-start ps-3 py-1 border-primary border-4">
+ <p><code>yay</code> 是 AUR 助手，改为你的 AUR 助手命令即可。</p>
+ </blockquote>

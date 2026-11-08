@@ -1,0 +1,4 @@
+<span property="schema:name" class="field field--name-title field--type-string field--label-hidden">Docker compose cheatsheet</span>
+<span rel="schema:author" class="field field--name-uid field--type-entity-reference field--label-hidden"><span lang about="https://minux.hu/user/1" typeof="schema:Person" property="schema:name" datatype>Fekete Zoltán</span></span>
+<span property="schema:dateCreated" content="2023-02-16T12:03:12+00:00" class="field field--name-created field--type-created field--label-hidden"><time datetime="2023-02-16T13:03:12+01:00" title="Thursday, February 16, 2023 - 13:03" class="datetime">Thu, 02/16/2023 - 13:03</time>
+</span>

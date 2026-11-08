@@ -1,0 +1,41 @@
+<blockquote
+ 
+ class="blockquote border-start ps-3 py-1 border-primary border-4">
+ <p>本指南只针对 UEFI 模式进行说明。</p>
+ </blockquote>
+<h2 id="安装">安装</h2>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="ln">1</span><span class="cl">sudo pacman -S grub efibootmgr
+</span></span></code></pre></div>
+
+
+ <blockquote
+ 
+ class="blockquote border-start ps-3 py-1 border-primary border-4">
+ <p>如果是双系统，还需要安装 <code>os-prober</code>。</p>
+ </blockquote>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="ln">1</span><span class="cl">sudo grub-install <span class="se">\
+</span></span></span><span class="line"><span class="ln">2</span><span class="cl"><span class="se"></span> --target<span class="o">=</span>x86_64-efi <span class="se">\
+</span></span></span><span class="line"><span class="ln">3</span><span class="cl"><span class="se"></span> --efi-directory<span class="o">=</span>/boot <span class="se">\
+</span></span></span><span class="line"><span class="ln">4</span><span class="cl"><span class="se"></span> --bootloader-id<span class="o">=</span>GRUB
+</span></span></code></pre></div>
+
+<h2 id="配置">配置</h2>
+<h3 id="修改配置">修改配置</h3>
+<p>配置文件位于 <code>/etc/default/grub</code>，可按情况自行修改。</p>
+
+ <blockquote
+ 
+ class="blockquote border-start ps-3 py-1 border-primary border-4">
+ <p>对于双系统，需要将其中的 <code>GRUB_DISABLE_OS_PROBER</code> 设为 <code>false</code>，默认是注释了的，取消注释即可。</p>
+ </blockquote>
+<h3 id="生成配置">生成配置</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="ln">1</span><span class="cl">sudo grub-mkconfig -o /boot/grub/grub.cfg
+</span></span></code></pre></div>
+
+<h3 id="双系统">双系统</h3>
+<p>若没识别 Windows 启动项，不急，先完成基本系统的安装，后续启动到新系统时，挂载 Windows 的启动分区（可通过 <code>fdisk -l | grep EFI</code> 查看），再次生成配置即可。</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="ln">1</span><span class="cl">mkdir /mnt/ms-boot
+</span></span><span class="line"><span class="ln">2</span><span class="cl">mount /dev/xxx /mnt/ms-boot
+</span></span></code></pre></div>
+
+<p>将 <code>/dev/xxx</code> 改为对应的盘符即可。</p>

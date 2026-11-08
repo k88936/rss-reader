@@ -1,0 +1,5 @@
+<p>前段时间，想尝试下 PHP 的多线程扩展 <a
+ href="http://php.net/manual/zh/book.pthreads.php"
+ 
+ target="_blank" rel="noopener noreferrer">pthreads</a>，由于其要求 PHP 启用 ZTS （Zend Thread Safety），<br>
+但是笔者所使用的发行版所能安装的 PHP 包都是 non-zts 的，所以只能自行编译和安装 PHP 了。</p>

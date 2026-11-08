@@ -1,0 +1,34 @@
+<h2 id="查看设备列表">查看设备列表</h2>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="ln">1</span><span class="cl">iwctl
+</span></span><span class="line"><span class="ln">2</span><span class="cl"><span class="o">[</span>iwd<span class="o">]</span><span class="c1"># device list</span>
+</span></span><span class="line"><span class="ln">3</span><span class="cl"> Devices 
+</span></span><span class="line"><span class="ln">4</span><span class="cl">--------------------------------------------------------------------------------
+</span></span><span class="line"><span class="ln">5</span><span class="cl"> Name Address Powered Adapter Mode 
+</span></span><span class="line"><span class="ln">6</span><span class="cl">--------------------------------------------------------------------------------
+</span></span><span class="line"><span class="ln">7</span><span class="cl"> wlan0 6e:35:5e:19:51:c3 on phy0 station
+</span></span></code></pre></div>
+
+
+ <blockquote
+ 
+ class="blockquote border-start ps-3 py-1 border-primary border-4">
+ <p><code>wlan0</code> 是本机的网络设备名称，后续将会用到，请根据情况对后续命令进行修改。</p>
+ </blockquote>
+<h2 id="扫描-wi-fi-热点">扫描 Wi-Fi 热点</h2>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="ln">1</span><span class="cl"><span class="o">[</span>iwd<span class="o">]</span><span class="c1"># station wlan0 scan</span>
+</span></span><span class="line"><span class="ln">2</span><span class="cl"><span class="o">[</span>iwd<span class="o">]</span><span class="c1"># station wlan0 get-networks</span>
+</span></span><span class="line"><span class="ln">3</span><span class="cl"> Available networks 
+</span></span><span class="line"><span class="ln">4</span><span class="cl">--------------------------------------------------------------------------------
+</span></span><span class="line"><span class="ln">5</span><span class="cl"> Network name Security Signal
+</span></span><span class="line"><span class="ln">6</span><span class="cl">--------------------------------------------------------------------------------
+</span></span><span class="line"><span class="ln">7</span><span class="cl"> &gt; RAZON WIFI psk **** 
+</span></span><span class="line"><span class="ln">8</span><span class="cl"> ...
+</span></span><span class="line"><span class="ln">9</span><span class="cl"> ...
+</span></span></code></pre></div>
+
+<h2 id="连接-wi-fi-热点">连接 Wi-Fi 热点</h2>
+<p>以 <code>RAZON WIFI</code> 为例：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="ln">1</span><span class="cl"><span class="o">[</span>iwd<span class="o">]</span><span class="c1"># station wlan0 connect &#34;RAZON WIFI&#34;</span>
+</span></span></code></pre></div>
+
+<p>如果 <code>station list</code> 显示 <code>connected</code> 说明连接成功。</p>

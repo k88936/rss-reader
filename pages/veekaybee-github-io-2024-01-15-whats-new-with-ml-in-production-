@@ -1,0 +1,6 @@
+<p><figure><img src="https://veekaybee.github.io/images/296615116-a57d4389-445e-4eea-92fe-0ee0320fe498.png" width="600">
+</figure>
+
+Image with some help from <a href="https://dingboard.com/">Dingboard.</a></p>
+<p>In 2023, I wrote two pieces on machine learning engineering for <a href="https://newsletter.pragmaticengineer.com/">The Pragmatic Programmer</a>. (<a href="https://newsletter.pragmaticengineer.com/p/what-is-ml-engineering">Part 1</a> and <a href="https://newsletter.pragmaticengineer.com/p/the-machine-learning-toolset">Part 2</a>). However, since I started working <a href="https://gist.github.com/veekaybee/be375ab33085102f9027853128dc5f0e">with LLMs recently</a>, neural architectures have changed some of those assumptions.</p>
+<p>To be clear, most of machine learning in production is still not related to large language models or generative AI, and even deep learning projects, of which LLMs are a small subset, make up no more than 10% of the market, at most. But it&rsquo;s still helpful to compare and contrast classical ML systems with their LLM counterparts, because this is where we&rsquo;re going in the future.</p>

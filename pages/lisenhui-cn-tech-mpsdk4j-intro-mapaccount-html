@@ -1,0 +1,7 @@
+<p><code>mpsdk4j</code>是在实际的生产项目中抽离出来的开源分享项目,它的成长至今也算是有不少的经历吧, 最近一直忙于工作与生活上的事情疏忽了对它的关心. 自去年下决心对它重构并建立了QQ交流群(
+<a href="http://jq.qq.com/?_wv=1027&amp;k=dPDLxk" title="486192816" rel="noopener external nofollow noreferrer" target="_blank" class=" exturl">
+ 486192816
+ 
+ <i class="fa fa-external-link-alt"></i>
+ 
+</a>)后, 逐渐的有不业界朋友前来关注, 在此非常感谢他们的支持. 都说用过方知其好, 可实际情况确不是这么乐观呀,在大家的使用过程中发现<code>mpsdk4j</code>有不少欠缺与不足的地方. 之前一直想在元旦发布的2.b.1版本也拖延至今还没有交工, 在此对大家说声抱歉, 以后定会嘉勉.下面还是先进入此次的主题&ndash;初识<code>mpsdk4j</code>之<code>MPAccount</code>. (注: 对于有微信开发基础与项目经验的可略过)</p>

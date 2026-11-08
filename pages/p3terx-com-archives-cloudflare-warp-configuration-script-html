@@ -1,0 +1,248 @@
+
+<p><figure><img class="" alt="" data-src="https://imgcdn.p3terx.com/post/20210225024426.jpg" src="https://imgcdn.p3terx.com/post/20210225024426.jpg"></figure></p><h2 id="toc_25">前言</h2><p><a href="https://p3terx.com/go/aHR0cHM6Ly9naXRodWIuY29tL1AzVEVSWC93YXJwLnNo" target="_blank" >Cloudflare WARP 一键安装脚本</a>（简称： WARP 脚本，英文名：Cloudflare WARP Installer）是一个简化在 Linux VPS 云服务器上安装和配置 Cloudflare WARP 的脚本。此脚本支持 Cloudflare WARP 官方 Linux 客户端 SOCKS5 代理和 WARP WireGuard 网络接口等多种 WARP 使用方式的一键部署，适用于 IPv4/IPv6 单双栈各类的网络环境，支持各类主流 Linux 系统、 CPU 架构和虚拟化平台。</p><p>本篇是 WARP 脚本介绍说明及使用教程。Cloudflare WARP 是什么？能干什么？以及这个脚本的实现原理等相关知识参见《<a href="https://p3terx.com/archives/use-cloudflare-warp-to-add-extra-ipv4-or-ipv6-network-support-to-vps-servers-for-free.html" target="_blank"  target="_blank"  target="_blank" >Cloudflare WARP 教程</a>》，本文不在赘述。</p><blockquote><strong>特别说明：</strong>自本站全网独家首发 WARP 脚本后出现了一些二次开发魔改版本，其中某些会下载来源不明的文件、与未知站点通讯，可能存在恶意行为，请仔细辨别、谨慎使用。任何解锁功能与脚本无关，是 WARP 出站 IP 的附加属性（详见《<a href="https://p3terx.com/archives/use-cloudflare-warp-to-add-extra-ipv4-or-ipv6-network-support-to-vps-servers-for-free.html" target="_blank"  target="_blank"  target="_blank" >Cloudflare WARP 教程</a>》中的《使用场景和局限性》章节）。</blockquote><h2 id="toc_26">开源地址</h2><p><a href="https://p3terx.com/go/aHR0cHM6Ly9naXRodWIuY29tL1AzVEVSWC93YXJwLnNo" target="_blank" >https://github.com/P3TERX/warp.sh</a></p><p>支持本项目欢迎随手点个 <code>star</code>，分享给更多小伙伴。你的支持是本站持续原创的动力。</p><h2 id="toc_27">脚本特点</h2><ul><li>纯净、开源、安全</li><li>无需手动更换 Linux 内核，更稳定、更自由</li><li>无需手动更新，随操作系统自动更新</li><li>AI 智能识别网络算法，自动匹配最佳配置方案进行部署</li><li>独家网络优化算法，能获得更快、更好的 WARP 网络体验</li><li>直观的进程状态、网络状态和 WARP 状态显示功能</li><li>Cloudflare WARP 官方 Linux 客户端支持</li><li>“一把梭”式极致体验</li></ul><p><figure><img class="" alt="" data-src="https://imgcdn.p3terx.com/post/20201113013636.jpg#vwid=600&vhei=395" src="https://imgcdn.p3terx.com/post/20201113013636.jpg#vwid=600&vhei=395"></figure></p><h2 id="toc_28">适用操作系统</h2><p>WARP WireGuard 网络接口模式：</p><ul><li>CPU 架构支持：x86(i386)、x86_64(amd64)、ARMv8(aarch64)、ARMv7(armhf) 等</li><li>系统支持：Debian 10+、Ubuntu 20+、Fedora、CentOS 7+、Rocky Linux 7+、Oracle Linux 7+、Arch Linux 等大部分现代主流 Linux 发行版。<strong>建议首选 Debian ，稳！</strong></li><li>虚拟化平台支持：KVM、Xen、OpenVZ、LXC 等</li></ul><p>WARP 官方 Linux 客户端 SOCKS5 代理模式：</p><ul><li>CPU 架构支持：仅 x86_64(amd64) 架构</li><li>系统支持：Debian 10/11、Ubuntu 18~22、CentOS 8 (及其它 RHEL 8 系) 系统中使用。其它发行版也许能正常安装，但可能存在无法正常启动的问题。</li></ul><h2 id="toc_29">使用方法</h2><ul><li>首先使用 SSH 工具连上 VPS 。<a href="https://p3terx.com/archives/cheap-vps-recommended-chatgpt.html" target="_blank"  target="_blank" >AD: 可访问 ChatGPT 的便宜 VPS 推荐</a></li><li>将系统更新一遍，以防止部分组件过旧导致异常。</li></ul><p>以下两种模式按照自己的需求二选一，二者功能是独立的。</p><h3 id="toc_30">WARP WireGuard 网络接口模式</h3><blockquote><strong>TIPS:</strong> 因部分用户的滥用行，官方已限制部分地区使用原版 WireGuard 连接 WARP 网络。比如中国香港，其它地区请自测。</blockquote><p>WARP WireGuard 网络接口模式（简称：WG 模式），是指通过第三方 WARP 工具(<a href="https://p3terx.com/go/aHR0cHM6Ly9naXRodWIuY29tL1ZpUmIzL3dnY2Y" target="_blank" >ViRb3/wgcf</a>)所生成的通用 WireGuard 配置文件创建名称为<code>wgcf</code>的 WireGuard 网络接口的方式去连接 WARP 网络。按照自己的需求执行以下命令即可，整个过程将自动进行，几种网络状态可自由切换。</p><ul><li><p>添加 WARP WireGuard 双栈全局网络，直接使用以下 WARP 脚本命令一把梭：</p><pre><code class="lang-bash"># 自动配置 WARP WireGuard 双栈全局网络（所有出站流量走 WARP 网络）
+bash &lt;(curl -fsSL git.io/warp.sh) d</code></pre></li><li><p>添加或更改 IPv4/IPv6 网络中的一个出口走  WARP WireGuard 网络，使用以下 WARP 脚本命令一把梭：</p><pre><code class="lang-bash"># 自动配置 WARP WireGuard IPv4 网络（IPv4 出站流量走 WARP 网络）
+bash &lt;(curl -fsSL git.io/warp.sh) 4
+
+# 自动配置 WARP WireGuard IPv6 网络（IPv6 出站流量走 WARP 网络）
+bash &lt;(curl -fsSL git.io/warp.sh) 6</code></pre></li><li><p>其它相关命令：</p><pre><code class="lang-bash"># 查看 WARP 脚本子命令列表
+bash &lt;(curl -fsSL git.io/warp.sh) help
+
+# 重启 WARP WireGuard 网络接口
+systemctl restart wg-quick@wgcf
+
+# 禁用 WARP WireGuard 网络接口
+systemctl disable wg-quick@wgcf --now</code></pre></li></ul><h3 id="toc_31">WARP 官方 Linux 客户端 SOCKS5 代理模式</h3><blockquote><strong>TIPS:</strong> 官方客户端还有很多小问题待解决，主要是内存泄露严重，目前只建议作为备用方案。未来官方完全放弃 WireGuard 兼容后会成为主流方案。</blockquote><p>Cloudflare WARP 官方 Linux 客户端的 Proxy Mode 功能可以让应用通过本地的 SOCKS5 代理端口去直接使用 WARP 网络。</p><ul><li><p>使用以下命令一把梭后将自动安装 WARP 官方客户端并开启 SOCKS5 代理端口(<code>127.0.0.1:40000</code>)：</p><pre><code class="lang-bash"># 自动配置 WARP 官方客户端 SOCKS5 代理
+bash &lt;(curl -fsSL git.io/warp.sh) s5</code></pre></li><li><p>如果觉得官方客户端不好用，那么一把梭干掉它：</p><pre><code class="lang-bash"># 卸载 WARP 官方 Linux 客户端
+bash &lt;(curl -fsSL git.io/warp.sh) uninstall</code></pre></li></ul><h2 id="toc_32">进阶使用</h2><p>WARP 脚本的一些彩蛋及高级进阶功能的使用方法。</p><h3 id="toc_33">重要配置文件备份 (WG 模式)</h3><p>接触 WARP 比较早的小伙伴可能还记得当年 Cloudflare 通过更新算法直接导致了所有第三方工具失效，所以记得备份。</p><p>目前 WARP 脚本通过调用 <a href="https://p3terx.com/go/aHR0cHM6Ly9naXRodWIuY29tL1ZpUmIzL3dnY2Y" target="_blank" >ViRb3/wgcf</a> 自动申请 WARP 账户信息(<code>wgcf-account.toml</code>)并生成通用 WireGuard 配置文件(<code>wgcf-profile.conf</code>)，脚本自动配置完成后会原样保存至<code>/etc/warp</code>目录(注意备份)，以便下次脚本自动调用，同时也避免了重复申请 WARP 账号导致 IP 被 Cloudflare 拉黑(<code>429 Too Many Requests</code>)。</p><h3 id="toc_34">使用已有配置文件 (WG 模式)</h3><p>若之前有生成过带有 WARP+ 流量的配置文件，又或者之前使用过其它古早第三方 WARP 工具或脚本生成过 WireGuard 配置文件，只要符合 WireGuard 配置文件标准即可。</p><ul><li>方法一：恢复之前的备份<code>/etc/warp</code>目录后执行 WARP 脚本。</li><li>方法二：将配置文件命名为<code>wgcf-profile.conf</code>并上传至 VPS ，并在此配置文件所在目录执行 WARP 脚本。</li></ul><p>脚本会截取关键信息生成符合所选网络方案的新配置文件(<code>/etc/wireguard/wgcf.conf</code>)以便 WireGuard 调用。</p><h3 id="toc_35">路由标记分流 (WG 模式)</h3><p>WARP WireGuard 双栈非全局网络，由双栈全局网络接口模式衍生而来，是指添加 WARP WireGuard 双栈网络接口并通过路由规则实现在已有 IP 栈的情况下不主动接管原有网络的一种方案。此模式下可通过指定网络接口 IP 、名称 (<code>wgcf</code>) 或设置路由标记 (<code>51888</code>) 的方式去走 WARP WireGuard 网络，用于分流，实现出站流量的可控性。</p><p>一把梭命令：</p><pre><code class="lang-bash"># 自动配置 WARP WireGuard 双栈非全局网络
+bash &lt;(curl -fsSL git.io/warp.sh) x</code></pre><p>一个示例，其它懂得都懂。</p><p><details><br><summary>Xray 路由标记 分流配置示例 | 点击查看</summary></p><pre><code class="lang-json">{
+    &quot;log&quot;: {
+        &quot;access&quot;: &quot;none&quot;,
+        &quot;error&quot;: &quot;&quot;,
+        &quot;loglevel&quot;: &quot;debug&quot;
+    },
+    &quot;inbounds&quot;: [
+        { // 入站 VMess ws 。协议不重要，重要的是思路。
+            &quot;listen&quot;: &quot;/dev/shm/v2ws.sock&quot;,
+            //&quot;listen&quot;: &quot;127.0.0.1&quot;,
+            //&quot;port&quot;: 2443,
+            &quot;protocol&quot;: &quot;vmess&quot;,
+            &quot;settings&quot;: {
+                &quot;clients&quot;: [
+                    { // 常规路由规则用户 UUID
+                        &quot;id&quot;: &quot;0ebc7d13-5ed4-4c45-a202-e4b7b1c86b20&quot;,
+                        &quot;alterId&quot;: 0
+                    },
+                    { // WARP 全局用户 UUID
+                        &quot;email&quot;: &quot;warp@cloudflare.com&quot;, // 指定用户邮箱，用于分流
+                        &quot;id&quot;: &quot;fe885a9f-4f3d-4162-a2a6-fd50aa6a8071&quot;,
+                        &quot;alterId&quot;: 0
+                    }
+                ]
+            },
+            &quot;streamSettings&quot;: {
+                &quot;network&quot;: &quot;ws&quot;,
+                &quot;wsSettings&quot;: {
+                    &quot;path&quot;: &quot;/vmess&quot;
+                }
+            },
+            &quot;sniffing&quot;: {
+                &quot;enabled&quot;: true, // 开启流量探测，用于分流或屏蔽 BT 协议。
+                &quot;destOverride&quot;: [ // 当流量为指定类型时，按其中包括的目标地址重置当前连接的目标。
+                    &quot;http&quot;,
+                    &quot;tls&quot;,
+                    &quot;quic&quot;
+                ]
+            }
+        }
+    ],
+    &quot;outbounds&quot;: [
+        { // 走服务器默认网络出站。路由规则未匹配的默认走第一个出口出站，所以这个要放在第一个位置。
+            &quot;protocol&quot;: &quot;freedom&quot;,
+            &quot;settings&quot;: {
+                &quot;domainStrategy&quot;: &quot;AsIs&quot;
+            }
+        },
+        { // 出站 路由标记示例。WARP WireGuard 双栈非全局路由分流
+            &quot;tag&quot;: &quot;WARP_out&quot;,
+            &quot;protocol&quot;: &quot;freedom&quot;,
+            &quot;streamSettings&quot;: {
+                &quot;sockopt&quot;: {
+                    &quot;mark&quot;: 51888 // 路由标记
+                }
+            },
+            &quot;settings&quot;: {
+                &quot;domainStrategy&quot;: &quot;UseIP&quot; // &quot;UseIP&quot;(双栈自适应)、”UseIPv4”(IPv4 优先)、”UseIPv4”(Pv6 优先)
+            }
+        },
+        { // 黑洞，丢弃流量
+            &quot;tag&quot;: &quot;blocked&quot;,
+            &quot;protocol&quot;: &quot;blackhole&quot;
+        }
+    ],
+    &quot;routing&quot;: {
+        &quot;domainStrategy&quot;: &quot;AsIs&quot;,
+        &quot;domainMatcher&quot;: &quot;mph&quot;,
+        &quot;rules&quot;: [ // 规则有优先级，注意顺序。
+            { // 屏蔽私有地址
+                &quot;ip&quot;: [
+                    &quot;geoip:private&quot;
+                ],
+                &quot;outboundTag&quot;: &quot;blocked&quot;,
+                &quot;type&quot;: &quot;field&quot;
+            },
+            { // 屏蔽 BT
+                &quot;protocol&quot;: [
+                    &quot;bittorrent&quot;
+                ],
+                &quot;outboundTag&quot;: &quot;blocked&quot;,
+                &quot;type&quot;: &quot;field&quot;
+            },
+            { // 用户分流。指定 UUID 全局走 WARP
+                &quot;user&quot;: [
+                    &quot;warp@cloudflare.com&quot;
+                ],
+                &quot;outboundTag&quot;: &quot;WARP_out&quot;,
+                &quot;type&quot;: &quot;field&quot;
+            },
+            { // 网站分流。指定网站走 WARP
+                &quot;domain&quot;: [
+                    &quot;geosite:google&quot;,
+                    &quot;geosite:netflix&quot;,
+                    &quot;geosite:openai&quot;
+                ],
+                &quot;outboundTag&quot;: &quot;WARP_out&quot;,
+                &quot;type&quot;: &quot;field&quot;
+            },
+            { // IP 分流。指定 IP 走 WARP
+                &quot;ip&quot;: [
+                    &quot;geoip:cn&quot;
+                ],
+                &quot;outboundTag&quot;: &quot;WARP_out&quot;,
+                &quot;type&quot;: &quot;field&quot;
+            }
+        ]
+    },
+    &quot;dns&quot;: {
+        &quot;servers&quot;: [
+            &quot;https://dns.google/dns-query&quot;,
+            &quot;https://dns11.quad9.net/dns-query&quot;,
+            &quot;localhost&quot;
+        ]
+    }
+}</code></pre><p></details></p><h3 id="toc_36">SOCKS5 分流 (官方客户端)</h3><p>一个示例，其它懂得都懂。</p><p><details><br><summary>Xray SOCKS5 分流配置示例 | 点击查看</summary></p><pre><code class="lang-json">{
+    &quot;log&quot;: {
+        &quot;access&quot;: &quot;none&quot;,
+        &quot;error&quot;: &quot;&quot;,
+        &quot;loglevel&quot;: &quot;debug&quot;
+    },
+    &quot;inbounds&quot;: [
+        { // 入站 VMess ws 。协议不重要，重要的是思路。
+            &quot;listen&quot;: &quot;/dev/shm/v2ws.sock&quot;,
+            //&quot;listen&quot;: &quot;127.0.0.1&quot;,
+            //&quot;port&quot;: 2443,
+            &quot;protocol&quot;: &quot;vmess&quot;,
+            &quot;settings&quot;: {
+                &quot;clients&quot;: [
+                    { // 常规路由规则用户 UUID
+                        &quot;id&quot;: &quot;0ebc7d13-5ed4-4c45-a202-e4b7b1c86b20&quot;,
+                        &quot;alterId&quot;: 0
+                    },
+                    { // WARP 全局用户 UUID
+                        &quot;email&quot;: &quot;warp@cloudflare.com&quot;, // 指定用户邮箱，用于分流
+                        &quot;id&quot;: &quot;fe885a9f-4f3d-4162-a2a6-fd50aa6a8071&quot;,
+                        &quot;alterId&quot;: 0
+                    }
+                ]
+            },
+            &quot;streamSettings&quot;: {
+                &quot;network&quot;: &quot;ws&quot;,
+                &quot;wsSettings&quot;: {
+                    &quot;path&quot;: &quot;/vmess&quot;
+                }
+            },
+            &quot;sniffing&quot;: {
+                &quot;enabled&quot;: true, // 开启流量探测，用于分流或屏蔽 BT 协议。
+                &quot;destOverride&quot;: [ // 当流量为指定类型时，按其中包括的目标地址重置当前连接的目标。
+                    &quot;http&quot;,
+                    &quot;tls&quot;,
+                    &quot;quic&quot;
+                ]
+            }
+        }
+    ],
+    &quot;outbounds&quot;: [
+        { // 走服务器默认网络出站。路由规则未匹配的默认走第一个出口出站，所以这个要放在第一个位置。
+            &quot;protocol&quot;: &quot;freedom&quot;,
+            &quot;settings&quot;: {
+                &quot;domainStrategy&quot;: &quot;AsIs&quot;
+            }
+        },
+        { // 出站 SOCKS5 代理。WARP 官方客户端
+            &quot;tag&quot;: &quot;WARP_out&quot;,
+            &quot;protocol&quot;: &quot;socks&quot;,
+            &quot;settings&quot;: {
+                &quot;servers&quot;: [
+                    {
+                        &quot;address&quot;: &quot;127.0.0.1&quot;,
+                        &quot;port&quot;: 40000
+                    }
+                ],
+                &quot;domainStrategy&quot;: &quot;UseIP&quot; // &quot;UseIP&quot;(双栈自适应)、”UseIPv4”(IPv4 优先)、”UseIPv4”(Pv6 优先)
+            }
+        },
+        { // 黑洞。丢弃流量
+            &quot;tag&quot;: &quot;blocked&quot;,
+            &quot;protocol&quot;: &quot;blackhole&quot;
+        }
+    ],
+    &quot;routing&quot;: {
+        &quot;domainStrategy&quot;: &quot;AsIs&quot;,
+        &quot;domainMatcher&quot;: &quot;mph&quot;,
+        &quot;rules&quot;: [ // 规则有优先级，注意顺序。
+            { // 屏蔽私有地址
+                &quot;ip&quot;: [
+                    &quot;geoip:private&quot;
+                ],
+                &quot;outboundTag&quot;: &quot;blocked&quot;,
+                &quot;type&quot;: &quot;field&quot;
+            },
+            { // 屏蔽 BT
+                &quot;protocol&quot;: [
+                    &quot;bittorrent&quot;
+                ],
+                &quot;outboundTag&quot;: &quot;blocked&quot;,
+                &quot;type&quot;: &quot;field&quot;
+            },
+            { // 用户分流。指定 UUID 全局走 WARP
+                &quot;user&quot;: [
+                    &quot;warp@cloudflare.com&quot;
+                ],
+                &quot;outboundTag&quot;: &quot;WARP_out&quot;,
+                &quot;type&quot;: &quot;field&quot;
+            },
+            { // 网站分流。指定网站走 WARP
+                &quot;domain&quot;: [
+                    &quot;geosite:google&quot;,
+                    &quot;geosite:netflix&quot;,
+                    &quot;geosite:openai&quot;
+                ],
+                &quot;outboundTag&quot;: &quot;WARP_out&quot;,
+                &quot;type&quot;: &quot;field&quot;
+            },
+            { // IP 分流。指定 IP 走 WARP
+                &quot;ip&quot;: [
+                    &quot;geoip:cn&quot;
+                ],
+                &quot;outboundTag&quot;: &quot;WARP_out&quot;,
+                &quot;type&quot;: &quot;field&quot;
+            }
+        ]
+    },
+    &quot;dns&quot;: {
+        &quot;servers&quot;: [
+            &quot;https://dns.google/dns-query&quot;,
+            &quot;https://dns11.quad9.net/dns-query&quot;,
+            &quot;localhost&quot;
+        ]
+    }
+}</code></pre><p></details></p><h2 id="toc_37">注意事项和其它说明</h2><ul><li>WARP 脚本允许 WARP 官方客户端与 WG 网络同时开启，但在 WG IPv4 或 WG 双栈全局模式下，因官方客户端默认走 IPv4 出口，WARP 客户端的网络数据可能会走在 WG 隧道中，这属于套娃行为，不仅减速效果非常明显，而且官方会限制这种行为并导致网络不稳定，所以并不建议这样使用。</li><li>OpenVZ 或 LXC 的 VPS 需要先启用 TUN/TAP 功能，一般在网页管理面板开启，不明白请自行咕鸽搜索开启方法，否则 WARP WireGuard 模式会启动失败。不要再问为什么不能用了，都什么年代了还不整一个全功能带内核级加速的 KVM VPS ？相同的价格，更好的体验：<strong><a href="https://p3terx.com/archives/cheap-and-costeffective-vps-recommended.html" target="_blank"  target="_blank" >高性价比便宜 VPS 传送门点此</a></strong></li></ul><h2 id="toc_38">遇到问题如何处理</h2><ul><li>部分已知问题由于篇幅过长已经转移至《<a href="https://p3terx.com/archives/cloudflare-warp-script-issue-and-solution.html" target="_blank" >Cloudflare WARP 一键安装脚本已知问题和解决方法</a>》这篇文章中，遇到问题可以先看看。</li><li>其它问题请在<a href="https://p3terx.com/go/aHR0cHM6Ly9naXRodWIuY29tL1AzVEVSWC93YXJwLnNoL2lzc3Vlcw" target="_blank" > WARP 脚本的 GitHub issues</a> 页面进行反馈<del>(顺便点个星)</del>，提供虚拟化平台、系统版本、内核版本以及从脚本运行到末尾的详细日志或其它有用的信息，以便分析问题原因改进脚本。<strong>若未提供有用信息一律当做垃圾信息删除</strong></li><li>重启、重装、重买是解决问题的三大法宝。</li></ul><h2 id="toc_39">相关推荐</h2><ul><li>《<a href="https://p3terx.com/archives/use-cloudflare-warp-to-add-extra-ipv4-or-ipv6-network-support-to-vps-servers-for-free.html" target="_blank"  target="_blank"  target="_blank" >Cloudflare WARP 教程：给 VPS 额外添加“原生” IPv4/IPv6 双栈网络出口</a>》</li><li>《<a href="https://p3terx.com/archives/use-he-tunnel-broker-to-add-public-network-ipv6-support-to-ipv4-vps-for-free.html" target="_blank" >使用 HE Tunnel Broker 给 IPv4 VPS 免费添加公网 IPv6 支持</a>》</li><li>《<a href="https://p3terx.com/archives/cheap-and-costeffective-vps-recommended.html" target="_blank"  target="_blank" >2023年国外高性价比便宜 VPS 推荐</a>》</li><li>《<a href="https://p3terx.com/archives/cheap-vps-recommended-chatgpt.html" target="_blank"  target="_blank" >可访问 ChatGPT 的便宜 VPS 推荐</a>》</li></ul><hr><p>本博客已开设 <a href="https://p3terx.com/go/aHR0cHM6Ly90Lm1lLytWcDRsd1p5X3lVWFhtUk41" target="_blank" >Telegram 频道</a>，欢迎小伙伴们订阅关注。</p>

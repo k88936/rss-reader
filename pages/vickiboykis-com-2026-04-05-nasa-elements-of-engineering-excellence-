@@ -1,0 +1,16 @@
+<p>I stumbled across <a href="https://ntrs.nasa.gov/archive/nasa/casi.ntrs.nasa.gov/20130000445.pdf">this report from NASA</a>, &ldquo;Elements of Engineering Excellence&rdquo;,
+published in 2012,</p>
+<blockquote>
+<p>The inspiration for this paper originated in discussions with the director of MSFC
+Engineering in 2006 who asked that we investigate the question: “How do you achieve excellence in aerospace engineering?” The authors’ approach to answering this question was a short course on Excellence in Engineering which is documented in this report.</p></blockquote>
+<p>The report talks about five areas of an organization that led to failures at NASA:</p>
+<ol>
+<li>Shifting from engineering “hands-on” and “excellence” to “insight/oversight”. Lack of ownership.</li>
+<li>“Normalization of the deviances”. Not questioning anomalies.</li>
+<li>Lack of critical thinking. Over-reliance on procedures and computer codes.</li>
+<li>Decentralization of authority.</li>
+<li>Organizational and technical complexity.</li>
+</ol>
+<p>And I found this first point particularly relevant in the age of agents:</p>
+<blockquote>
+<p>The five root causes are not listed in any priority order. The first root cause listed deals with a shift in the NASA culture, where the organization moved from a hands-on engineering approach to an insight/oversight approach. In the early days the heritage was basically the arsenal approach where you designed, built and verified the system before contracting it out for production. The engineers really understood the design, the hardware/software and the system based on actual experience. In the early culture much of the technology development was an in-house, hands-on activity. The shift has resulted in the elimination of much independent analysis and test and experience based understanding of the systems required to catch and prevent problems. Howard E. McCurdy in his book Inside NASA says, “NASA officials from the original cultures believed they needed to provide their engineers and scientists with hands-on experience in order to maintain the technical side of the house. It was the only way to keep them technically sharp. By keeping their own engineers and scientists sharp, they could penetrate the work of the contractor. During the first decade of space flight, a strong technical culture guided the work of NASA employees. The norms typical of that period required NASA to maintain a corps of professional employees deeply involved in the details of space flight and aeronautics. The technical culture counterbalanced many organizational forces that rose up to challenge it. It overpowered the usual bureaucratic tendencies present in government operations. It provided a counterweight to the centralizing and organizational necessities of the Apollo mission.” [McCurdy, H. 1993] The loss of the technical excellence based on hands-on experience has led to many of the problems and therefore is one of the root causes of problems. To prevent problems, NASA needs to re-establish the culture of technical excellence based on hands-on work.</p></blockquote>

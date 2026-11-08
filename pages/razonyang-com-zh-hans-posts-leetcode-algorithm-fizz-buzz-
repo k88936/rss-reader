@@ -1,0 +1,6 @@
+<p>编写一个程序，用字符串表示数字 1 到 n，其中：</p>
+<ul>
+<li>如果数字是<strong>3</strong>的倍数，则输出<strong>Fizz</strong></li>
+<li>如果数字是<strong>5</strong>的倍数，则输出<strong>Buzz</strong></li>
+<li>如果数字是<strong>3</strong>和<strong>5</strong>的倍数，则输出<strong>FizzBuzz</strong></li>
+</ul>

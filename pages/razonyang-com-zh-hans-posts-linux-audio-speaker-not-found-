@@ -1,0 +1,1 @@
+<p>最近在新买的笔记本上安装了 Arch Linux，不过没有正确识别扬声器输出设备，这是因为新型的笔记本还需要安装 <code>sof-firmware</code> 和 <code>alsa-ucm-conf</code> 固件。</p>

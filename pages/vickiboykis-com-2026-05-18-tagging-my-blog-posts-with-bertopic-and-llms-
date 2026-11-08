@@ -1,0 +1,170 @@
+<p>I recently added tags to my blog using <a href="https://maartengr.github.io/BERTopic/index.html">BERTopic</a> and a mix of LLMs. You can see the tags in the sidebar to the right (or in the footer on mobile). I&rsquo;ve done this before in 2023, with GGUF Mistral using llama-cpp, but never finished the project. Now, because the models have been getting so good, and my project was small, relatively well-defined, and easy to evaluate, the project took me about 6-10 hours over a month, using BERTopic, Claude Code, and Pi with Deepseek.</p>
+<p>Why so many different AI tools? Mostly to evaluate their different ways of working. Much of that time was spent noodling on the UX experience of the tags rather than iterating on the tags themselves.</p>
+<p>One of the genuinely useful use-cases of LLMs these days is for finishing personal projects that don&rsquo;t touch production and have a small surface area that&rsquo;s personalized for you. In other words, <a href="https://www.robinsloan.com/notes/home-cooked-app/">as Robin Sloan wrote</a>, an app can be a home-cooked meal.</p>
+<p>I love having a static site because of how easy it is to write and publish content and how fast it loads, but sometimes I wish it was slightly more fully-featured. LLMs have allowed me to add <a href="https://vickiboykis.com/2025/08/08/enabling-hugo-static-site-search-with-lunr.js/">features like search</a>. The theme I use, <a href="https://github.com/janraasch/hugo-bearblog/">Hugo Bear Blog</a>, already has support for tags, but I&rsquo;d never added them to posts, and I also wanted a slightly different way to visualize them.</p>
+<p>We consumers generally use LLMs for text or image or, if we&rsquo;re developers, for code generation. But, one of the most underrated features of LLMs is the ability to compress rather than generate. This is really unsurprising: LLMs are, after all, natural language models.</p>
+<p><a href="https://arxiv.org/abs/2501.04040">Since they were trained and fine-tuned originally on language modeling tasks</a> they also perform really well at all the tasks that language models are meant for, such as summarization, information retrieval, question answering. LLMs are really good at labelling things. That is, they&rsquo;re good at topic modeling, the machine learning task behind tagging, especially in a <a href="https://arxiv.org/abs/2005.14165">zero-shot context</a> (where they have no previous training data from you specifically).</p>
+<h1 id="what-were-tags">What were tags?</h1>
+<p>In the early days of online blogging, tags were important for facilitating content discovery. People initially started tagging their blog posts on their individual blogs. Eventually, site aggregators like <a href="https://arxiv.org/abs/cs/0508082">Delicious</a>, surfaced top links with tags by aggregating tags across top links shared by users.</p>
+<figure><img src="https://vickiboykis.com/images/blogtags/delicious.jpg" width="600">
+</figure>
+
+<p>Pinboard was another prominent platform where finding content through tags and looking at aggregated tags was an important feature of the platform. Coincidentally, Delicious was later <a href="https://blog.pinboard.in/2017/06/pinboard_acquires_delicious/">acquired by Pinboard</a>.</p>
+<p>Early on, the best way to find things that you liked was to manually participate in the curation of these folksonomies. Twitter and Tumblr developed some of the most creative folksonomic tagging systems. <a href="https://saramschmieder.com/2022/03/02/talking-in-the-tags-an-exploration/">On Tumblr</a>, tags became a way to not only discover posts, but to have conversations with other people about your post. On Twitter, <a href="https://www.hashtags.org/featured/history-of-hashtags/">hashtags became</a> a way to signal communal discovery of people with shared interests before the implementation of <a href="https://dl.acm.org/doi/10.1145/3394486.3403370">Twitter&rsquo;s SimClusters algorithm</a>.</p>
+<p>Tagging and hashtags served as an implicit contract of content discovery across platforms for over a decade, across Twitter, Instagram, TikTok, and many other services. However, <a href="https://newsletter.vickiboykis.com/archive/we-are-all-gaga-now/">big social</a> has been in big decline for a while now. <a href="https://sriramk.com/group-chats-rule-the-world">Group chats have arisen as a medium for exchange and discovery</a>, as well as Discord groups that <a href="https://maggieappleton.com/cozy-web">rely less</a> on traditional tagging mechanisms. Bluesky, a social platform that was founded more recently, has the ability to add hashtags to posts, but most folks don&rsquo;t do so. Discovery happens, like with many platforms today, <a href="https://bsky.social/about/blog/06-26-2024-starter-packs">through starter packs</a> and custom algorithmic feeds.</p>
+<p>The rise of LLMs led to an even greater decrease in the power of individual websites to add signal. An increase in AI overview features in search results that offer either summarization or RAG-assisted source synthesis has meant that <a href="https://www.newstarget.com/2025-04-09-googles-ai-search-overhaul-decimates-website-traffic.html">visits to actual websites are dropping faster than ever</a>. With LLMs, the <a href="https://vickiboykis.com/2024/05/06/weve-been-put-in-the-vibe-space/">rise of semantic</a> and blended agentic-style search as a discovery mechanism means tags are not as important.</p>
+<p>Within blogging, content surfaces like (oh God) LinkedIn native posts and X&rsquo;s longform posts are contributing to platform-specific lock-in. All of our public blog content is being scraped as training data anyway, and agentic search and RAG mean people access content through an LLM&rsquo;s interpretation of it rather than going directly to a page. RSS still exists, but who is going to syndicate a site when they could write an article on X or LinkedIn? (Me, sure.) You can subscribe to <a href="https://vickiboykis.com/index.xml">my feed!</a>. Blog tags as a mechanism for understanding what my blog is about realistically still probably matter only to me. But I still want them!</p>
+<h1 id="historical-approaches-to-tagging-with-lda">Historical approaches to tagging with LDA</h1>
+<p>Generally, synthesizing and detecting topics across a body of text is an unsupervised learning machine learning problem. We don&rsquo;t know ahead of time what the categories are. We have to infer them from the corpus.</p>
+<figure><img src="https://vickiboykis.com/images/blogtags/corpus.png" width="600">
+</figure>
+
+<p>Traditionally, this was a really <a href="https://tedunderwood.com/2012/04/07/topic-modeling-made-just-simple-enough/">hard statistical problem in machine learning solved with approaches like latent dirichlet allocation (LDA)</a>. I really recommend Ted&rsquo;s post if you&rsquo;re interested in more of the core implementation details. The key idea is that, given a corpus of text documents, each document is modeled as a collection of topics. Each topic is a distribution over words, which means that each word in our corpus has a stated probability for being a member of a topic.</p>
+<p>There were a number of unsolved problems with this approach, and with all statistical approaches. The biggest one was that the underlying assumption of topic modeling is that documents are bags of words. That is, words that are independent of each other. But, because words lose their context when they&rsquo;re broken up from their constituent sentences (as we did when we created the tokenized input text for the model), the model wouldn&rsquo;t recognize that the word &ldquo;bank&rdquo; in these two sentences, with &ldquo;I went to the bank&rdquo; and &ldquo;The bank of the river overflowed with water&rdquo; are different from one another.</p>
+<p>One of the most trite and overused quotes in NLP is &ldquo;You shall know a word by the company it keeps&rdquo;, and this turned out to be one of the core successes of evolving neural approaches for language processing.</p>
+<h1 id="from-embeddings-to-tagging-with-early-llms-in-2023">From embeddings to tagging with early LLMs in 2023</h1>
+<p>The evolving use of <a href="https://vickiboykis.com/what_are_embeddings/">embeddings</a> made it much easier to represent items that were semantically close together mathematically, by projecting into the same multi-dimensional vector space. The following generation of contextual embeddings calculated vectors based on the position or representation of the word, which eventually led to models that fully modeled the context - or the relationship of every word to every other word in a given text at the same time, creating weights of how relevant a word is to any other given word, aka the attention mechanism.</p>
+<p>The first part of any topic modeling approach is picking your seed topics that the model can extrapolate from. You can do this in a number of ways: by bootstrapping from a couple of selected ones and creating more detailed ones, by picking plausible topics across your document set through tf-idf or LDA, by going through all the content and having an LLM zero-shot them.</p>
+<h1 id="seeding-topics-with-mistral">Seeding topics with Mistral</h1>
+<p>This is what I tried to do the first time I tried to do this exercise. When local models like <a href="https://mistral.ai/news/announcing-mistral-7b">Mistral 7B-Instruct</a> became available in 2023, I started playing around with them and realized that they did well at tagging. I decided I wanted to see if I could tag my blog with topics.</p>
+<p>The first part was figuring out a set of tags from the given documents. I did some searching and found a paper called <a href="https://github.com/chtmp223/topicGPT">TopicGPT</a> which was already exploring ways to use LLMs to do tasks that were previously done by BERT encoder models, and prior to that, latent dirichlet allocation.</p>
+<p>I adapted the template in the paper with <a href="https://mistral.ai/news/announcing-mistral-7b">GGUF quants of Mistral 7B</a> using <a href="https://github.com/abetlen/llama-cpp-python">llama-cpp-python</a> (ancient history by now!).</p>
+<p>Prompt templates were really important, less so than now, and the code looked like this:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>system <span style="color:#f92672">=</span> <span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">You will receive a document and a set of top-level topics from a topic hierarchy.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">Your task is to identify generalizable topics within the document that can act as top-level topics from the hierarchy.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">Output the existing top-level topics as identified in the document. If the document has new topics,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">suggest those.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"></span><span style="color:#e6db74">{</span>topics<span style="color:#e6db74">}</span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">[Examples]
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"></span><span style="color:#e6db74">{</span>examples<span style="color:#e6db74">}</span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">[Instructions]
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">Step 1: Determine topics mentioned in the document.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">- The topic labels must be as GENERALIZABLE as possible. They must not be document-specific.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">- The topics must reflect a SINGLE topic instead of a combination of topics.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">- The new topics must have a level number, a short general label, and a topic description.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">- The topics must be broad enough to accommodate future subtopics.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">Step 2: Perform ONE of the following operations:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">1. If there are already duplicates or relevant topics in the hierarchy, output those topics and stop here.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">2. If the document contains no topic, return &#34;None&#34;.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">3. Otherwise, add your topic as a top-level topic. Stop here and output the added topic(s). DO NOT add any additional levels.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">Output:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">existing_topics: [&#34;Preprocessing&#34;, &#34;LLMs&#34;]
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">new_topics: [&#34;Python&#34;]
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;</span>
+</span></span></code></pre></div><p>Although both <code>llama-cpp-python</code> and the model worked well (for what was available at the time), I was constrained by a couple things:</p>
+<ol>
+<li>
+<p>A small context window - Mistral <a href="https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.1/discussions/15">7B GGUF had 32k tokens</a> which meant that I had to make decisions about how to fit both my prompt and the longer documents entirely into the context window. Generally compacting to fit into a context window involves either cutting off text or creating a summary of your text and then summarizing that summary, neither of which are ideal when you&rsquo;re looking for specific terms. You can see the token counting that has to happen in the process.</p>
+</li>
+<li>
+<p>It was annoying to deal with reprompting the model to run in a loop for every document and keeping track of the results of those documents, especially as the smaller, local model ran out of memory.</p>
+</li>
+<li>
+<p>Constraining guaranteed outputs for categories using a combination of the prompt and Outlines was finicky, even with the help of <a href="https://github.com/dottxt-ai/outlines">Outlines, which made it easier</a>. Side note: <a href="https://arxiv.org/abs/2307.09702">Read the paper, it&rsquo;s very cool.</a></p>
+</li>
+<li>
+<p>I couldn&rsquo;t decide on the proper method to create an initial pass at my first-level taxonomy topics and ended up doing it with this prompting approach, but still had to seed it manually, which didn&rsquo;t create good categories. This problem isn&rsquo;t specific to LLMs and is a known problem that&rsquo;s discussed in the <a href="https://arxiv.org/abs/cs/0508082">original topic paper, way back from 2005</a>:</p>
+<blockquote>
+<p>The underlying factor behind this variation may be that basic levels vary in specificity to the degree that such specificity makes a difference in the lives of the individual. A dog expert has not only the skill but also the need to differentiate beagles from poodles, for example. Like variation in expertise, variations in other social or cultural categories likely yield variations in basic levels.</p></blockquote>
+<blockquote>
+<p>For the purposes of tagging systems, however, conflicting basic levels can prove disastrous, as documents tagged perl and javascript may be too specific for some users, while a document tagged programming may be too general for others.</p></blockquote>
+<blockquote>
+<p>Tagging is fundamentally about sensemaking. Sensemaking is a process in which information is categorized and labeled and, critically, through which meaning emerges (Weick, Sutcliffe &amp; Obstfeld forthcoming). Recall that “basic levels” are related to the way in which humans interact with the items at those levels (Tanaka &amp; Taylor 1991); when one interacts with the outside world, one makes sense of the things one encounters by categorizing them and ascribing meaning to them. However, in practice, categories are often not well defined and their boundaries exhibit vagueness (Labov 1973). Items often lie between categories or equally well in multiple categories. The lines one ultimately draws for oneself reflect one’s own experiences, daily practices, needs and concerns.</p></blockquote>
+</li>
+</ol>
+<h1 id="moving-to-llms--agentic-harnesses-in-2026">Moving to LLMs + Agentic Harnesses in 2026</h1>
+<p>A couple of things have improved over the past several years that made me revisit the project.</p>
+<ol>
+<li>Model context windows, even for open models, have increased <a href="https://epoch.ai/data-insights/context-windows">considerably</a> over the past three years. Anywhere from 200k to a million tokens is considered a fair baseline for a given leading model, although it&rsquo;s unclear <a href="https://arxiv.org/abs/2509.21361">how much of that context</a> is actually used effectively.</li>
+<li>The emergence of <a href="https://crawshaw.io/blog/programming-with-agents">agentic harnesses</a> as a pattern for LLM access - <a href="https://pi.dev/">hi Pi, the one I prefer to use!</a> - into the frothy pot of LLM land means that you can now not only use models to tag individual documents, but also make your harness and underlying model clean up an entire site for less than 10 bucks, depending on the size of your blog and with much less manual wrangling of files.</li>
+<li>As more LLM systems come online, it&rsquo;s become increasingly clear that the most effective LLM systems are ones that incorporate blended approaches to machine learning. That is, they are composed partly of generative parts where they make sense, and classical deep learning or tabular approaches where these make sense. I blended older transformer models with newer approaches, and this ended up working really well.</li>
+</ol>
+<p>So, we can simplify the work with LLMs by just starting to cluster with BERTopic.</p>
+<h1 id="using-bertopic">Using BERTopic</h1>
+<p><a href="https://maartengr.github.io/BERTopic/algorithm/algorithm.html">BERTopic is pretty great</a> and free in terms of cost (though not compute), so I decided to start there.</p>
+<p>BERTopic accepts a given set of documents. For our purposes, each of my blog posts is a document. For each document, BERTopic creates an embedding of 384 dimensions. Then, BERTopic performs dimensionality reduction using UMAP, which preserves locality, to reduce the embeddings into 5-10 dimensions, but in dimensions that still make sense relative to each other.</p>
+<p>Then, it uses HDBSCAN to actually cluster the points together. Then, it produces a bag-of-words representation from the clusters, similar to what we produced with LDA, which combines all the documents in a given cluster into a single document, and counts frequency per cluster. Finally, the algorithm performs tf-idf on the words in a cluster per topic.</p>
+<p>Throughout the process, we are constantly performing compression. But, unlike LDA, which has to re-assign every word in the corpus across many iterations, BERTopic compresses at the document level. With BERTopic, we generate one embedding per document, then cluster those, which speeds up computation quite a bit.</p>
+<p>It&rsquo;s very elegant and extremely fast on (even) a Mac M2 since it uses a lightweight <a href="https://maartengr.github.io/BERTopic/getting_started/embeddings/embeddings.html">sentence-transformers model</a>, and my blog&rsquo;s document base is not that big: 176k words.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>printf <span style="color:#e6db74">&#39;Lines: %d\nWords: %d\nBytes: %d\n&#39;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span> <span style="color:#66d9ef">$(</span>wc -l -w -c bertopic_input.txt | tr -s <span style="color:#e6db74">&#39; &#39;</span><span style="color:#66d9ef">)</span>
+</span></span><span style="display:flex;"><span>Lines: <span style="color:#ae81ff">4115</span>
+</span></span><span style="display:flex;"><span>Words: <span style="color:#ae81ff">176282</span>
+</span></span><span style="display:flex;"><span>Bytes: <span style="color:#ae81ff">1063606</span>
+</span></span></code></pre></div><p>The &ldquo;context window&rdquo; (really, max_seq_length) for all-mini-lm is <a href="https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/blob/main/sentence_bert_config.json#L2">256 tokens</a>, which means that I could break my posts down into, essentially, paragraphs, and have each paragraph be an individual document so that I didn&rsquo;t need to summarize or fold into a context window.</p>
+<p>I fed that into BERTopic and got an initial first pass at the topics.</p>
+<figure><img src="https://vickiboykis.com/images/blogtags/bertopic.png" width="400">
+</figure>
+
+<h1 id="refining-the-topics">Refining the topics</h1>
+<p>The thing about clustering algorithms is that they will cluster things into groups, but won&rsquo;t label the groups. For example, here are some of the clusters that BERTopic produced.</p>
+<figure><img src="https://vickiboykis.com/images/blogtags/clusters.png" width="400">
+</figure>
+
+<p>You can see that the attempted titles loosely fit with the tags, but that it would be better for the &ldquo;software&rdquo; cluster to come up with something slightly better. Software is a really generic tag in and of itself - my whole blog is about software.</p>
+<p>So, what concretely do I want to say about software? I like to talk about best practices, <a href="https://vickiboykis.com/2025/10/20/i-want-to-see-the-claw/">things we should aspire to</a>. A better word for that might be craft? But it&rsquo;s not just any craft, it&rsquo;s software craft.</p>
+<p>As the Delicious paper alludes to, it takes a while to get to a good tag, because you&rsquo;re creating a contract not only for yourself, but what you think your audience understands to be true. This was so important that many early taxonomy systems had experts: aka librarians! That created the first taxonomies. <a href="http://shirky.com/writings/ontology_overrated.html">Clay Shirky wrote about</a> just how hard this can be, particularly when you are creating a taxonomy in a digital space that has no boundary constraints.</p>
+<figure><img src="https://vickiboykis.com/images/shirky.png" width="600">
+</figure>
+
+<p>This was such a complex problem that companies like Tumblr, for example, had a meme librarian that explicitly spent time cataloging and thinking about <a href="https://americanlibrariesmagazine.org/bookend-meme-librarian/">trends specifically on the platform.</a></p>
+<p>Since these particular blog tags are just mine, I can formulate them however I want. Once I got the original output from BERTopic, I created a list. I then spent a bit of time in the Gemini chatbot window tuning them. Why Gemini? I&rsquo;d already used it to write a small script cleaning up my markdown posts into documents, but Claude or ChatGPT would have done a similar job.</p>
+<p>For example, here&rsquo;s some iteration I did to get to the &ldquo;shipping&rdquo; tag, which you&rsquo;d think would be extremely easy, but it turns out was actually hard to get to. When people talk about &ldquo;taste&rdquo; with relation to LLMs, this is what I think they mean - it takes time to get it to generate something that is like something you yourself would generate, versus what it (or the average of the internet) thinks.</p>
+<figure><img src="https://vickiboykis.com/images/blogtags/devops.png" width="400">
+</figure>
+
+<figure><img src="https://vickiboykis.com/images/blogtags/devops2.png" width="400">
+</figure>
+
+<p>I then decided to get some more help from <a href="https://openai.com/index/introducing-gpt-oss/">GPT-OSS running locally on LM Studio</a> in thinking about what, if any, other top-level categories I should have, and refining the final list.</p>
+<figure><img src="https://vickiboykis.com/images/blogtags/gpt-oss.png" width="400">
+</figure>
+
+<p>Now, I had a taxonomy, and I was ready to classify.</p>
+<h1 id="batch-tagging-with-claude-code">Batch-tagging with Claude Code</h1>
+<figure><img src="https://vickiboykis.com/images/blogtags/initial.png" width="400">
+</figure>
+
+<p>I took the initial list of topics and spun up Claude Code in my blog repo. I asked it to go through all the posts that I had, in batches, and tag them, using this prompt:</p>
+<pre tabindex="0"><code>selecting from this list of tags, go through all the posts in the `blog` repo and select the appropriate tags based on the content of the posts. If no tags fit, skip. do not suggest related tags. Select between 5-7 appropriate tags for each post. Start with the latest post and work backwards chronologically.
+cloud
+engineering
+data science
+embeddings
+machine learning
+collaboration
+diffusion
+LLMs
+.... [other tags from my list, up to 30 or so]
+</code></pre><p>Claude worked for about 7 minutes, and the result was that each post had tags.</p>
+<p>I then went through manually and made some adjustments as necessary. For example, one of the tags I&rsquo;d jokingly added was &ldquo;leading thoughts&rdquo;, but when I saw it in a list of serious tags, it didn&rsquo;t make sense and I didn&rsquo;t feel it was helpful, so I took it out.</p>
+<p>I had an end-result, which I put at the bottom of the page, and sat with it for a few weeks.</p>
+<figure><img src="https://vickiboykis.com/images/blogtags/blogtags.png" width="600">
+</figure>
+
+<h2 id="generating-the-ui-with-pi">Generating the UI with Pi</h2>
+<p>I had my tags, but I was unsatisfied both with the amount of tags (too many, too many mixed levels) and with how things looked, because they were too cluttered. In my first pass, I added some more fine-grained categories like &ldquo;Java&rdquo;, which I ended up removing, because it became too cluttered.</p>
+<p>It was around this time that <a href="https://www.anthropic.com/engineering/april-23-postmortem">Claude Code started having reliability issues</a> that were partially obscured from users. After doing some research, I switched to Pi as my harness for a number of reasons, but mostly after watching this <a href="https://www.youtube.com/live/_zdroS0Hc74?t=3633s">incredible talk by Mario</a>. The engineering philosophy he describes really resonates with how I think about these tools, and software in general. That is, they should be introspectable, small, and light, plug and play, and open source.</p>
+<p>I switched to Pi and have since tried out a number of models, including the latest from Gemini, OpenAI, and DeepSeek 4. Many of the models are largely interchangeable for this task with slight differences in personality, and I&rsquo;m also excited to try hooking up Pi to Gemma 4 to see if I can get the same quality of local inference.</p>
+<p>The UX piece took just as much, or even more, than the machine learning. Initially I represented the tags in the bottom bar, but decided to move them to the side for discoverability. Another issue was that initially, I had too many tags and collapsed them in the design.</p>
+<figure><img src="https://vickiboykis.com/images/blogtags/71tags.png" width="400">
+</figure>
+
+<p>In a second pass, I reduced the number of tags, but the collapsible menu still wasn&rsquo;t exactly what I wanted.</p>
+<figure><img src="https://vickiboykis.com/images/blogtags/24more.png" width="400">
+</figure>
+
+<p>After moving the tags to the sidebar, I did a bunch of front-end wrangling with Pi using a number of different models to both reduce the number of tags and get them in the correct format on the sidebar, which led to the results you see now.</p>
+<h1 id="final-thoughts">Final thoughts</h1>
+<p>It only took me 6-10 hours (over the course of a month) to complete this project, but it truly is incredible how much work LLMs, as they are accessed via a harness in 2026, compressed for me. Outside of how great Pi is generally, most of the models and harnesses these days feel fairly interchangeable, but still allow a lot of productivity for general development tasks that are 1. small, 2. well-scoped, 3. within the developer&rsquo;s area of expertise so they can assess it.</p>
+<p>It&rsquo;s worth noting that using pre-LLM transformer BERT models did a fair amount of the heavy lifting here, and they did it better and cheaper than LLMs did. I suspect as more vendors raise per-token prices and gate unlimited plans, people encountering rising token costs will at least partly come back to blending LLMs with traditional ML approaches.</p>
+<p>Other than that, it was just much easier to work with models in a harness like Claude Code and Pi than the previous TopicGPT-style approach.</p>
+<p>I am currently happy with the results. The posts were tagged fairly correctly, I was able to get to a finished result, and I&rsquo;ve used the tags a few times afterwards.</p>
+<p>Will the remaining seven real people on the internet find it helpful? Guess we&rsquo;ll see!</p>

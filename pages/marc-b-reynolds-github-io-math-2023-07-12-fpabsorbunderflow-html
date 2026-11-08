@@ -1,0 +1,1 @@
+A sketch of a fast path filter to avoid explicit underflow checking following an addition or subtraction.

@@ -1,0 +1,4 @@
+<p>由于重新安装了 Arch Linux，需要重新安装 QQ，于是乎去官网看了下，居然发现已经有官方 <a
+ href="https://im.qq.com/linuxqq/"
+ 
+ target="_blank" rel="noopener noreferrer">Linux 版 QQ</a>。虽然功能稀少，UI 提升空间很大，不过对于办公沟通足矣。而且依赖少，不需要 <code>wine</code>，总体来说还是不错的。</p>

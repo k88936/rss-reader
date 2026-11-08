@@ -1,0 +1,1 @@
+<p>本文将介绍 Chrome 浏览器下如何调试亮色和深色模式，也就是模拟 <code>prefers-color-scheme</code>。</p>

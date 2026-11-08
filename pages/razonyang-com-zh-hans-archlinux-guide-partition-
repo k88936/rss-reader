@@ -1,0 +1,79 @@
+<h2 id="分区方案">分区方案</h2>
+<p>我的分区方案是十分随意的：</p>
+
+<div class="table-responsive">
+ <table class="table table-bordered table-hover table-striped">
+ <thead
+ >
+ <tr>
+ <th
+ >分区</th>
+ <th
+ >大小</th>
+ </tr>
+ </thead>
+ <tbody
+ >
+ <tr>
+ <td
+ ><code>/boot</code></td>
+ <td
+ >512MiB</td>
+ </tr>
+ <tr>
+ <td
+ ><code>/home</code></td>
+ <td
+ >128GiB</td>
+ </tr>
+ <tr>
+ <td
+ ><code>swap</code></td>
+ <td
+ >16GiB</td>
+ </tr>
+ <tr>
+ <td
+ ><code>root</code></td>
+ <td
+ >剩余空间</td>
+ </tr>
+ </tbody>
+ </table>
+</div>
+
+
+<p>由于我的是 500G 的硬盘，所以 <code>/home</code> 的大小给足了点，请根据自身情况调整即可。</p>
+<h2 id="分区">分区</h2>
+<p>首先确定磁盘的标识：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="ln">1</span><span class="cl">fdisk -l
+</span></span><span class="line"><span class="ln">2</span><span class="cl">Disk /dev/nvme1n1: 465.76 GiB, <span class="m">500107862016</span> bytes, <span class="m">976773168</span> sectors
+</span></span><span class="line"><span class="ln">3</span><span class="cl">Disk model: KIOXIA-EXCERIA SSD 
+</span></span></code></pre></div>
+
+
+ <blockquote
+ 
+ class="blockquote border-start ps-3 py-1 border-primary border-4">
+ <p>本文则以 <code>/dev/nvme1n1</code> 为例。</p>
+ </blockquote>
+<p>由于笔者使用的是 LVM 分区，笔者尝试过将 <code>/boot</code> 作为 LVM 的逻辑卷，不过出现无法识别和启动的问题，所以建议将磁盘分为两个区，一个用作 <code>/boot</code> 分区，剩下的作为 LVM 的物理卷，其余的 <code>home</code>、<code>swap</code> 和 <code>root</code> 分区均作为 LVM 逻辑卷。</p>
+
+ <blockquote
+ 
+ class="blockquote border-start ps-3 py-1 border-primary border-4">
+ <p>注意以下操作会清空磁盘，请谨慎操作。</p>
+ </blockquote>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="ln"> 1</span><span class="cl">$ parted /dev/nvme1n1
+</span></span><span class="line"><span class="ln"> 2</span><span class="cl"><span class="o">(</span>parted<span class="o">)</span> mklabel gpt
+</span></span><span class="line"><span class="ln"> 3</span><span class="cl"><span class="o">(</span>parted<span class="o">)</span> mkpart <span class="s2">&#34;EFI system partition&#34;</span> fat32 1MiB 513MiB
+</span></span><span class="line"><span class="ln"> 4</span><span class="cl"><span class="o">(</span>parted<span class="o">)</span> <span class="nb">set</span> <span class="m">1</span> esp on
+</span></span><span class="line"><span class="ln"> 5</span><span class="cl"><span class="o">(</span>parted<span class="o">)</span> mkpart ext4 513MiB 100%
+</span></span><span class="line"><span class="ln"> 6</span><span class="cl"><span class="o">(</span>parted<span class="o">)</span> print 
+</span></span><span class="line"><span class="ln"> 7</span><span class="cl">...
+</span></span><span class="line"><span class="ln"> 8</span><span class="cl">Number Start End Size File system Name Flags
+</span></span><span class="line"><span class="ln"> 9</span><span class="cl"> <span class="m">1</span> 1.00MiB 513MiB 512MiB fat32 EFI system partition boot, esp
+</span></span><span class="line"><span class="ln">10</span><span class="cl"> <span class="m">2</span> 513MiB 476940MiB 476427MiB ext4
+</span></span></code></pre></div>
+
+<p>两个分区创建完毕，接下来就是创建 LVM 的物理卷。</p>
