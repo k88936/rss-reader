@@ -1,4 +1,0 @@
-<span property="schema:name" class="field field--name-title field--type-string field--label-hidden">Hello World in NetBSD x86_64 assembly</span>
-<span rel="schema:author" class="field field--name-uid field--type-entity-reference field--label-hidden"><span lang about="https://minux.hu/user/1" typeof="schema:Person" property="schema:name" datatype>Fekete Zoltán</span></span>
-<span property="schema:dateCreated" content="2024-02-11T09:23:12+00:00" class="field field--name-created field--type-created field--label-hidden"><time datetime="2024-02-11T10:23:12+01:00" title="Sunday, February 11, 2024 - 10:23" class="datetime">Sun, 02/11/2024 - 10:23</time>
-</span>

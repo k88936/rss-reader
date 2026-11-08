@@ -1,1 +1,0 @@
-<p><code>Apache Kylin</code>是运行在<code>Hadoop</code>集群之上的<code>OLAP</code>数据分析应用服务，在<code>Hadoop</code>生态中，大家对它的认可度和赞誉都很高，全球有超过1000+企业都在使用“麒麟”（Apache Kylin）这只神兽。而<code>Hadoop</code>集群的部署又并非易事，那这是否就阻碍了我们探究<code>Apache Kylin</code>的步伐呢？答案是否定的，通过借助强大的虚拟技术，在自己本地就能体验到“麒麟”的魅力，那么接下来就让我们一起进入“麒麟”的数据世界。</p>

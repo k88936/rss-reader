@@ -1,7 +1,0 @@
-<p>对于上个月<code>Hugo NexT</code>最新的<code>V4.7.2</code>版本发布后，便是收到了不少用户使用的反馈，其中一点便是与代码块显示需要折叠的问题
-<a href="https://github.com/hugo-next/hugo-theme-next/issues/168" title="Issues#168" rel="noopener external nofollow noreferrer" target="_blank" class=" exturl">
- Issues#168
- 
- <i class="fa fa-external-link-alt"></i>
- 
-</a>。这点对于那些程序“猿”的博友们来说，或多或少是要在文章中嵌入大量的代码块，以便给读者展示具体功能实现过程。如果此时的代码块的篇幅比较大，那么文章里的其他非代码块的信息显示会被撑到很下面，对于读者的阅读体验就不那么的友好。这算是个比较普遍通用的需求，加上代码块在显示也有些重叠覆盖的问题，便打算是尽早的把它们给修复好。</p>

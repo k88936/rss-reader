@@ -1,7 +1,0 @@
-<p>近期有段时间没有登录 <code>GitHub</code> 仓库站点，今天查看邮箱发现
-<a href="https://github.com/hugo-next/hugo-theme-next" title="hugo-theme-next" rel="noopener external nofollow noreferrer" target="_blank" class=" exturl">
- hugo-theme-next
- 
- <i class="fa fa-external-link-alt"></i>
- 
-</a>项目上有新的 <code>PR</code>进来，便想上来查看下具体情况。结果发现Github官方已经全面启用<code>2FA</code>安全认证要求，只是之前自己“偷懒”并没有做这个功能的认证，原来还有可以使用密码方式绕过去的，但现在也关闭了此入口，难道真的要芭比Q啦。</p>
